@@ -5,7 +5,7 @@ export type EvaluationStatus = 'achieved' | 'developing' | 'untested';
 export interface Evaluation {
   id?: string;
   student_id?: string;
-  date?: string;
+  date: string;  // <-- A interrogação foi removida aqui!
   breathing: EvaluationStatus;
   floating: EvaluationStatus;
   technique: EvaluationStatus;
@@ -21,8 +21,8 @@ export interface Student {
   guardian_name?: string;
   phone?: string;
   created_at?: string;
-  evalDetails: Evaluation;      // Mantém pro formato antigo funcionar visualmente
-  evaluations?: Evaluation[];   // O histórico de avaliações que vem do Supabase
+  evalDetails: Evaluation;
+  evaluations?: Evaluation[];
 }
 
 export const levels: Record<CapLevel, { name: string; colorClass: string; bgClass: string }> = {
