@@ -1,6 +1,7 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { createClient } from '@supabase/supabase-js';
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
+// Chaves fixas direto no código conforme você pediu
+const supabaseUrl = 'https://jefmyjeuxkajycjexgly.supabase.co';
+const supabaseAnonKey = 'sb_publishable_2yVknLEKpom35ZgE6BYY1A_liY-cr5b';
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
