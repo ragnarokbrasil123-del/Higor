@@ -39,7 +39,6 @@ export function SwimmingModule() {
   const selectedStudentRaw = students.find(s => s.id === selectedId) || null;
   const latestEval = selectedStudentRaw?.evaluations?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   
-  // Agora usamos "as Evaluation" para o TypeScript ter certeza de que o aluno novo não vai quebrar o sistema
   const selectedStudent = selectedStudentRaw ? {
     ...selectedStudentRaw,
     evalDetails: latestEval || ({ 
@@ -276,21 +275,21 @@ export function SwimmingModule() {
                           <span className="text-sm font-semibold text-slate-700">{criterion.label}</span>
                           <div className="flex flex-wrap gap-2 shrink-0">
                             <EvaluationButton
-                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation]}
+                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation] as EvaluationStatus}
                               value="achieved"
                               label="Atingido"
                               colorClass="bg-emerald-500 text-white"
                               onClick={() => handleUpdateEvaluation(criterion.key as keyof Evaluation, 'achieved')}
                             />
                             <EvaluationButton
-                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation]}
+                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation] as EvaluationStatus}
                               value="developing"
                               label="Em Desenv."
                               colorClass="bg-orange-400 text-white"
                               onClick={() => handleUpdateEvaluation(criterion.key as keyof Evaluation, 'developing')}
                             />
                             <EvaluationButton
-                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation]}
+                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation] as EvaluationStatus}
                               value="untested"
                               label="N/A"
                               colorClass="bg-slate-200 text-slate-500"
