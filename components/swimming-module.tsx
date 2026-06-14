@@ -36,13 +36,19 @@ export function SwimmingModule() {
     return matchesSearch && matchesLevel;
   });
 
-  // Converte os dados do banco para o formato exato que o seu JSX original espera
   const selectedStudentRaw = students.find(s => s.id === selectedId) || null;
   const latestEval = selectedStudentRaw?.evaluations?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   
+  // Agora usamos "as Evaluation" para o TypeScript ter certeza de que o aluno novo não vai quebrar o sistema
   const selectedStudent = selectedStudentRaw ? {
     ...selectedStudentRaw,
-    evalDetails: latestEval || { breathing: 'untested', floating: 'untested', technique: 'untested', speed: 'untested' }
+    evalDetails: latestEval || ({ 
+      breathing: 'untested', 
+      floating: 'untested', 
+      technique: 'untested', 
+      speed: 'untested',
+      date: new Date().toISOString()
+    } as Evaluation)
   } : null;
 
   const handleUpdateEvaluation = async (criterion: keyof Evaluation, status: EvaluationStatus) => {
@@ -53,7 +59,6 @@ export function SwimmingModule() {
       [criterion]: status
     };
 
-    // Atualiza a tela instantaneamente
     setStudents(prev => prev.map(s => {
       if (s.id === selectedStudentRaw.id) {
          return { ...s, evaluations: [{ ...updatedEval, date: new Date().toISOString() }, ...(s.evaluations || [])] };
@@ -61,7 +66,6 @@ export function SwimmingModule() {
       return s;
     }));
 
-    // Salva no banco de dados em background
     await supabase.from('evaluations').insert([{
       student_id: selectedStudentRaw.id,
       breathing: updatedEval.breathing,
@@ -134,7 +138,6 @@ export function SwimmingModule() {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
       
-      {/* Header section from theme */}
       <header className="h-16 flex items-center justify-between px-4 md:px-8 bg-white/50 border-b border-slate-200 backdrop-blur-sm shrink-0">
         <h1 className="text-xl font-bold text-slate-800">Módulo de Avaliação Trimestral</h1>
         <div className="hidden sm:flex items-center gap-4">
@@ -154,10 +157,8 @@ export function SwimmingModule() {
         </div>
       </header>
 
-      {/* Main Container */}
       <div className="flex-1 p-4 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 overflow-hidden">
         
-        {/* Left Column: Student List */}
         <div className="md:col-span-5 flex flex-col h-full bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
           
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -227,7 +228,6 @@ export function SwimmingModule() {
           </div>
         </div>
 
-        {/* Right Column: Evaluation Panel */}
         <div className="md:col-span-7 flex flex-col h-full bg-white/80 glass rounded-3xl shadow-xl border border-white overflow-hidden relative">
           <AnimatePresence mode="wait">
             {selectedStudent ? (
@@ -238,7 +238,6 @@ export function SwimmingModule() {
                 exit={{ opacity: 0, transform: 'scale(0.95)' }}
                 className="flex flex-col h-full w-full absolute inset-0"
               >
-                {/* Header */}
                 <div className="p-6 sm:p-8 pb-4 flex items-center gap-4 sm:gap-6 border-b border-slate-100/50 shrink-0">
                   <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shrink-0", levels[selectedStudent.level].bgClass)}>
                     {selectedStudent.name.charAt(0)}
@@ -260,7 +259,6 @@ export function SwimmingModule() {
                   </div>
                 </div>
 
-                {/* Criteria List */}
                 <div className="flex-1 p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
                   <div className="space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -315,7 +313,6 @@ export function SwimmingModule() {
                   </div>
                 </div>
 
-                {/* Footer action */}
                 <div className="p-6 bg-white/50 border-t border-slate-100 flex gap-4 shrink-0">
                   <button 
                     onClick={() => setSelectedId(null)}
