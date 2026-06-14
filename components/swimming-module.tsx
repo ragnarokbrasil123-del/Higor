@@ -1,26 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Droplets, Search, Check, Award, ChevronRight, Filter } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { jsPDF } from 'jspdf';
 import { Student, CapLevel, EvaluationStatus, Evaluation, levels } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
 }
 
-interface SwimmingModuleProps {
-  students: Student[];
-  setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
-}
-
-export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+export function SwimmingModule() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<CapLevel | 'all'>('all');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    const { data } = await supabase.from('students').select('*, evaluations(*)');
+    if (data) setStudents(data);
+    setLoading(false);
+  };
 
   const filteredStudents = students.filter(s => {
     const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -28,18 +36,39 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
     return matchesSearch && matchesLevel;
   });
 
-  const handleUpdateEvaluation = (criterion: keyof Evaluation, status: EvaluationStatus) => {
-    if (!selectedStudent) return;
+  // Converte os dados do banco para o formato exato que o seu JSX original espera
+  const selectedStudentRaw = students.find(s => s.id === selectedId) || null;
+  const latestEval = selectedStudentRaw?.evaluations?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  
+  const selectedStudent = selectedStudentRaw ? {
+    ...selectedStudentRaw,
+    evalDetails: latestEval || { breathing: 'untested', floating: 'untested', technique: 'untested', speed: 'untested' }
+  } : null;
+
+  const handleUpdateEvaluation = async (criterion: keyof Evaluation, status: EvaluationStatus) => {
+    if (!selectedStudentRaw || !selectedStudent) return;
     
-    const updatedStudent = {
-      ...selectedStudent,
-      evalDetails: {
-        ...selectedStudent.evalDetails,
-        [criterion]: status
-      }
+    const updatedEval = {
+      ...selectedStudent.evalDetails,
+      [criterion]: status
     };
-    setSelectedStudent(updatedStudent);
-    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+
+    // Atualiza a tela instantaneamente
+    setStudents(prev => prev.map(s => {
+      if (s.id === selectedStudentRaw.id) {
+         return { ...s, evaluations: [{ ...updatedEval, date: new Date().toISOString() }, ...(s.evaluations || [])] };
+      }
+      return s;
+    }));
+
+    // Salva no banco de dados em background
+    await supabase.from('evaluations').insert([{
+      student_id: selectedStudentRaw.id,
+      breathing: updatedEval.breathing,
+      floating: updatedEval.floating,
+      technique: updatedEval.technique,
+      speed: updatedEval.speed,
+    }]);
   };
 
   const handleDownloadReport = () => {
@@ -68,16 +97,26 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
     ] as const;
     
     criteria.forEach(c => {
-      const status = selectedStudent.evalDetails[c.key];
-      doc.text(`${c.label}: ${statusMap[status]}`, 25, yPos);
+      const status = selectedStudent.evalDetails[c.key as keyof Evaluation];
+      doc.text(`${c.label}: ${statusMap[status as EvaluationStatus]}`, 25, yPos);
       yPos += 10;
     });
     
     doc.save(`avaliacao_${selectedStudent.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
   };
 
-  const EvaluationButton = ({ status, value, label, onClick, colorClass }: { 
-    status: EvaluationStatus, value: EvaluationStatus, label: string, onClick: () => void, colorClass: string
+  const EvaluationButton = ({ 
+    status, 
+    value, 
+    label, 
+    onClick, 
+    colorClass 
+  }: { 
+    status: EvaluationStatus, 
+    value: EvaluationStatus, 
+    label: string, 
+    onClick: () => void,
+    colorClass: string
   }) => (
     <button
       onClick={onClick}
@@ -94,6 +133,8 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      
+      {/* Header section from theme */}
       <header className="h-16 flex items-center justify-between px-4 md:px-8 bg-white/50 border-b border-slate-200 backdrop-blur-sm shrink-0">
         <h1 className="text-xl font-bold text-slate-800">Módulo de Avaliação Trimestral</h1>
         <div className="hidden sm:flex items-center gap-4">
@@ -113,9 +154,12 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
         </div>
       </header>
 
+      {/* Main Container */}
       <div className="flex-1 p-4 md:p-8 grid grid-cols-1 md:grid-cols-12 gap-6 overflow-hidden">
+        
         {/* Left Column: Student List */}
         <div className="md:col-span-5 flex flex-col h-full bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden shrink-0">
+          
           <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h2 className="font-bold text-slate-700">Lista de Alunos</h2>
             <span className="text-xs bg-slate-200 px-2 py-1 rounded text-slate-600">{filteredStudents.length} Ativos</span>
@@ -151,12 +195,12 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-            {filteredStudents.map(student => (
+            {loading ? <p className="text-center text-sm text-slate-400 py-4">Carregando alunos do banco...</p> : filteredStudents.map(student => (
               <motion.button
                 key={student.id}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedStudent(student)}
+                onClick={() => setSelectedId(student.id)}
                 className={cn(
                   "w-full text-left p-3 flex items-center gap-4 transition-colors group rounded-2xl",
                   selectedStudent?.id === student.id 
@@ -194,6 +238,7 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
                 exit={{ opacity: 0, transform: 'scale(0.95)' }}
                 className="flex flex-col h-full w-full absolute inset-0"
               >
+                {/* Header */}
                 <div className="p-6 sm:p-8 pb-4 flex items-center gap-4 sm:gap-6 border-b border-slate-100/50 shrink-0">
                   <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg shrink-0", levels[selectedStudent.level].bgClass)}>
                     {selectedStudent.name.charAt(0)}
@@ -215,11 +260,13 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
                   </div>
                 </div>
 
+                {/* Criteria List */}
                 <div className="flex-1 p-6 sm:p-8 space-y-6 overflow-y-auto custom-scrollbar">
                   <div className="space-y-4">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1 h-3 bg-amber-500 rounded-full"></span> Critérios Técnicos
                     </h3>
+                    
                     <div className="grid gap-3">
                       {([
                         { key: 'breathing', label: 'Respiração e Controle' },
@@ -230,9 +277,27 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
                         <div key={criterion.key} className="p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:border-amber-200">
                           <span className="text-sm font-semibold text-slate-700">{criterion.label}</span>
                           <div className="flex flex-wrap gap-2 shrink-0">
-                            <EvaluationButton status={selectedStudent.evalDetails[criterion.key]} value="achieved" label="Atingido" colorClass="bg-emerald-500 text-white" onClick={() => handleUpdateEvaluation(criterion.key, 'achieved')} />
-                            <EvaluationButton status={selectedStudent.evalDetails[criterion.key]} value="developing" label="Em Desenv." colorClass="bg-orange-400 text-white" onClick={() => handleUpdateEvaluation(criterion.key, 'developing')} />
-                            <EvaluationButton status={selectedStudent.evalDetails[criterion.key]} value="untested" label="N/A" colorClass="bg-slate-200 text-slate-500" onClick={() => handleUpdateEvaluation(criterion.key, 'untested')} />
+                            <EvaluationButton
+                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation]}
+                              value="achieved"
+                              label="Atingido"
+                              colorClass="bg-emerald-500 text-white"
+                              onClick={() => handleUpdateEvaluation(criterion.key as keyof Evaluation, 'achieved')}
+                            />
+                            <EvaluationButton
+                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation]}
+                              value="developing"
+                              label="Em Desenv."
+                              colorClass="bg-orange-400 text-white"
+                              onClick={() => handleUpdateEvaluation(criterion.key as keyof Evaluation, 'developing')}
+                            />
+                            <EvaluationButton
+                              status={selectedStudent.evalDetails[criterion.key as keyof Evaluation]}
+                              value="untested"
+                              label="N/A"
+                              colorClass="bg-slate-200 text-slate-500"
+                              onClick={() => handleUpdateEvaluation(criterion.key as keyof Evaluation, 'untested')}
+                            />
                           </div>
                         </div>
                       ))}
@@ -250,8 +315,12 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
                   </div>
                 </div>
 
+                {/* Footer action */}
                 <div className="p-6 bg-white/50 border-t border-slate-100 flex gap-4 shrink-0">
-                  <button onClick={() => setSelectedStudent(null)} className="flex-1 py-3 bg-black text-white rounded-2xl font-bold text-sm shadow-lg shadow-black/20 hover:bg-slate-900 transition-all active:scale-95 border border-slate-800">
+                  <button 
+                    onClick={() => setSelectedId(null)}
+                    className="flex-1 py-3 bg-black text-white rounded-2xl font-bold text-sm shadow-lg shadow-black/20 hover:bg-slate-900 transition-all active:scale-95 border border-slate-800"
+                  >
                     Salvar Avaliação
                   </button>
                   <button className="px-6 py-3 bg-slate-100 text-slate-500 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all hidden sm:block">
@@ -260,7 +329,11 @@ export function SwimmingModule({ students, setStudents }: SwimmingModuleProps) {
                 </div>
               </motion.div>
             ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col items-center justify-center text-slate-400 p-8">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="h-full flex flex-col items-center justify-center text-slate-400 p-8"
+              >
                 <div className="w-20 h-20 rounded-full bg-slate-100 border border-white flex items-center justify-center mb-4 shadow-sm">
                   <Droplets className="w-8 h-8 text-slate-300" />
                 </div>
