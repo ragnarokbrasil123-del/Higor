@@ -18,19 +18,48 @@ interface Task {
   date?: string;
 }
 
+// Nossa lista oficial de ambientes do Clube
+const defaultTasks = [
+  "Área Externa da Piscina",
+  "Deck da Piscina",
+  "Banheiro Feminino Piscina",
+  "Banheiro Masculino Piscina",
+  "Vestiário Feminino Piscina",
+  "Vestiário Masculino Piscina",
+  "Casa de Máquinas da Piscina",
+  "Sala de Ginástica",
+  "Sala de Dança",
+  "Sala de Lutas",
+  "Sala de Pilates",
+  "Sala de Avaliação Física",
+  "Recepção",
+  "Sala de Espera",
+  "Catracas de Entrada",
+  "Corredores",
+  "Escadaria",
+  "Elevador",
+  "Copa",
+  "Escritório Administrativo",
+  "Sala de Reunião",
+  "Almoxarifado",
+  "Vestiário Feminino",
+  "Vestiário Masculino",
+  "Banheiros de Cima",
+  "Banheiros de Baixo",
+  "Banheiro PCD (Acessibilidade)"
+];
+
 export function ChecklistModule() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   
-  // Inicia com a data de hoje (YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   });
 
-  // Sempre que a data mudar, busca as tarefas específicas daquele dia
   useEffect(() => {
     fetchTasks(selectedDate);
   }, [selectedDate]);
@@ -39,13 +68,12 @@ export function ChecklistModule() {
     const { data } = await supabase
       .from('cleaning_tasks')
       .select('*')
-      .eq('date', date) // Filtra pelo dia escolhido
+      .eq('date', date)
       .order('created_at', { ascending: true });
       
     if (data) setTasks(data);
   };
 
-  // Função para avançar ou voltar os dias pelos botões
   const changeDate = (days: number) => {
     const [year, month, day] = selectedDate.split('-').map(Number);
     const date = new Date(year, month - 1, day);
@@ -64,12 +92,10 @@ export function ChecklistModule() {
     const tempId = Date.now().toString();
     const newTaskTitleClean = newTaskTitle.trim();
     
-    // Adiciona na tela instantaneamente
     const tempTask: Task = { id: tempId, title: newTaskTitleClean, completed: false, date: selectedDate };
     setTasks([...tasks, tempTask]);
     setNewTaskTitle('');
 
-    // Salva no banco vinculando à data selecionada!
     const { data } = await supabase.from('cleaning_tasks').insert([{ 
       title: newTaskTitleClean, 
       completed: false, 
@@ -78,6 +104,32 @@ export function ChecklistModule() {
 
     if (data && data[0]) {
       setTasks(prev => prev.map(t => t.id === tempId ? data[0] : t));
+    }
+  };
+
+  // Função nova que popula a lista de uma vez só!
+  const loadDefaultChecklist = async () => {
+    const tempTasks = defaultTasks.map((title, index) => ({
+      id: `temp-${Date.now()}-${index}`,
+      title,
+      completed: false,
+      date: selectedDate
+    }));
+    
+    // Atualiza a tela instantaneamente
+    setTasks(tempTasks);
+
+    // Salva todas de uma vez no Supabase
+    const rowsToInsert = defaultTasks.map(title => ({
+      title,
+      completed: false,
+      date: selectedDate
+    }));
+    
+    const { data } = await supabase.from('cleaning_tasks').insert(rowsToInsert).select();
+
+    if (data) {
+      setTasks(data);
     }
   };
 
@@ -129,7 +181,6 @@ export function ChecklistModule() {
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
 
-  // Verifica se o dia selecionado é hoje para mostrar a tag amarela "HOJE"
   const isToday = () => {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -215,7 +266,7 @@ export function ChecklistModule() {
               <Plus className="absolute left-4 text-slate-400 w-5 h-5 pointer-events-none" />
               <input 
                 type="text" 
-                placeholder="Adicionar nova tarefa..." 
+                placeholder="Adicionar nova tarefa manual..." 
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 className="w-full pl-12 pr-24 py-4 rounded-2xl border-0 bg-white shadow-sm ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-amber-500 transition-all text-slate-700 font-medium"
@@ -237,11 +288,22 @@ export function ChecklistModule() {
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-center py-16 text-slate-400"
+                  className="text-center py-16 px-4"
                 >
-                  <CheckSquare className="w-12 h-12 mx-auto mb-4 text-slate-300 opacity-50" />
-                  <p className="text-lg font-medium">Nenhuma tarefa encontrada para este dia.</p>
-                  <p className="text-sm">Adicione tarefas no campo acima para começar.</p>
+                  <CheckSquare className="w-16 h-16 mx-auto mb-4 text-slate-200" />
+                  <p className="text-xl font-bold text-slate-700 mb-2">Checklist em branco</p>
+                  <p className="text-sm text-slate-500 mb-8 max-w-md mx-auto">
+                    Você pode digitar as tarefas uma a uma lá em cima, ou preencher automaticamente todas as áreas do clube de uma só vez clicando no botão abaixo.
+                  </p>
+                  
+                  {/* BOTÃO MÁGICO */}
+                  <button 
+                    onClick={loadDefaultChecklist}
+                    className="mx-auto px-8 py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-2xl transition-all shadow-xl shadow-slate-900/20 flex items-center gap-3 group active:scale-95"
+                  >
+                    <ClipboardList className="w-6 h-6 text-amber-500 group-hover:scale-110 transition-transform" />
+                    Gerar Checklist Padrão (27 Itens)
+                  </button>
                 </motion.div>
               ) : (
                 tasks.map((task) => (
