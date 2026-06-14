@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckSquare, Plus, Trash2, Edit2, Check, X, ClipboardList } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { supabase } from '@/lib/supabase';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
@@ -16,38 +17,61 @@ interface Task {
   completed: boolean;
 }
 
-const initialTasks: Task[] = [
-  { id: '1', title: 'Limpar vestiários masculinos', completed: true },
-  { id: '2', title: 'Limpar vestiários femininos', completed: false },
-  { id: '3', title: 'Higienizar bordas da piscina', completed: false },
-  { id: '4', title: 'Recolher lixo da área comum', completed: false },
-  { id: '5', title: 'Repor sabonete e papel toalha', completed: false },
-];
-
 export function ChecklistModule() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
 
-  const handleAddTask = (e: React.FormEvent) => {
+  // 1. Busca as tarefas do banco ao abrir a página
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    // Busca do banco ordenando da mais nova pra mais antiga
+    const { data } = await supabase.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
+    if (data) setTasks(data);
+  };
+
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: newTaskTitle.trim(),
-      completed: false
-    };
+    const tempId = Date.now().toString(); // ID temporário apenas para exibir na tela rápido
+    const newTaskTitleClean = newTaskTitle.trim();
     
-    setTasks([newTask, ...tasks]);
+    // Atualiza a tela imediatamente (Optimistic UI)
+    const tempTask: Task = { id: tempId, title: newTaskTitleClean, completed: false };
+    setTasks([tempTask, ...tasks]);
     setNewTaskTitle('');
+
+    // Salva no banco de dados em background
+    const { data } = await supabase.from('cleaning_tasks').insert([{ 
+      title: newTaskTitleClean, 
+      completed: false, 
+      date: new Date().toISOString().split('T')[0] // Data obrigatória para a tabela
+    }]).select();
+
+    // Quando o banco responder, troca o ID temporário pelo ID real (UUID) do banco
+    if (data && data[0]) {
+      setTasks(prev => prev.map(t => t.id === tempId ? data[0] : t));
+    }
   };
 
-  const toggleTask = (id: string) => {
+  const toggleTask = async (id: string) => {
+    const taskToToggle = tasks.find(t => t.id === id);
+    if (!taskToToggle) return;
+
+    const newStatus = !taskToToggle.completed;
+
+    // Atualiza a tela imediatamente
     setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
+      task.id === id ? { ...task, completed: newStatus } : task
     ));
+
+    // Salva a alteração no banco
+    await supabase.from('cleaning_tasks').update({ completed: newStatus }).eq('id', id);
   };
 
   const startEditing = (task: Task) => {
@@ -55,15 +79,23 @@ export function ChecklistModule() {
     setEditingTitle(task.title);
   };
 
-  const saveEditing = () => {
-    if (!editingTitle.trim()) {
+  const saveEditing = async () => {
+    if (!editingTitle.trim() || !editingTaskId) {
       cancelEditing();
       return;
     }
+    
+    const newTitle = editingTitle.trim();
+    const idToEdit = editingTaskId;
+
+    // Atualiza a tela imediatamente
     setTasks(tasks.map(task => 
-      task.id === editingTaskId ? { ...task, title: editingTitle.trim() } : task
+      task.id === idToEdit ? { ...task, title: newTitle } : task
     ));
     setEditingTaskId(null);
+
+    // Salva a alteração de texto no banco
+    await supabase.from('cleaning_tasks').update({ title: newTitle }).eq('id', idToEdit);
   };
 
   const cancelEditing = () => {
@@ -71,8 +103,12 @@ export function ChecklistModule() {
     setEditingTitle('');
   };
 
-  const deleteTask = (id: string) => {
+  const deleteTask = async (id: string) => {
+    // Atualiza a tela imediatamente
     setTasks(tasks.filter(t => t.id !== id));
+    
+    // Deleta do banco
+    await supabase.from('cleaning_tasks').delete().eq('id', id);
   };
 
   const completedCount = tasks.filter(t => t.completed).length;
