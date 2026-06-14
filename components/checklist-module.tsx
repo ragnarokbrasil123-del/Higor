@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckSquare, Plus, Trash2, Edit2, Check, X, ClipboardList } from 'lucide-react';
+import { CheckSquare, Plus, Trash2, Edit2, Check, X, ClipboardList, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +15,7 @@ interface Task {
   id: string;
   title: string;
   completed: boolean;
+  date?: string;
 }
 
 export function ChecklistModule() {
@@ -22,38 +23,59 @@ export function ChecklistModule() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  
+  // Inicia com a data de hoje (YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
 
-  // 1. Busca as tarefas do banco ao abrir a página
+  // Sempre que a data mudar, busca as tarefas específicas daquele dia
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    fetchTasks(selectedDate);
+  }, [selectedDate]);
 
-  const fetchTasks = async () => {
-    // Busca do banco ordenando da mais nova pra mais antiga
-    const { data } = await supabase.from('cleaning_tasks').select('*').order('created_at', { ascending: false });
+  const fetchTasks = async (date: string) => {
+    const { data } = await supabase
+      .from('cleaning_tasks')
+      .select('*')
+      .eq('date', date) // Filtra pelo dia escolhido
+      .order('created_at', { ascending: true });
+      
     if (data) setTasks(data);
+  };
+
+  // Função para avançar ou voltar os dias pelos botões
+  const changeDate = (days: number) => {
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setDate(date.getDate() + days);
+    
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const newDay = String(date.getDate()).padStart(2, '0');
+    setSelectedDate(`${newYear}-${newMonth}-${newDay}`);
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
     
-    const tempId = Date.now().toString(); // ID temporário apenas para exibir na tela rápido
+    const tempId = Date.now().toString();
     const newTaskTitleClean = newTaskTitle.trim();
     
-    // Atualiza a tela imediatamente (Optimistic UI)
-    const tempTask: Task = { id: tempId, title: newTaskTitleClean, completed: false };
-    setTasks([tempTask, ...tasks]);
+    // Adiciona na tela instantaneamente
+    const tempTask: Task = { id: tempId, title: newTaskTitleClean, completed: false, date: selectedDate };
+    setTasks([...tasks, tempTask]);
     setNewTaskTitle('');
 
-    // Salva no banco de dados em background
+    // Salva no banco vinculando à data selecionada!
     const { data } = await supabase.from('cleaning_tasks').insert([{ 
       title: newTaskTitleClean, 
       completed: false, 
-      date: new Date().toISOString().split('T')[0] // Data obrigatória para a tabela
+      date: selectedDate 
     }]).select();
 
-    // Quando o banco responder, troca o ID temporário pelo ID real (UUID) do banco
     if (data && data[0]) {
       setTasks(prev => prev.map(t => t.id === tempId ? data[0] : t));
     }
@@ -65,12 +87,10 @@ export function ChecklistModule() {
 
     const newStatus = !taskToToggle.completed;
 
-    // Atualiza a tela imediatamente
     setTasks(tasks.map(task => 
       task.id === id ? { ...task, completed: newStatus } : task
     ));
 
-    // Salva a alteração no banco
     await supabase.from('cleaning_tasks').update({ completed: newStatus }).eq('id', id);
   };
 
@@ -88,13 +108,11 @@ export function ChecklistModule() {
     const newTitle = editingTitle.trim();
     const idToEdit = editingTaskId;
 
-    // Atualiza a tela imediatamente
     setTasks(tasks.map(task => 
       task.id === idToEdit ? { ...task, title: newTitle } : task
     ));
     setEditingTaskId(null);
 
-    // Salva a alteração de texto no banco
     await supabase.from('cleaning_tasks').update({ title: newTitle }).eq('id', idToEdit);
   };
 
@@ -104,15 +122,19 @@ export function ChecklistModule() {
   };
 
   const deleteTask = async (id: string) => {
-    // Atualiza a tela imediatamente
     setTasks(tasks.filter(t => t.id !== id));
-    
-    // Deleta do banco
     await supabase.from('cleaning_tasks').delete().eq('id', id);
   };
 
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
+
+  // Verifica se o dia selecionado é hoje para mostrar a tag amarela "HOJE"
+  const isToday = () => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return selectedDate === todayStr;
+  };
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-y-auto">
@@ -128,6 +150,30 @@ export function ChecklistModule() {
               Checklist de Limpeza
             </h1>
             <p className="text-amber-200/80">Gerenciamento diário de infraestrutura e higienização.</p>
+            
+            {/* SELETOR DE DATA */}
+            <div className="flex items-center gap-2 mt-6">
+              <button onClick={() => changeDate(-1)} className="p-2 hover:bg-white/10 rounded-lg text-amber-500 transition-colors" title="Dia Anterior">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-3 px-5 py-2.5 bg-white/10 backdrop-blur-md rounded-xl border border-white/10 shadow-inner">
+                <CalendarDays className="w-5 h-5 text-amber-500" />
+                <div className="flex flex-col">
+                  {isToday() && <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider mb-0.5">Hoje</span>}
+                  <input 
+                    type="date" 
+                    value={selectedDate}
+                    onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                    className="bg-transparent border-none text-white text-sm font-bold focus:ring-0 outline-none cursor-pointer p-0 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100 transition-opacity"
+                  />
+                </div>
+              </div>
+
+              <button onClick={() => changeDate(1)} className="p-2 hover:bg-white/10 rounded-lg text-amber-500 transition-colors" title="Próximo Dia">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
           
           <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-x-white/20 border-t-white/20 shadow-lg shrink-0">
@@ -194,7 +240,7 @@ export function ChecklistModule() {
                   className="text-center py-16 text-slate-400"
                 >
                   <CheckSquare className="w-12 h-12 mx-auto mb-4 text-slate-300 opacity-50" />
-                  <p className="text-lg font-medium">Nenhuma tarefa encontrada.</p>
+                  <p className="text-lg font-medium">Nenhuma tarefa encontrada para este dia.</p>
                   <p className="text-sm">Adicione tarefas no campo acima para começar.</p>
                 </motion.div>
               ) : (
@@ -258,7 +304,7 @@ export function ChecklistModule() {
                     {/* Actions */}
                     <div className={cn(
                       "flex items-center gap-1 transition-opacity",
-                      editingTaskId === task.id ? "opacity-100" : "opacity-0 group-hover:opacity-100 sm:opacity-100" // Always visible on mobile, hover on desktop
+                      editingTaskId === task.id ? "opacity-100" : "opacity-0 group-hover:opacity-100 sm:opacity-100"
                     )}>
                       {editingTaskId === task.id ? (
                         <>
