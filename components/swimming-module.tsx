@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Droplets, Search, Check, Award, ChevronRight, Filter, Trash2 } from 'lucide-react';
+import { Droplets, Search, Check, Award, ChevronRight, Filter, Trash2, MessageCircle } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { jsPDF } from 'jspdf';
@@ -131,7 +131,7 @@ export function SwimmingModule() {
     } else {
       setDraftEval(null);
     }
-  }, [selectedId, selectedStudentRaw?.evaluations]); // Added dependency to refresh when eval changes
+  }, [selectedId, selectedStudentRaw?.evaluations]);
 
   const handleUpdateCriterion = (criterionId: string, status: EvalStatus) => {
     if (!draftEval) return;
@@ -146,7 +146,6 @@ export function SwimmingModule() {
     setSaving(true);
     
     if (draftEval.id) {
-      // ATUALIZA SE JÁ EXISTIR (Evita duplicação)
       const { data } = await supabase.from('evaluations').update({
         results: draftEval.results,
         general_status: draftEval.general_status,
@@ -161,7 +160,6 @@ export function SwimmingModule() {
         alert("Ficha atualizada com sucesso!");
       }
     } else {
-      // CRIA NOVA
       const { data } = await supabase.from('evaluations').insert([{
         student_id: selectedStudentRaw.id,
         date: new Date().toISOString(),
@@ -181,16 +179,43 @@ export function SwimmingModule() {
     setSaving(false);
   };
 
-  // === FUNÇÕES DE EXCLUSÃO (LIXEIRAS) ===
+  // === DICA DE OURO: INTEGRAÇÃO WHATSAPP ===
+  const handleWhatsApp = () => {
+    if (!selectedStudentRaw) return;
+    if (!selectedStudentRaw.phone) {
+      alert("Por favor, edite o cadastro deste aluno e adicione um número de telefone primeiro.");
+      return;
+    }
+    
+    // Pega apenas os números do telefone digitado
+    let phoneNum = selectedStudentRaw.phone.replace(/\D/g, '');
+    
+    // Se o número não tiver o +55 do Brasil, nós garantimos que tenha
+    if (!phoneNum.startsWith('55')) {
+      phoneNum = '55' + phoneNum;
+    }
+
+    const isApproved = draftEval?.general_status === 'approved';
+    let message = '';
+    
+    if (isApproved) {
+      message = `Olá! Aqui é do Clube Olimpo. Temos excelentes notícias: O(a) aluno(a) *${selectedStudentRaw.name}* foi *APROVADO(A)* na avaliação trimestral! 🥳\n\nEle(a) já está apto(a) para trocar de nível.\n\nO certificado oficial impresso e a nova touca serão entregues na próxima aula. Parabéns pela evolução! 🏊‍♂️🏅`;
+    } else {
+      message = `Olá! Aqui é do Clube Olimpo. A nova avaliação trimestral do(a) *${selectedStudentRaw.name}* acabou de sair!\n\nVou enviar o arquivo PDF com a ficha técnica aqui embaixo para vocês acompanharem a evolução dele(a) nas aulas.\n\nQualquer dúvida, o professor está à disposição! 🏊‍♂️💙`;
+    }
+    
+    const url = `https://wa.me/${phoneNum}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+  // ==========================================
+
   const handleDeleteStudent = async () => {
     if (!selectedStudentRaw) return;
     if (!confirm("Tem certeza que deseja APAGAR ESTE ALUNO do sistema? Todo o histórico será perdido.")) return;
     
-    // Deleta do banco
     await supabase.from('evaluations').delete().eq('student_id', selectedStudentRaw.id);
     await supabase.from('students').delete().eq('id', selectedStudentRaw.id);
     
-    // Atualiza a tela
     setStudents(prev => prev.filter(s => s.id !== selectedStudentRaw.id));
     setSelectedId(null);
   };
@@ -199,10 +224,8 @@ export function SwimmingModule() {
     if (!draftEval?.id || !selectedStudentRaw) return;
     if (!confirm("Tem certeza que deseja excluir esta ficha de avaliação?")) return;
     
-    // Deleta do banco
     await supabase.from('evaluations').delete().eq('id', draftEval.id);
     
-    // Atualiza a tela
     setStudents(prev => prev.map(s => {
       if (s.id === selectedStudentRaw.id) {
         return { ...s, evaluations: s.evaluations?.filter(e => e.id !== draftEval.id) || [] };
@@ -211,7 +234,6 @@ export function SwimmingModule() {
     }));
     alert("Avaliação excluída!");
   };
-  // =====================================
 
   const handleDownloadReport = () => {
     if (!selectedStudentRaw || !draftEval) return;
@@ -374,21 +396,31 @@ export function SwimmingModule() {
                     </span>
                   </div>
                   
-                  {/* === LIXEIRA DO ALUNO === */}
-                  <button 
-                    onClick={handleDeleteStudent}
-                    className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-100"
-                    title="Excluir Aluno do Sistema"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                  {/* ======================= */}
+                  <div className="flex gap-2">
+                    {/* BOTÃO DO WHATSAPP */}
+                    {selectedStudentRaw.phone && (
+                      <button 
+                        onClick={handleWhatsApp}
+                        className="p-3 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-emerald-100"
+                        title="Enviar Ficha pelo WhatsApp"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </button>
+                    )}
 
+                    {/* LIXEIRA DO ALUNO */}
+                    <button 
+                      onClick={handleDeleteStudent}
+                      className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-100"
+                      title="Excluir Aluno do Sistema"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar bg-slate-50/30">
                   
-                  {/* CRITÉRIOS DE AVALIAÇÃO DINÂMICOS */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1.5 h-4 bg-amber-500 rounded-full"></span> Verificação de Habilidades
@@ -423,7 +455,6 @@ export function SwimmingModule() {
                     )}
                   </div>
 
-                  {/* AVALIAÇÃO GERAL (Aprovado / Reprovado) */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1.5 h-4 bg-amber-500 rounded-full"></span> Avaliação Geral
@@ -440,7 +471,6 @@ export function SwimmingModule() {
                     </div>
                   </div>
 
-                  {/* OBSERVAÇÕES */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                       <span className="w-1.5 h-4 bg-amber-500 rounded-full"></span> Observações do Professor
@@ -455,8 +485,6 @@ export function SwimmingModule() {
                 </div>
 
                 <div className="p-6 bg-white/50 border-t border-slate-100 flex gap-4 shrink-0">
-                  
-                  {/* === LIXEIRA DA FICHA === */}
                   {draftEval.id && (
                     <button 
                       onClick={handleDeleteEvaluation}
@@ -465,8 +493,6 @@ export function SwimmingModule() {
                       Excluir Ficha
                     </button>
                   )}
-                  {/* ======================== */}
-
                   <button 
                     onClick={handleSaveEvaluation}
                     disabled={saving}
