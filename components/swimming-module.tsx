@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Droplets, Search, Check, Award, ChevronRight, Filter } from 'lucide-react';
+import { Droplets, Search, Check, Award, ChevronRight, Filter, Trash2 } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { jsPDF } from 'jspdf';
@@ -64,8 +64,30 @@ const EVALUATION_CRITERIA: Record<CapLevel, { id: string; label: string }[]> = {
     { id: 'g9', label: '9. Crawl e Costas: 25 metros mantendo a técnica aperfeiçoada.' },
     { id: 'g10', label: '10. Peito: 12,5 metros, nado completo mantendo a técnica rudimentar.' },
   ],
-  lightBlue: [],
-  darkBlue: [],
+  lightBlue: [
+    { id: 'lb1', label: '1. Executa nado peito com saída Filipina.' },
+    { id: 'lb2', label: '2. Executa braçada do nado borboleta com variações de pernas.' },
+    { id: 'lb3', label: '3. Executa o nado borboleta rudimentar.' },
+    { id: 'lb4', label: '4. 15 metros de ondulação dorsal.' },
+    { id: 'lb5', label: '5. 15 metros nado peito com saída Filipina.' },
+    { id: 'lb6', label: '6. 12,5 metros de borboleta rudimentar.' },
+    { id: 'lb7', label: '7. Executa o medley rudimentar.' },
+    { id: 'lb8', label: '8. Executa a virada olímpica rudimentar nado crawl.' },
+    { id: 'lb9', label: '9. Sustentação com Palmateios na posição ventral.' },
+    { id: 'lb10', label: '10. 15 metros de ondulação submersa frontal.' },
+  ],
+  darkBlue: [
+    { id: 'db1', label: '1. Nado crawl e costas 100 metros, 50 metros nado peito.' },
+    { id: 'db2', label: '2. Nado borboleta 25 metros.' },
+    { id: 'db3', label: '3. Salta da plataforma na posição correta (sem exigência de perfeição).' },
+    { id: 'db4', label: '4. Saída e viradas dos 4 nados.' },
+    { id: 'db5', label: '5. Respiração técnica dos 4 nados.' },
+    { id: 'db6', label: '6. Os 4 nados executados com técnicas aperfeiçoadas.' },
+    { id: 'db7', label: '7. Executa o Medley (rudimentar).' },
+    { id: 'db8', label: '8. Nadar 12,5 metros em apneia.' },
+    { id: 'db9', label: '9. Preparado para nadar em piscina semi olímpica e olímpica.' },
+    { id: 'db10', label: '10. Nadar 250 metros crawl em 7 minutos.' },
+  ],
   black: []
 };
 
@@ -77,7 +99,6 @@ export function SwimmingModule() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Rascunho da avaliação atual sendo editada na tela
   const [draftEval, setDraftEval] = useState<Evaluation | null>(null);
 
   useEffect(() => {
@@ -98,7 +119,6 @@ export function SwimmingModule() {
 
   const selectedStudentRaw = students.find(s => s.id === selectedId) || null;
 
-  // Quando escolhe um aluno, carrega a avaliação mais recente dele ou cria uma nova zerada
   useEffect(() => {
     if (selectedStudentRaw) {
       const latestEval = selectedStudentRaw.evaluations?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -111,7 +131,7 @@ export function SwimmingModule() {
     } else {
       setDraftEval(null);
     }
-  }, [selectedId]);
+  }, [selectedId, selectedStudentRaw?.evaluations]); // Added dependency to refresh when eval changes
 
   const handleUpdateCriterion = (criterionId: string, status: EvalStatus) => {
     if (!draftEval) return;
@@ -125,26 +145,73 @@ export function SwimmingModule() {
     if (!selectedStudentRaw || !draftEval) return;
     setSaving(true);
     
-    // Salva a avaliação no banco
-    const { data } = await supabase.from('evaluations').insert([{
-      student_id: selectedStudentRaw.id,
-      date: new Date().toISOString(),
-      results: draftEval.results,
-      general_status: draftEval.general_status,
-      notes: draftEval.notes
-    }]).select();
+    if (draftEval.id) {
+      // ATUALIZA SE JÁ EXISTIR (Evita duplicação)
+      const { data } = await supabase.from('evaluations').update({
+        results: draftEval.results,
+        general_status: draftEval.general_status,
+        notes: draftEval.notes
+      }).eq('id', draftEval.id).select();
 
-    if (data && data[0]) {
-      setStudents(prev => prev.map(s => {
-        if (s.id === selectedStudentRaw.id) {
-           return { ...s, evaluations: [data[0], ...(s.evaluations || [])] };
-        }
-        return s;
-      }));
-      alert("Avaliação salva com sucesso!");
+      if (data && data[0]) {
+        setStudents(prev => prev.map(s => s.id === selectedStudentRaw.id 
+          ? { ...s, evaluations: s.evaluations?.map(e => e.id === draftEval.id ? data[0] : e) || [] } 
+          : s
+        ));
+        alert("Ficha atualizada com sucesso!");
+      }
+    } else {
+      // CRIA NOVA
+      const { data } = await supabase.from('evaluations').insert([{
+        student_id: selectedStudentRaw.id,
+        date: new Date().toISOString(),
+        results: draftEval.results,
+        general_status: draftEval.general_status,
+        notes: draftEval.notes
+      }]).select();
+
+      if (data && data[0]) {
+        setStudents(prev => prev.map(s => s.id === selectedStudentRaw.id 
+          ? { ...s, evaluations: [data[0], ...(s.evaluations || [])] } 
+          : s
+        ));
+        alert("Ficha salva com sucesso!");
+      }
     }
     setSaving(false);
   };
+
+  // === FUNÇÕES DE EXCLUSÃO (LIXEIRAS) ===
+  const handleDeleteStudent = async () => {
+    if (!selectedStudentRaw) return;
+    if (!confirm("Tem certeza que deseja APAGAR ESTE ALUNO do sistema? Todo o histórico será perdido.")) return;
+    
+    // Deleta do banco
+    await supabase.from('evaluations').delete().eq('student_id', selectedStudentRaw.id);
+    await supabase.from('students').delete().eq('id', selectedStudentRaw.id);
+    
+    // Atualiza a tela
+    setStudents(prev => prev.filter(s => s.id !== selectedStudentRaw.id));
+    setSelectedId(null);
+  };
+
+  const handleDeleteEvaluation = async () => {
+    if (!draftEval?.id || !selectedStudentRaw) return;
+    if (!confirm("Tem certeza que deseja excluir esta ficha de avaliação?")) return;
+    
+    // Deleta do banco
+    await supabase.from('evaluations').delete().eq('id', draftEval.id);
+    
+    // Atualiza a tela
+    setStudents(prev => prev.map(s => {
+      if (s.id === selectedStudentRaw.id) {
+        return { ...s, evaluations: s.evaluations?.filter(e => e.id !== draftEval.id) || [] };
+      }
+      return s;
+    }));
+    alert("Avaliação excluída!");
+  };
+  // =====================================
 
   const handleDownloadReport = () => {
     if (!selectedStudentRaw || !draftEval) return;
@@ -273,12 +340,12 @@ export function SwimmingModule() {
                   selectedStudentRaw?.id === student.id ? "bg-amber-50 border border-amber-100 ring-2 ring-amber-500/20" : "border border-transparent hover:bg-slate-50"
                 )}
               >
-                <div className={cn("w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center", levels[student.level].bgClass)}>
-                  <Award className="w-5 h-5 text-white opacity-80" />
+                <div className={cn("w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-inner", levels[student.level].bgClass)}>
+                  <Award className="w-5 h-5 text-white opacity-90" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-slate-800 truncate">{student.name}</p>
-                  <p className="text-[11px] uppercase text-slate-500 truncate">{levels[student.level].name}</p>
+                  <p className="text-[11px] uppercase text-slate-500 truncate font-semibold">{levels[student.level].name}</p>
                 </div>
               </motion.button>
             ))}
@@ -306,6 +373,17 @@ export function SwimmingModule() {
                       Ficha: {levels[selectedStudentRaw.level].name}
                     </span>
                   </div>
+                  
+                  {/* === LIXEIRA DO ALUNO === */}
+                  <button 
+                    onClick={handleDeleteStudent}
+                    className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-100"
+                    title="Excluir Aluno do Sistema"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  {/* ======================= */}
+
                 </div>
 
                 <div className="flex-1 p-6 space-y-8 overflow-y-auto custom-scrollbar bg-slate-50/30">
@@ -377,12 +455,24 @@ export function SwimmingModule() {
                 </div>
 
                 <div className="p-6 bg-white/50 border-t border-slate-100 flex gap-4 shrink-0">
+                  
+                  {/* === LIXEIRA DA FICHA === */}
+                  {draftEval.id && (
+                    <button 
+                      onClick={handleDeleteEvaluation}
+                      className="px-6 py-3 bg-white text-red-500 rounded-2xl font-bold text-sm hover:bg-red-50 transition-all border border-red-200 shadow-sm"
+                    >
+                      Excluir Ficha
+                    </button>
+                  )}
+                  {/* ======================== */}
+
                   <button 
                     onClick={handleSaveEvaluation}
                     disabled={saving}
                     className="flex-1 py-3 bg-black text-white rounded-2xl font-bold text-sm shadow-lg hover:bg-slate-900 transition-all active:scale-95 border border-slate-800 disabled:opacity-50"
                   >
-                    {saving ? "Salvando..." : "Salvar Avaliação"}
+                    {saving ? "Salvando..." : (draftEval.id ? "Atualizar Ficha Salva" : "Salvar Nova Ficha")}
                   </button>
                 </div>
               </motion.div>
