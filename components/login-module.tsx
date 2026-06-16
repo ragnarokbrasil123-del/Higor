@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 interface LoginModuleProps {
@@ -12,12 +12,15 @@ interface LoginModuleProps {
 export function LoginModule({ onLogin }: LoginModuleProps) {
   const [loginType, setLoginType] = useState<'none' | 'team' | 'client'>('none');
   
-  // Team Auth
+  // Equipe
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showTeamPassword, setShowTeamPassword] = useState(false);
   
-  // Client Auth
+  // Cliente
   const [phone, setPhone] = useState('');
+  const [clientPassword, setClientPassword] = useState('');
+  const [showClientPassword, setShowClientPassword] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,25 +51,31 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
     
     const cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.length < 8) {
-      setError('Digite um número válido.');
+      setError('Digite um número de telefone válido.');
       setLoading(false);
       return;
     }
     
+    // Busca o aluno pelo telefone e valida a senha
     const { data, error: dbError } = await supabase
       .from('students')
       .select('*, evaluations(*)')
       .ilike('phone', `%${cleanPhone}%`)
+      .eq('password', clientPassword)
       .limit(1)
       .single();
 
     setLoading(false);
 
     if (dbError || !data) {
-      setError('Aluno não encontrado com este número. Verifique com a recepção.');
+      setError('Telefone ou Senha incorretos. Tente novamente.');
     } else {
       onLogin('client', data);
     }
+  };
+
+  const handleForgotPassword = () => {
+    alert("Para sua segurança, as senhas só podem ser redefinidas presencialmente ou pelo WhatsApp oficial da recepção do Clube Olimpo. Por favor, entre em contato conosco!");
   };
 
   return (
@@ -101,29 +110,64 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
               </button>
             </motion.div>
           ) : loginType === 'team' ? (
+            
+            /* --- LOGIN DA EQUIPE --- */
             <motion.div key="team-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
               <button onClick={() => {setLoginType('none'); setError('');}} className="mb-6 text-amber-500 flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
               <form onSubmit={handleTeamLogin} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Usuário</label>
-                  <div className="relative mt-1"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" /><input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="Ex: admin" /></div>
+                  <div className="relative mt-1">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="Ex: admin" />
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Senha</label>
-                  <div className="relative mt-1"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" /><input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="••••••••" /></div>
+                  <div className="relative mt-1">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input type={showTeamPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowTeamPassword(!showTeamPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 transition-colors">
+                      {showTeamPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
                 </div>
                 {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
                 <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-amber-500 text-black font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-amber-500/20">{loading ? "Entrando..." : "Entrar no Sistema"}</button>
               </form>
             </motion.div>
+
           ) : (
+            
+            /* --- LOGIN DO CLIENTE/PAI --- */
             <motion.div key="client-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
               <button onClick={() => {setLoginType('none'); setError('');}} className="mb-6 text-blue-400 flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
               <form onSubmit={handleClientLogin} className="space-y-4">
-                <div className="text-center mb-6"><h2 className="text-white font-bold text-lg mb-1">Dossiê do Aluno</h2><p className="text-slate-300 text-xs">Digite o WhatsApp que foi cadastrado na secretaria do clube.</p></div>
-                <div>
-                  <div className="relative mt-1"><Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" /><input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors" placeholder="(DD) 99999-9999" /></div>
+                <div className="text-center mb-6">
+                  <h2 className="text-white font-bold text-lg mb-1">Dossiê do Aluno</h2>
+                  <p className="text-slate-300 text-xs">Digite os dados cadastrados na secretaria.</p>
                 </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">WhatsApp</label>
+                  <div className="relative mt-1">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors" placeholder="(DDD) 99999-9999" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Senha de Acesso</label>
+                  <div className="relative mt-1">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <input type={showClientPassword ? "text" : "password"} required value={clientPassword} onChange={(e) => setClientPassword(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowClientPassword(!showClientPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-400 transition-colors">
+                      {showClientPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  <div className="text-right mt-2">
+                    <button type="button" onClick={handleForgotPassword} className="text-xs text-blue-400 font-medium hover:underline">Esqueci a senha</button>
+                  </div>
+                </div>
+
                 {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
                 <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-blue-500/20">{loading ? "Buscando ficha..." : "Acessar Ficha"}</button>
               </form>
