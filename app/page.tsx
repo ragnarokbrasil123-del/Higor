@@ -18,10 +18,9 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState<Tab>('swimming');
 
   return (
-    // fixed inset-0 com overflow-hidden cria a estrutura dura de um App nativo
     <div className="fixed inset-0 flex flex-col md:flex-row bg-[#F0F4F8] overflow-hidden">
       
-      {/* === DESKTOP SIDEBAR === */}
+      {/* === DESKTOP SIDEBAR (Fica igual no computador) === */}
       <aside className="hidden md:flex w-64 bg-black text-white flex-col shrink-0 border-r border-slate-800 z-20">
         <div className="p-6 pt-8 flex items-center justify-center border-b border-slate-800/50">
           <img src="/logo.png" alt="Clube Olimpo" className="w-40 h-auto object-contain drop-shadow-lg" />
@@ -39,33 +38,34 @@ export default function Page() {
         </nav>
       </aside>
 
-      {/* === CABEÇALHO MOBILE === */}
-      <header className="md:hidden h-14 bg-black border-b border-slate-800 flex items-center justify-center shrink-0 z-20 shadow-md">
-        <img src="/logo.png" alt="Clube Olimpo" className="h-8 w-auto object-contain" />
+      {/* === CABEÇALHO MOBILE INTELIGENTE (Logo + Botões juntos) === */}
+      <header className="md:hidden bg-black flex flex-col shrink-0 z-20 shadow-md">
+        <div className="h-14 flex items-center justify-center">
+          <img src="/logo.png" alt="Clube Olimpo" className="h-8 w-auto object-contain" />
+        </div>
+        <div className="flex justify-between items-center px-2 pb-3 gap-2 bg-black">
+          <button onClick={() => setActiveTab('registration')} className={cn("flex-1 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <UserPlus className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-wide">Cadastro</span>
+          </button>
+          <button onClick={() => setActiveTab('swimming')} className={cn("flex-1 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <Droplets className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-wide">Natação</span>
+          </button>
+          <button onClick={() => setActiveTab('cleaning')} className={cn("flex-1 py-2.5 rounded-xl flex flex-col items-center justify-center gap-1 transition-all border", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <ClipboardList className="w-4 h-4" />
+            <span className="text-[10px] font-bold tracking-wide">Limpeza</span>
+          </button>
+        </div>
       </header>
 
-      {/* === ÁREA CENTRAL (Ajustada para não sobrepor o rodapé) === */}
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0 relative z-10 custom-scrollbar">
+      {/* === ÁREA CENTRAL (Agora 100% livre até o final da tela) === */}
+      <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'registration' && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
         {activeTab === 'swimming' && <SwimmingModule />}
         {activeTab === 'cleaning' && <ChecklistModule />}
       </main>
 
-      {/* === BOTTOM TAB BAR MOBILE (Com área de segurança) === */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black border-t border-slate-800 flex justify-around items-center px-1 z-50 pb-[env(safe-area-inset-bottom)] h-[calc(4rem+env(safe-area-inset-bottom))]">
-        <button onClick={() => setActiveTab('registration')} className={cn("flex flex-col items-center justify-center gap-1 h-full flex-1 transition-all", activeTab === 'registration' ? "text-amber-500" : "text-slate-500 hover:text-slate-300")}>
-          <UserPlus className={cn("w-5 h-5 transition-all", activeTab === 'registration' && "w-6 h-6")} />
-          <span className="text-[10px] font-bold">Cadastro</span>
-        </button>
-        <button onClick={() => setActiveTab('swimming')} className={cn("flex flex-col items-center justify-center gap-1 h-full flex-1 transition-all", activeTab === 'swimming' ? "text-amber-500" : "text-slate-500 hover:text-slate-300")}>
-          <Droplets className={cn("w-5 h-5 transition-all", activeTab === 'swimming' && "w-6 h-6")} />
-          <span className="text-[10px] font-bold">Natação</span>
-        </button>
-        <button onClick={() => setActiveTab('cleaning')} className={cn("flex flex-col items-center justify-center gap-1 h-full flex-1 transition-all", activeTab === 'cleaning' ? "text-amber-500" : "text-slate-500 hover:text-slate-300")}>
-          <ClipboardList className={cn("w-5 h-5 transition-all", activeTab === 'cleaning' && "w-6 h-6")} />
-          <span className="text-[10px] font-bold">Limpeza</span>
-        </button>
-      </div>
     </div>
   );
 }
