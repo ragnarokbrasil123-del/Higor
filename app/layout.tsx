@@ -1,23 +1,36 @@
-import type {Metadata} from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css'; // Global styles
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Nautilus Eval & CleanList',
-  description: 'Swimming evaluations and corporative checklists.',
+  title: "Clube Olimpo",
+  description: "Sistema Oficial do Clube Olimpo",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Clube Olimpo",
+  },
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export const viewport: Viewport = {
+  themeColor: "#000000",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body suppressHydrationWarning className="font-sans bg-slate-50 text-slate-900 rendering-auto">
-        {children}
-      </body>
+    <html lang="pt-BR">
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
