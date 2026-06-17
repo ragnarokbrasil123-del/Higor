@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+// @ts-ignore
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 
