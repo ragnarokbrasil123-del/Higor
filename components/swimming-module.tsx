@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Droplets, Search, Check, Award, ChevronRight, Filter, Trash2, MessageCircle, Edit, ArrowLeft, PlusCircle, History } from 'lucide-react';
+import { Droplets, Search, Check, Award, ChevronRight, Filter, Trash2, MessageCircle, Edit, ArrowLeft, PlusCircle, History, Lock, CheckCircle2 } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { jsPDF } from 'jspdf';
@@ -121,6 +121,14 @@ export function SwimmingModule() {
 
   const selectedStudentRaw = students.find(s => s.id === selectedId) || null;
 
+  // LÓGICA DA REGRA DOS 80% (AUTO-APROVAÇÃO)
+  const currentCriteriaList = selectedStudentRaw && EVALUATION_CRITERIA[selectedStudentRaw.level] ? EVALUATION_CRITERIA[selectedStudentRaw.level] : [];
+  const totalCriteria = currentCriteriaList.length;
+  const yesCount = draftEval ? currentCriteriaList.filter(c => draftEval.results[c.id] === 'yes').length : 0;
+  const requiredYes = Math.ceil(totalCriteria * 0.8);
+  const isApproved = totalCriteria > 0 && yesCount >= requiredYes;
+  const missingYes = Math.max(0, requiredYes - yesCount);
+
   useEffect(() => { if (selectedStudentRaw) setViewMode('profile'); }, [selectedId]);
 
   const handleSaveStudent = async () => {
@@ -147,8 +155,12 @@ export function SwimmingModule() {
   const handleSaveEvaluation = async () => {
     if (!selectedStudentRaw || !draftEval) return;
     setSaving(true);
+    
+    // O SISTEMA DEFINE O STATUS ANTES DE SALVAR (Regra de 80%)
+    const autoStatus = isApproved ? 'approved' : 'reproved';
+
     if (draftEval.id) {
-      const { data, error } = await supabase.from('evaluations').update({ results: draftEval.results, general_status: draftEval.general_status, notes: draftEval.notes }).eq('id', draftEval.id).select();
+      const { data, error } = await supabase.from('evaluations').update({ results: draftEval.results, general_status: autoStatus, notes: draftEval.notes }).eq('id', draftEval.id).select();
       if (error) alert("Erro: " + error.message);
       else if (data && data[0]) {
         setStudents(prev => prev.map(s => s.id === selectedStudentRaw.id ? { ...s, evaluations: s.evaluations?.map(e => e.id === draftEval.id ? data[0] : e) || [] } : s));
@@ -156,7 +168,7 @@ export function SwimmingModule() {
         setViewMode('profile');
       }
     } else {
-      const { data, error } = await supabase.from('evaluations').insert([{ student_id: selectedStudentRaw.id, date: new Date().toISOString(), results: draftEval.results, general_status: draftEval.general_status, notes: draftEval.notes }]).select();
+      const { data, error } = await supabase.from('evaluations').insert([{ student_id: selectedStudentRaw.id, date: new Date().toISOString(), results: draftEval.results, general_status: autoStatus, notes: draftEval.notes }]).select();
       if (error) {
         if (error.message.includes("results")) alert("Rode aquele SQL antigo que passei!"); else alert("Erro: " + error.message);
       } else if (data && data[0]) {
@@ -232,7 +244,7 @@ export function SwimmingModule() {
 
       <div className="flex-1 grid grid-cols-1 md:grid-cols-12 md:gap-6 overflow-hidden md:p-8">
         
-        {/* === LISTA DE ALUNOS (Esconde no celular se tiver aluno selecionado) === */}
+        {/* === LISTA DE ALUNOS === */}
         <div className={cn("md:col-span-4 flex flex-col h-full bg-white md:rounded-3xl shadow-sm border-r md:border border-slate-200 overflow-hidden shrink-0", selectedStudentRaw ? "hidden md:flex" : "flex")}>
           <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
             <h2 className="font-bold text-sm text-slate-700">Selecione o Aluno</h2>
@@ -272,12 +284,12 @@ export function SwimmingModule() {
           </div>
         </div>
 
-        {/* === PAINEL DIREITO (Esconde no celular se NÃO tiver aluno selecionado) === */}
+        {/* === PAINEL DIREITO === */}
         <div className={cn("md:col-span-8 flex flex-col h-full bg-white/80 md:glass md:rounded-3xl shadow-xl md:border border-white overflow-hidden relative", !selectedStudentRaw ? "hidden md:flex" : "flex")}>
           <AnimatePresence mode="wait">
             {selectedStudentRaw ? (
               viewMode === 'profile' ? (
-                // === DOSSIÊ MOBILE FIRST ===
+                // === DOSSIÊ ===
                 <motion.div key="profile" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex flex-col h-full w-full absolute inset-0">
                   <div className="p-4 md:p-8 border-b border-slate-100 shrink-0 bg-white">
                     <button onClick={() => setSelectedId(null)} className="md:hidden flex items-center gap-1 px-3 py-2 bg-slate-100 rounded-lg mb-3">
@@ -355,7 +367,7 @@ export function SwimmingModule() {
                 </motion.div>
 
               ) : (
-                // === PREENCHER FICHA MOBILE ===
+                // === PREENCHER FICHA COM 80% AUTO-APROVAÇÃO ===
                 <motion.div key="eval" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex flex-col h-full w-full absolute inset-0">
                   <div className="p-4 border-b border-slate-100 shrink-0 bg-white flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -365,10 +377,27 @@ export function SwimmingModule() {
                     {draftEval?.id && <button onClick={handleDeleteEvaluation} className="p-2 bg-red-50 text-red-500 rounded-lg"><Trash2 className="w-4 h-4"/></button>}
                   </div>
                   <div className="flex-1 p-3 space-y-5 overflow-y-auto custom-scrollbar bg-slate-50/50">
+                    
+                    {/* PLACAR DOS 80% */}
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200">
+                      <div className="flex justify-between items-end mb-2">
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Regra de Aprovação (80%)</p>
+                          <p className="text-lg font-extrabold text-slate-800">{yesCount} <span className="text-sm font-medium text-slate-400">/ {totalCriteria} metas atingidas</span></p>
+                        </div>
+                        <div className={cn("px-3 py-1 rounded-full text-xs font-bold border", isApproved ? "bg-emerald-50 text-emerald-600 border-emerald-200" : "bg-slate-50 text-slate-500 border-slate-200")}>
+                          Mínimo: {requiredYes}
+                        </div>
+                      </div>
+                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <motion.div className={cn("h-full transition-colors", isApproved ? "bg-emerald-500" : "bg-amber-500")} initial={{ width: 0 }} animate={{ width: `${Math.min(100, (yesCount / totalCriteria) * 100)}%` }} />
+                      </div>
+                    </div>
+
                     <div className="space-y-3">
-                      {EVALUATION_CRITERIA[selectedStudentRaw.level]?.length === 0 ? <p className="text-xs text-slate-500 p-3 bg-white rounded-lg border">Sem critérios.</p> : (
+                      {currentCriteriaList.length === 0 ? <p className="text-xs text-slate-500 p-3 bg-white rounded-lg border">Sem critérios para este nível.</p> : (
                         <div className="grid gap-2">
-                          {EVALUATION_CRITERIA[selectedStudentRaw.level].map(criterion => (
+                          {currentCriteriaList.map(criterion => (
                             <div key={criterion.id} className="p-3 bg-white rounded-xl border shadow-sm flex flex-col gap-2">
                               <span className="text-xs font-semibold text-slate-700 leading-tight">{criterion.label}</span>
                               <div className="flex gap-2 mt-1"><EvaluationButton status={draftEval!.results[criterion.id] || 'untested'} value="yes" label="Sim" colorClass="bg-green-500 text-white" onClick={() => handleUpdateCriterion(criterion.id, 'yes')} /><EvaluationButton status={draftEval!.results[criterion.id] || 'untested'} value="no" label="Não" colorClass="bg-red-500 text-white" onClick={() => handleUpdateCriterion(criterion.id, 'no')} /></div>
@@ -377,14 +406,31 @@ export function SwimmingModule() {
                         </div>
                       )}
                     </div>
+                    
+                    {/* RESULTADO GERAL AUTOMÁTICO */}
                     <div className="space-y-2">
                       <h3 className="text-[11px] font-bold text-slate-500 uppercase">Resultado Geral</h3>
-                      <div className="flex gap-2"><button onClick={() => setDraftEval({ ...draftEval!, general_status: 'approved' })} className={cn("flex-1 py-3 rounded-xl text-sm font-bold border", draftEval!.general_status === 'approved' ? "bg-emerald-500 text-white border-emerald-500 shadow-md" : "bg-white text-slate-500")}>Aprovado</button><button onClick={() => setDraftEval({ ...draftEval!, general_status: 'reproved' })} className={cn("flex-1 py-3 rounded-xl text-sm font-bold border", draftEval!.general_status === 'reproved' ? "bg-red-500 text-white border-red-500 shadow-md" : "bg-white text-slate-500")}>Reprovado</button></div>
+                      <div className={cn("p-4 rounded-xl border flex flex-col items-center justify-center text-center transition-colors", isApproved ? "bg-emerald-50 border-emerald-200" : "bg-slate-50 border-slate-200")}>
+                        {isApproved ? (
+                          <>
+                            <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-1" />
+                            <p className="font-bold text-emerald-700 text-lg">Aprovado Automático!</p>
+                            <p className="text-xs text-emerald-600 font-medium">Aluno atingiu os 80% e está apto.</p>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-8 h-8 text-slate-400 mb-1" />
+                            <p className="font-bold text-slate-600 text-lg">Bloqueado</p>
+                            <p className="text-xs text-slate-500 font-medium">Faltam {missingYes} metas para aprovação.</p>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="space-y-2"><h3 className="text-[11px] font-bold text-slate-500 uppercase">Anotações</h3><textarea value={draftEval!.notes || ''} onChange={(e) => setDraftEval({ ...draftEval!, notes: e.target.value })} className="w-full p-3 bg-white rounded-xl border text-xs h-20" placeholder="Observações extra..."></textarea></div>
+
+                    <div className="space-y-2"><h3 className="text-[11px] font-bold text-slate-500 uppercase">Anotações do Professor</h3><textarea value={draftEval!.notes || ''} onChange={(e) => setDraftEval({ ...draftEval!, notes: e.target.value })} className="w-full p-3 bg-white rounded-xl border text-xs h-20 outline-none focus:ring-2 focus:ring-amber-500/20" placeholder="Observações extras para os pais lerem..."></textarea></div>
                   </div>
                   <div className="p-4 bg-white border-t flex gap-3 shrink-0">
-                    <button onClick={handleSaveEvaluation} disabled={saving} className="w-full py-3.5 bg-black text-white rounded-xl font-bold active:scale-95 transition-transform">{saving ? "Salvando..." : "Salvar Ficha"}</button>
+                    <button onClick={handleSaveEvaluation} disabled={saving} className="w-full py-3.5 bg-black text-white rounded-xl font-bold active:scale-95 transition-transform">{saving ? "Salvando..." : isApproved ? "Salvar Ficha Aprovada" : "Salvar Ficha Reprovada"}</button>
                   </div>
                 </motion.div>
               )
