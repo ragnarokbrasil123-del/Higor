@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckSquare, Plus, Trash2, Edit2, Check, X, Wrench, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { Wrench, Plus, Trash2, Edit2, Check, X, ChevronLeft, ChevronRight, CalendarDays, Camera } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { supabase } from '@/lib/supabase';
@@ -18,19 +18,16 @@ interface Task {
   date?: string;
 }
 
-const defaultTasks = [
-  "Medição de Cloro e PH da Água",
+const defaultMaintenanceTasks = [
+  "Retrolavagem do Filtro (Piscina)",
+  "Limpeza do Pré-filtro da Bomba",
+  "Verificação de Vazamentos na Casa de Máquinas",
+  "Medição e Correção de Cloro",
+  "Medição e Correção de pH",
+  "Verificação do Trocador de Calor",
   "Limpeza das Bordas da Piscina",
-  "Retrolavagem do Filtro",
   "Aspiração do Fundo da Piscina",
-  "Limpeza dos Cestos do Skimmer",
-  "Revisão da Bomba de Calor",
-  "Checagem da Casa de Máquinas (Vazamentos)",
-  "Calibração de Equipamentos Automáticos",
-  "Troca/Reposição de Produtos Químicos",
-  "Verificação de Iluminação Subaquática",
-  "Verificação dos Trocadores de Calor",
-  "Ralos de Fundo e Segurança"
+  "Verificação da Iluminação Subaquática"
 ];
 
 export function MaintenanceModule() {
@@ -38,6 +35,12 @@ export function MaintenanceModule() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  
+  // ESTADOS DO SISTEMA DE FOTOS
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activePhotoTask, setActivePhotoTask] = useState<string | null>(null);
+  const [previewPhotos, setPreviewPhotos] = useState<Record<string, string>>({});
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
   
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
@@ -72,9 +75,9 @@ export function MaintenanceModule() {
   };
 
   const loadDefaultChecklist = async () => {
-    const tempTasks = defaultTasks.map((title, index) => ({ id: `temp-${Date.now()}-${index}`, title, completed: false, date: selectedDate }));
+    const tempTasks = defaultMaintenanceTasks.map((title, index) => ({ id: `temp-${Date.now()}-${index}`, title, completed: false, date: selectedDate }));
     setTasks(tempTasks);
-    const rowsToInsert = defaultTasks.map(title => ({ title, completed: false, date: selectedDate }));
+    const rowsToInsert = defaultMaintenanceTasks.map(title => ({ title, completed: false, date: selectedDate }));
     const { data } = await supabase.from('maintenance_tasks').insert(rowsToInsert).select();
     if (data) setTasks(data);
   };
@@ -111,6 +114,19 @@ export function MaintenanceModule() {
     await supabase.from('maintenance_tasks').delete().eq('id', id);
   };
 
+  const handlePhotoClick = (taskId: string) => {
+    setActivePhotoTask(taskId);
+    fileInputRef.current?.click();
+  };
+
+  const handlePhotoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && activePhotoTask) {
+      const url = URL.createObjectURL(file);
+      setPreviewPhotos(prev => ({ ...prev, [activePhotoTask]: url }));
+    }
+  };
+
   const completedCount = tasks.filter(t => t.completed).length;
   const progressPercent = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
   const isToday = () => {
@@ -120,6 +136,11 @@ export function MaintenanceModule() {
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-y-auto bg-slate-50">
+      
+      {/* CÂMERA: capture="environment" força câmera traseira no celular */}
+      <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={handlePhotoSelected} />
+
+      {/* Degradê Azul Escuro para Manutenção */}
       <div className="absolute top-0 w-full h-64 bg-gradient-to-b from-blue-900 to-transparent pointer-events-none opacity-80"></div>
 
       <div className="relative z-10 max-w-4xl mx-auto p-3 md:p-8 w-full">
@@ -166,7 +187,7 @@ export function MaintenanceModule() {
                 <Plus className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                 <input type="text" placeholder="Adicionar nova tarefa técnica..." value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 text-sm font-medium outline-none transition-all" />
               </div>
-              <button type="submit" disabled={!newTaskTitle.trim()} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm disabled:opacity-50 active:scale-95 transition-all">Adicionar</button>
+              <button type="submit" disabled={!newTaskTitle.trim()} className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold text-sm disabled:opacity-50 active:scale-95 transition-all">Adicionar</button>
             </form>
           </div>
 
@@ -182,25 +203,39 @@ export function MaintenanceModule() {
                 </motion.div>
               ) : (
                 tasks.map((task) => (
-                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={cn("group flex flex-col md:flex-row md:items-center gap-3 p-3 md:p-4 rounded-xl transition-all border", task.completed ? "bg-green-50/40 border-green-500/20" : "bg-white border-slate-100 hover:bg-slate-50")}>
+                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={cn("group flex flex-col md:flex-row md:items-center gap-3 p-3 md:p-4 rounded-xl transition-all border", task.completed ? "bg-blue-50/40 border-blue-500/20" : "bg-white border-slate-100 hover:bg-slate-50")}>
                     
                     <div className="flex items-center gap-3 w-full min-w-0">
-                      <button onClick={() => toggleTask(task.id)} className={cn("w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-green-500 border-green-500" : "border-slate-300")}>
+                      <button onClick={() => toggleTask(task.id)} className={cn("w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-blue-500 border-blue-500" : "border-slate-300")}>
                         <motion.div animate={{ scale: task.completed ? 1 : 0 }}><Check className="w-3 h-3 text-white" strokeWidth={3} /></motion.div>
                       </button>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex items-center gap-3">
                         {editingTaskId === task.id ? (
                           <input type="text" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditing()} onBlur={saveEditing} autoFocus className="w-full bg-white border border-blue-300 rounded px-2 py-1 outline-none text-sm" />
                         ) : (
-                          <p className={cn("text-sm font-medium truncate select-none", task.completed ? "text-green-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
+                          <p className={cn("text-sm font-medium truncate select-none", task.completed ? "text-blue-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
+                        )}
+                        
+                        {/* FOTO MINIATURA */}
+                        {previewPhotos[task.id] && (
+                           <img 
+                             src={previewPhotos[task.id]} 
+                             alt="Evidência" 
+                             onClick={() => setExpandedPhoto(previewPhotos[task.id])}
+                             className="w-10 h-10 rounded-lg object-cover shadow-sm border border-slate-200 cursor-zoom-in hover:scale-105 transition-transform" 
+                           />
                         )}
                       </div>
                       
                       <div className={cn("flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity", editingTaskId === task.id && "md:opacity-100")}>
                         {editingTaskId === task.id ? (
-                          <><button onClick={saveEditing} className="p-1.5 text-green-600 bg-green-50 rounded"><Check className="w-4 h-4" /></button><button onClick={cancelEditing} className="p-1.5 text-slate-400 bg-slate-100 rounded"><X className="w-4 h-4" /></button></>
+                          <><button onClick={saveEditing} className="p-1.5 text-blue-600 bg-blue-50 rounded"><Check className="w-4 h-4" /></button><button onClick={cancelEditing} className="p-1.5 text-slate-400 bg-slate-100 rounded"><X className="w-4 h-4" /></button></>
                         ) : (
-                          <><button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 rounded"><Edit2 className="w-4 h-4" /></button><button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button></>
+                          <>
+                            <button onClick={() => handlePhotoClick(task.id)} title="Tirar foto" className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"><Camera className="w-4 h-4" /></button>
+                            <button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-amber-600 rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -212,6 +247,27 @@ export function MaintenanceModule() {
         </div>
 
       </div>
+
+      {/* OVERLAY TELA CHEIA PARA A FOTO */}
+      <AnimatePresence>
+        {expandedPhoto && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out"
+            onClick={() => setExpandedPhoto(null)}
+          >
+            <motion.img 
+              initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              src={expandedPhoto} 
+              alt="Foto Ampliada" 
+              className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain" 
+            />
+            <button onClick={() => setExpandedPhoto(null)} className="absolute top-6 right-6 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white backdrop-blur-md transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
