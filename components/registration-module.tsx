@@ -19,7 +19,7 @@ interface RegistrationModuleProps {
 export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
   
-  // Single Registration State
+  // Variáveis do Cadastro Único
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [level, setLevel] = useState<CapLevel>('orange');
@@ -28,7 +28,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Bulk Registration State
+  // Variáveis do Cadastro em Lote
   const [file, setFile] = useState<File | null>(null);
   const [bulkStatus, setBulkStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,13 +52,14 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     onSuccess();
   };
 
+  // FUNÇÃO CORRIGIDA AQUI!
   const parseLevel = (ptLevel: string): CapLevel => {
-    const map: Record<string, CapLevel> = {
-      'branca': 'white', 'laranja': 'orange', 'vermelha': 'red', 
+    const map: any = {
+      'laranja': 'orange', 'vermelha': 'red', 
       'azul claro': 'light_blue', 'azul escuro': 'dark_blue', 
       'preta': 'black', 'prata': 'silver'
     };
-    return map[ptLevel.toLowerCase().trim()] || 'orange'; // Laranja como fallback seguro
+    return map[ptLevel.toLowerCase().trim()] || 'orange'; 
   };
 
   const handleBulkUpload = async () => {
@@ -70,12 +71,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     reader.onload = async (e) => {
       try {
         const text = e.target?.result as string;
-        // Divide por linhas e remove linhas vazias
-        const rows = text.split('\\n').map(r => r.trim()).filter(r => r.length > 0);
+        const rows = text.split('\n').map(r => r.trim()).filter(r => r.length > 0);
         
-        // Ignora o cabeçalho se existir (checa a primeira linha)
         const startIndex = rows[0].toLowerCase().includes('nome') ? 1 : 0;
-        
         const studentsToInsert = [];
         
         for (let i = startIndex; i < rows.length; i++) {
@@ -122,8 +120,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   };
 
   const downloadTemplate = () => {
-    const header = "Nome do Aluno, Idade, Nível, Nome do Responsável, WhatsApp, Senha\\n";
-    const example = "João Silva, 7, Azul Claro, Maria Silva, 11999999999, joao123\\n";
+    const header = "Nome do Aluno, Idade, Nivel, Nome do Responsavel, WhatsApp, Senha\n";
+    const example = "Joao Silva, 7, Azul Claro, Maria Silva, 11999999999, joao123\n";
     const blob = new Blob([header + example], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -140,7 +138,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       <header className="h-14 md:h-16 flex justify-between items-center px-4 md:px-8 bg-white/50 border-b border-slate-200 backdrop-blur-sm shrink-0">
         <h1 className="text-base md:text-xl font-extrabold text-slate-800 tracking-tight">Cadastro</h1>
         
-        {/* Toggle Mode */}
         <div className="flex p-1 bg-slate-200 rounded-lg">
           <button onClick={() => setMode('single')} className={cn("px-3 md:px-4 py-1.5 text-xs md:text-sm font-bold rounded-md transition-all", mode === 'single' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500")}>Único</button>
           <button onClick={() => setMode('bulk')} className={cn("px-3 md:px-4 py-1.5 text-xs md:text-sm font-bold rounded-md transition-all", mode === 'bulk' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500")}>Em Lote</button>
@@ -151,7 +148,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
         <AnimatePresence mode="wait">
           {mode === 'single' ? (
             
-            /* --- MODO: CADASTRO ÚNICO --- */
             <motion.div key="single" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto bg-white md:rounded-3xl shadow-sm border border-slate-200 overflow-hidden rounded-2xl">
               <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -207,13 +203,12 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
 
           ) : (
 
-            /* --- MODO: IMPORTAÇÃO EM LOTE --- */
             <motion.div key="bulk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-2xl mx-auto space-y-6">
               
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
                 <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importação de Planilha Excel (CSV)</h2>
                 <p className="text-sm text-amber-800 mb-4">Migrando de outro sistema? Suba a sua lista de alunos de uma vez só! Salve sua planilha no formato <strong>.CSV (Separado por vírgulas)</strong> seguindo exatamente a ordem das colunas do nosso modelo.</p>
-                <button onClick={downloadTemplate} className="px-4 py-2 bg-amber-500 text-black text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors flex items-center gap-2 shadow-sm">
+                <button type="button" onClick={downloadTemplate} className="px-4 py-2 bg-amber-500 text-black text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors flex items-center gap-2 shadow-sm w-fit">
                   <Download className="w-4 h-4" /> Baixar Modelo Vazio
                 </button>
               </div>
@@ -226,7 +221,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                     <CheckCircle2 className="w-16 h-16 text-emerald-500 mb-4" />
                     <p className="font-bold text-slate-800 text-lg mb-1">Arquivo Selecionado</p>
                     <p className="text-slate-500 text-sm mb-6">{file.name}</p>
-                    <button onClick={(e) => { e.stopPropagation(); handleBulkUpload(); }} disabled={loading} className="px-8 py-3 bg-black text-white font-bold rounded-xl w-full max-w-xs shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleBulkUpload(); }} disabled={loading} className="px-8 py-3 bg-black text-white font-bold rounded-xl w-full max-w-xs shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
                       <UploadCloud className="w-5 h-5" /> {loading ? "Processando..." : "Importar Todos os Alunos"}
                     </button>
                   </>
@@ -234,7 +229,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   <>
                     <UploadCloud className="w-16 h-16 text-slate-300 group-hover:text-amber-500 transition-colors mb-4" />
                     <p className="font-bold text-slate-800 text-lg mb-1">Clique para selecionar seu .CSV</p>
-                    <p className="text-slate-400 text-sm">Ou arraste o arquivo para cá</p>
+                    <p className="text-slate-400 text-sm">Ou toque aqui no celular</p>
                   </>
                 )}
               </div>
