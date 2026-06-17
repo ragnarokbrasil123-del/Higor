@@ -9,6 +9,7 @@ import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
 import { GlobalNotifier } from '@/components/global-notifier'; 
+import { InstallPrompt } from '@/components/install-prompt'; // <-- IMPORT DO INSTALADOR
 import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -50,15 +51,25 @@ export default function Page() {
   }
 
   if (!user) {
-    return <LoginModule onLogin={(role, data) => {
-      const newUser = { role, data };
-      localStorage.setItem('olimpo_session', JSON.stringify(newUser));
-      setUser(newUser);
-    }} />;
+    return (
+      <div className="relative h-screen w-screen overflow-hidden">
+        <InstallPrompt /> {/* Instalador para quem ainda não fez login */}
+        <LoginModule onLogin={(role, data) => {
+          const newUser = { role, data };
+          localStorage.setItem('olimpo_session', JSON.stringify(newUser));
+          setUser(newUser);
+        }} />
+      </div>
+    );
   }
 
   if (user.role === 'client') {
-    return <ClientPortal student={user.data} onLogout={handleLogout} />;
+    return (
+      <div className="relative h-screen w-screen overflow-hidden">
+        <InstallPrompt /> {/* Instalador para os Pais/Alunos */}
+        <ClientPortal student={user.data} onLogout={handleLogout} />
+      </div>
+    );
   }
 
   const isAdmin = user.role === 'admin';
@@ -66,8 +77,9 @@ export default function Page() {
   return (
     <div className="fixed inset-0 flex flex-col md:flex-row bg-[#F0F4F8] overflow-hidden">
       
-      {/* NOTIFICADOR FLUTUANTE EM TODAS AS TELAS (Só aparece para o Admin) */}
+      {/* NOTIFICADOR E INSTALADOR FLUTUANTES (Para a Equipe) */}
       <GlobalNotifier isAdmin={isAdmin} />
+      <InstallPrompt />
 
       {/* === DESKTOP SIDEBAR === */}
       <aside className="hidden md:flex w-64 bg-black text-white flex-col shrink-0 border-r border-slate-800 z-20">
