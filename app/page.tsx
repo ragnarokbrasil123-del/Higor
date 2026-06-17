@@ -8,7 +8,7 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
-import { GlobalNotifier } from '@/components/global-notifier'; // <-- IMPORT DO NOTIFICADOR
+import { GlobalNotifier } from '@/components/global-notifier'; 
 import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -64,7 +64,7 @@ export default function Page() {
   const isAdmin = user.role === 'admin';
 
   return (
-    <div className="fixed inset-0 flex flex-col md:flex-row bg-[#F0F4F8] overflow-hidden relative">
+    <div className="fixed inset-0 flex flex-col md:flex-row bg-[#F0F4F8] overflow-hidden">
       
       {/* NOTIFICADOR FLUTUANTE EM TODAS AS TELAS (Só aparece para o Admin) */}
       <GlobalNotifier isAdmin={isAdmin} />
