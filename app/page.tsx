@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SwimmingModule } from '@/components/swimming-module';
 import { ChecklistModule } from '@/components/checklist-module';
 import { MaintenanceModule } from '@/components/maintenance-module';
@@ -22,13 +22,46 @@ type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 export default function Page() {
   const [user, setUser] = useState<UserState>(null);
   const [activeTab, setActiveTab] = useState<Tab>('swimming');
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // === MAGIA DO PWA E SESSÃO AQUI ===
+  useEffect(() => {
+    // 1. Tenta recuperar a sessão salva
+    const savedUser = localStorage.getItem('olimpo_session');
+    if (savedUser) setUser(JSON.parse(savedUser));
+    
+    // 2. Avisa o Android/iOS que isso é um Aplicativo Instalável
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.log('Erro no PWA:', err));
+    }
+
+    setIsLoaded(true);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('olimpo_session'); // Destrói o crachá
+    setUser(null);
+  };
+
+  // Tela de transição rápida para não piscar o login
+  if (!isLoaded) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <img src="/logo.png" alt="Carregando..." className="w-32 animate-pulse opacity-50" />
+      </div>
+    );
+  }
 
   if (!user) {
-    return <LoginModule onLogin={(role, data) => setUser({ role, data })} />;
+    return <LoginModule onLogin={(role, data) => {
+      const newUser = { role, data };
+      localStorage.setItem('olimpo_session', JSON.stringify(newUser)); // Salva o crachá
+      setUser(newUser);
+    }} />;
   }
 
   if (user.role === 'client') {
-    return <ClientPortal student={user.data} onLogout={() => setUser(null)} />;
+    return <ClientPortal student={user.data} onLogout={handleLogout} />;
   }
 
   const isAdmin = user.role === 'admin';
@@ -70,7 +103,7 @@ export default function Page() {
         </nav>
         
         <div className="p-4 border-t border-slate-800">
-          <button onClick={() => setUser(null)} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-bold transition-all">
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-bold transition-all">
              <LogOut className="w-4 h-4" /> Sair do Sistema
           </button>
         </div>
@@ -81,7 +114,7 @@ export default function Page() {
         <div className="h-14 flex justify-between items-center px-4">
           <div className="w-8" />
           <img src="/logo.png" alt="Clube Olimpo" className="h-8 w-auto object-contain" />
-          <button onClick={() => setUser(null)} className="text-slate-400 hover:text-white p-2">
+          <button onClick={handleLogout} className="text-slate-400 hover:text-white p-2">
             <LogOut className="w-5 h-5" />
           </button>
         </div>
