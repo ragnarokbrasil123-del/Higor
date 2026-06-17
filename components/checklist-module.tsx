@@ -31,10 +31,11 @@ export function ChecklistModule() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   
-  // ESTADOS DO SISTEMA DE FOTOS (Visualização Local)
+  // ESTADOS DO SISTEMA DE FOTOS
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activePhotoTask, setActivePhotoTask] = useState<string | null>(null);
   const [previewPhotos, setPreviewPhotos] = useState<Record<string, string>>({});
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null); // Foto em tela cheia
   
   const [selectedDate, setSelectedDate] = useState<string>(() => {
     const today = new Date();
@@ -108,7 +109,6 @@ export function ChecklistModule() {
     await supabase.from('cleaning_tasks').delete().eq('id', id);
   };
 
-  // AÇÃO DO BOTÃO DE CÂMERA
   const handlePhotoClick = (taskId: string) => {
     setActivePhotoTask(taskId);
     fileInputRef.current?.click();
@@ -132,8 +132,8 @@ export function ChecklistModule() {
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-y-auto bg-slate-50">
       
-      {/* INPUT ESCONDIDO DA CÂMERA */}
-      <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handlePhotoSelected} />
+      {/* CÂMERA: capture="environment" força abrir a câmera traseira no celular */}
+      <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={handlePhotoSelected} />
 
       <div className="absolute top-0 w-full h-64 bg-gradient-to-b from-amber-900 to-transparent pointer-events-none opacity-80"></div>
 
@@ -203,28 +203,32 @@ export function ChecklistModule() {
                       <button onClick={() => toggleTask(task.id)} className={cn("w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-green-500 border-green-500" : "border-slate-300")}>
                         <motion.div animate={{ scale: task.completed ? 1 : 0 }}><Check className="w-3 h-3 text-white" strokeWidth={3} /></motion.div>
                       </button>
-                      <div className="flex-1 min-w-0 flex items-center gap-2">
+                      <div className="flex-1 min-w-0 flex items-center gap-3">
                         {editingTaskId === task.id ? (
                           <input type="text" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditing()} onBlur={saveEditing} autoFocus className="w-full bg-white border border-amber-300 rounded px-2 py-1 outline-none text-sm" />
                         ) : (
                           <p className={cn("text-sm font-medium truncate select-none", task.completed ? "text-green-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
                         )}
                         
-                        {/* MINIATURA DA FOTO SE EXISTIR */}
+                        {/* FOTO MINIATURA (CLICÁVEL PARA AMPLIAR) */}
                         {previewPhotos[task.id] && (
-                           <img src={previewPhotos[task.id]} alt="Evidência" className="w-8 h-8 md:w-10 md:h-10 rounded object-cover shadow-sm border border-slate-200 cursor-pointer hover:scale-150 transition-transform" />
+                           <img 
+                             src={previewPhotos[task.id]} 
+                             alt="Evidência" 
+                             onClick={() => setExpandedPhoto(previewPhotos[task.id])}
+                             className="w-10 h-10 rounded-lg object-cover shadow-sm border border-slate-200 cursor-zoom-in hover:scale-105 transition-transform" 
+                           />
                         )}
                       </div>
                       
-                      {/* BOTÕES DE AÇÃO: CÂMERA, EDITAR E EXCLUIR */}
                       <div className={cn("flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity", editingTaskId === task.id && "md:opacity-100")}>
                         {editingTaskId === task.id ? (
                           <><button onClick={saveEditing} className="p-1.5 text-green-600 bg-green-50 rounded"><Check className="w-4 h-4" /></button><button onClick={cancelEditing} className="p-1.5 text-slate-400 bg-slate-100 rounded"><X className="w-4 h-4" /></button></>
                         ) : (
                           <>
-                            <button onClick={() => handlePhotoClick(task.id)} title="Tirar foto como evidência" className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 hover:bg-blue-50 rounded"><Camera className="w-4 h-4" /></button>
-                            <button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-amber-600 rounded"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => handlePhotoClick(task.id)} title="Tirar foto" className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"><Camera className="w-4 h-4" /></button>
+                            <button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-amber-600 rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
                           </>
                         )}
                       </div>
@@ -237,6 +241,27 @@ export function ChecklistModule() {
         </div>
 
       </div>
+
+      {/* OVERLAY TELA CHEIA PARA A FOTO */}
+      <AnimatePresence>
+        {expandedPhoto && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out"
+            onClick={() => setExpandedPhoto(null)}
+          >
+            <motion.img 
+              initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+              src={expandedPhoto} 
+              alt="Foto Ampliada" 
+              className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain" 
+            />
+            <button onClick={() => setExpandedPhoto(null)} className="absolute top-6 right-6 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white backdrop-blur-md transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
