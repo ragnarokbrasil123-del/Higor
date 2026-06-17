@@ -35,12 +35,16 @@ export function InstallPrompt() {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
+      // Se o Chrome liberou a instalação, prossegue
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setDisplayMode('hidden'); // Some se instalar
       }
       setDeferredPrompt(null);
+    } else {
+      // Se a pessoa abriu pelo navegador do WhatsApp/Instagram ou faltou ícone
+      alert("Para instalar, você precisa abrir este link no navegador Google Chrome! Se você já estiver no Chrome, clique nos 3 pontinhos no canto superior e escolha 'Instalar Aplicativo'.");
     }
   };
 
