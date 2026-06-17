@@ -8,6 +8,7 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
+import { GlobalNotifier } from '@/components/global-notifier'; // <-- IMPORT DO NOTIFICADOR
 import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -24,13 +25,10 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState<Tab>('swimming');
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // === MAGIA DO PWA E SESSÃO AQUI ===
   useEffect(() => {
-    // 1. Tenta recuperar a sessão salva
     const savedUser = localStorage.getItem('olimpo_session');
     if (savedUser) setUser(JSON.parse(savedUser));
     
-    // 2. Avisa o Android/iOS que isso é um Aplicativo Instalável
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('Erro no PWA:', err));
     }
@@ -39,11 +37,10 @@ export default function Page() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('olimpo_session'); // Destrói o crachá
+    localStorage.removeItem('olimpo_session');
     setUser(null);
   };
 
-  // Tela de transição rápida para não piscar o login
   if (!isLoaded) {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
@@ -55,7 +52,7 @@ export default function Page() {
   if (!user) {
     return <LoginModule onLogin={(role, data) => {
       const newUser = { role, data };
-      localStorage.setItem('olimpo_session', JSON.stringify(newUser)); // Salva o crachá
+      localStorage.setItem('olimpo_session', JSON.stringify(newUser));
       setUser(newUser);
     }} />;
   }
@@ -67,8 +64,11 @@ export default function Page() {
   const isAdmin = user.role === 'admin';
 
   return (
-    <div className="fixed inset-0 flex flex-col md:flex-row bg-[#F0F4F8] overflow-hidden">
+    <div className="fixed inset-0 flex flex-col md:flex-row bg-[#F0F4F8] overflow-hidden relative">
       
+      {/* NOTIFICADOR FLUTUANTE EM TODAS AS TELAS (Só aparece para o Admin) */}
+      <GlobalNotifier isAdmin={isAdmin} />
+
       {/* === DESKTOP SIDEBAR === */}
       <aside className="hidden md:flex w-64 bg-black text-white flex-col shrink-0 border-r border-slate-800 z-20">
         <div className="p-6 pt-8 flex items-center justify-center border-b border-slate-800/50">
