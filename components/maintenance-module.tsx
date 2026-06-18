@@ -1,112 +1,80 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Check, ChevronLeft, ChevronRight, Edit2, Trash2, X, Wrench, Camera, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wrench, Plus, Trash2, Edit2, Check, X, ChevronLeft, ChevronRight, CalendarDays, Camera } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { supabase } from '@/lib/supabase';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
 }
 
-interface Task {
+interface MaintenanceTask {
   id: string;
   title: string;
   completed: boolean;
-  date?: string;
+  date: string;
+  photo_url?: string | null;
 }
 
-const defaultMaintenanceTasks = [
-  "Retrolavagem do Filtro (Piscina)",
-  "Limpeza do Pré-filtro da Bomba",
-  "Verificação de Vazamentos na Casa de Máquinas",
-  "Medição e Correção de Cloro",
-  "Medição e Correção de pH",
-  "Verificação do Trocador de Calor",
-  "Limpeza das Bordas da Piscina",
-  "Aspiração do Fundo da Piscina",
-  "Verificação da Iluminação Subaquática"
-];
-
 export function MaintenanceModule() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<MaintenanceTask[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   
-  // ESTADOS DO SISTEMA DE FOTOS
+  // Controle da Câmera
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activePhotoTask, setActivePhotoTask] = useState<string | null>(null);
-  const [previewPhotos, setPreviewPhotos] = useState<Record<string, string>>({});
-  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
-  
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  });
+  const [activeUploadTaskId, setActiveUploadTaskId] = useState<string | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
-  useEffect(() => { fetchTasks(selectedDate); }, [selectedDate]);
+  useEffect(() => {
+    loadTasks();
+  }, [selectedDate]);
 
-  const fetchTasks = async (date: string) => {
-    const { data } = await supabase.from('maintenance_tasks').select('*').eq('date', date).order('created_at', { ascending: true });
+  const loadTasks = async () => {
+    const { data } = await supabase
+      .from('maintenance_tasks')
+      .select('*')
+      .eq('date', selectedDate)
+      .order('id', { ascending: true });
     if (data) setTasks(data);
-  };
-
-  const changeDate = (days: number) => {
-    const [year, month, day] = selectedDate.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setDate(date.getDate() + days);
-    setSelectedDate(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
   };
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-    const tempId = Date.now().toString();
+    if (!newTaskTitle.trim() || !selectedDate) return;
+
     const newTaskTitleClean = newTaskTitle.trim();
-    
+    const tempId = Date.now().toString();
+
     setTasks([...tasks, { id: tempId, title: newTaskTitleClean, completed: false, date: selectedDate }]);
     setNewTaskTitle('');
 
-    const { data } = await supabase.from('maintenance_tasks').insert([{ title: newTaskTitleClean, completed: false, date: selectedDate }]).select();
-    if (data && data[0]) setTasks(prev => prev.map(t => t.id === tempId ? data[0] : t));
-  };
+    const { error } = await supabase
+      .from('maintenance_tasks')
+      .insert([{ title: newTaskTitleClean, date: selectedDate, completed: false }]);
 
-  const loadDefaultChecklist = async () => {
-    const tempTasks = defaultMaintenanceTasks.map((title, index) => ({ id: `temp-${Date.now()}-${index}`, title, completed: false, date: selectedDate }));
-    setTasks(tempTasks);
-    const rowsToInsert = defaultMaintenanceTasks.map(title => ({ title, completed: false, date: selectedDate }));
-    const { data } = await supabase.from('maintenance_tasks').insert(rowsToInsert).select();
-    if (data) setTasks(data);
+    if (!error) {
+      // Dispara a Notificação Push nativa!
+      fetch('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTaskTitleClean })
+      });
+    }
   };
 
   const toggleTask = async (id: string) => {
-    const taskToToggle = tasks.find(t => t.id === id);
-    if (!taskToToggle) return;
-    const newStatus = !taskToToggle.completed;
-    setTasks(tasks.map(task => task.id === id ? { ...task, completed: newStatus } : task));
-    await supabase.from('maintenance_tasks').update({ completed: newStatus }).eq('id', id);
-  };
-
-  const startEditing = (task: Task) => {
-    setEditingTaskId(task.id);
-    setEditingTitle(task.title);
-  };
-
-  const saveEditing = async () => {
-    if (!editingTitle.trim() || !editingTaskId) return cancelEditing();
-    const newTitle = editingTitle.trim();
-    const idToEdit = editingTaskId;
-    setTasks(tasks.map(task => task.id === idToEdit ? { ...task, title: newTitle } : task));
-    setEditingTaskId(null);
-    await supabase.from('maintenance_tasks').update({ title: newTitle }).eq('id', idToEdit);
-  };
-
-  const cancelEditing = () => {
-    setEditingTaskId(null);
-    setEditingTitle('');
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+    
+    setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+    await supabase.from('maintenance_tasks').update({ completed: !task.completed }).eq('id', id);
   };
 
   const deleteTask = async (id: string) => {
@@ -114,80 +82,157 @@ export function MaintenanceModule() {
     await supabase.from('maintenance_tasks').delete().eq('id', id);
   };
 
-  const handlePhotoClick = (taskId: string) => {
-    setActivePhotoTask(taskId);
+  const startEditing = (task: MaintenanceTask) => {
+    setEditingTaskId(task.id);
+    setEditingTitle(task.title);
+  };
+
+  const saveEditing = async () => {
+    if (!editingTaskId || !editingTitle.trim()) return cancelEditing();
+    
+    setTasks(tasks.map(t => t.id === editingTaskId ? { ...t, title: editingTitle.trim() } : t));
+    await supabase.from('maintenance_tasks').update({ title: editingTitle.trim() }).eq('id', editingTaskId);
+    cancelEditing();
+  };
+
+  const cancelEditing = () => {
+    setEditingTaskId(null);
+    setEditingTitle('');
+  };
+
+  const changeDate = (days: number) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + days);
+    setSelectedDate(d.toISOString().split('T')[0]);
+  };
+
+  const isToday = selectedDate === new Date().toISOString().split('T')[0];
+  const completedCount = tasks.filter(t => t.completed).length;
+  const progress = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
+
+  // ==========================================
+  // COMPRESSOR DE IMAGEM E UPLOAD
+  // ==========================================
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800; // Reduz a resolução para não lotar o banco
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6)); // 60% de qualidade
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const openCamera = (id: string) => {
+    setActiveUploadTaskId(id);
     fileInputRef.current?.click();
   };
 
-  const handlePhotoSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && activePhotoTask) {
-      const url = URL.createObjectURL(file);
-      setPreviewPhotos(prev => ({ ...prev, [activePhotoTask]: url }));
+    if (!file || !activeUploadTaskId) return;
+
+    try {
+      const base64Image = await compressImage(file);
+      
+      // Atualiza a tela instantaneamente
+      setTasks(tasks.map(t => t.id === activeUploadTaskId ? { ...t, photo_url: base64Image } : t));
+      
+      // Salva no banco de dados
+      await supabase.from('maintenance_tasks').update({ photo_url: base64Image }).eq('id', activeUploadTaskId);
+    } catch (err) {
+      alert("Erro ao salvar foto.");
+    } finally {
+      setActiveUploadTaskId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const completedCount = tasks.filter(t => t.completed).length;
-  const progressPercent = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
-  const isToday = () => {
-    const today = new Date();
-    return selectedDate === `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  };
-
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full relative overflow-y-auto bg-slate-50">
-      
-      {/* CÂMERA: capture="environment" força câmera traseira no celular */}
-      <input type="file" accept="image/*" capture="environment" className="hidden" ref={fileInputRef} onChange={handlePhotoSelected} />
+    <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 to-slate-200">
+      {/* INPUT OCULTO DA CÂMERA */}
+      <input 
+        type="file" 
+        accept="image/*" 
+        capture="environment" // Abre a câmera traseira direto no celular!
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+      />
 
-      {/* Degradê Azul Escuro para Manutenção */}
-      <div className="absolute top-0 w-full h-64 bg-gradient-to-b from-blue-900 to-transparent pointer-events-none opacity-80"></div>
+      {/* MODAL DE VER FOTO TELA CHEIA */}
+      <AnimatePresence>
+        {viewingPhoto && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
+          >
+            <button 
+              onClick={() => setViewingPhoto(null)} 
+              className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <img src={viewingPhoto} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" alt="Evidência" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="relative z-10 max-w-4xl mx-auto p-3 md:p-8 w-full">
+      <div className="flex-1 w-full max-w-4xl mx-auto p-4 md:p-8">
         
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 mb-6 mt-4">
-          <div className="text-white">
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mb-1 md:mb-2 flex items-center gap-2 md:gap-3">
-              <Wrench className="w-6 h-6 md:w-8 md:h-8 text-blue-400" />
-              Manutenção
-            </h1>
-            <p className="text-xs md:text-sm text-blue-200/80">Checklist técnico da casa de máquinas e infraestrutura.</p>
-            
-            <div className="flex items-center gap-1 md:gap-2 mt-4">
-              <button onClick={() => changeDate(-1)} className="p-2 hover:bg-white/10 rounded-lg text-blue-400"><ChevronLeft className="w-5 h-5" /></button>
-              <div className="flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2 bg-white/10 backdrop-blur-md rounded-xl border border-white/10">
-                <CalendarDays className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
-                <div className="flex flex-col">
-                  {isToday() && <span className="text-[9px] uppercase font-bold text-blue-400 tracking-wider">Hoje</span>}
-                  <input type="date" value={selectedDate} onChange={(e) => e.target.value && setSelectedDate(e.target.value)} className="bg-transparent border-none text-white text-xs md:text-sm font-bold focus:ring-0 outline-none p-0 w-[110px]" />
-                </div>
-              </div>
-              <button onClick={() => changeDate(1)} className="p-2 hover:bg-white/10 rounded-lg text-blue-400"><ChevronRight className="w-5 h-5" /></button>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 md:mt-0">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Wrench className="w-8 h-8 text-blue-500" />
+              <h1 className="text-3xl font-black text-slate-800 tracking-tight">Manutenção</h1>
             </div>
+            <p className="text-slate-500 font-medium ml-11">Checklist técnico da casa de máquinas.</p>
           </div>
-          
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 border border-x-white/20 border-t-white/20 shrink-0 self-start md:self-auto">
-            <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 md:w-16 md:h-16 flex items-center justify-center">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36"><path className="text-white/20" fill="none" strokeWidth="3" stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/><path className="text-blue-400 transition-all" fill="none" strokeWidth="3" strokeDasharray={`${progressPercent}, 100`} stroke="currentColor" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/></svg>
-                <span className="absolute text-white font-bold text-[10px] md:text-sm">{progressPercent}%</span>
+
+          <div className="flex items-center gap-6 bg-white p-2 pr-6 rounded-2xl shadow-sm border border-slate-200">
+            <div className="flex items-center">
+              <button onClick={() => changeDate(-1)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"><ChevronLeft className="w-5 h-5" /></button>
+              <div className="w-40 text-center flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isToday ? 'Hoje' : 'Histórico'}</span>
+                <span className="font-bold text-slate-700">{new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
               </div>
-              <div className="text-white">
-                <p className="font-bold text-base md:text-lg">{completedCount} de {tasks.length}</p>
-                <p className="text-[10px] text-blue-200/80 uppercase">Concluídas</p>
+              <button onClick={() => changeDate(1)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"><ChevronRight className="w-5 h-5" /></button>
+            </div>
+            
+            <div className="w-px h-10 bg-slate-200 mx-2"></div>
+            
+            <div className="flex items-center gap-3">
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <svg className="w-12 h-12 transform -rotate-90">
+                  <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-100" />
+                  <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={125.6} strokeDashoffset={125.6 - (125.6 * progress) / 100} className={cn("transition-all duration-1000 ease-out", progress === 100 ? "text-green-500" : "text-blue-500")} />
+                </svg>
+                <span className="absolute text-[11px] font-bold text-slate-700">{progress}%</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-slate-700">{completedCount} de {tasks.length}</span>
+                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Concluídas</span>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl overflow-hidden border border-slate-100">
-          <div className="p-3 md:p-6 border-b border-slate-100 bg-slate-50/50">
-            <form onSubmit={handleAddTask} className="flex flex-col md:flex-row gap-2">
-              <div className="relative flex-1">
-                <Plus className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-                <input type="text" placeholder="Adicionar nova tarefa técnica..." value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 text-sm font-medium outline-none transition-all" />
-              </div>
-              <button type="submit" disabled={!newTaskTitle.trim()} className="px-6 py-3 bg-blue-500 text-white rounded-xl font-bold text-sm disabled:opacity-50 active:scale-95 transition-all">Adicionar</button>
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+          <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
+            <form onSubmit={handleAddTask} className="flex gap-3">
+              <input type="text" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="+ Adicionar nova tarefa técnica..." className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-700 placeholder:text-slate-400" />
+              <button type="submit" disabled={!newTaskTitle.trim()} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm disabled:opacity-50 active:scale-95 transition-all">Adicionar</button>
             </form>
           </div>
 
@@ -197,45 +242,42 @@ export function MaintenanceModule() {
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 px-4">
                   <Wrench className="w-12 h-12 mx-auto mb-3 text-slate-200" />
                   <p className="text-lg font-bold text-slate-700 mb-1">Manutenção em branco</p>
-                  <button onClick={loadDefaultChecklist} className="w-full md:w-auto mx-auto px-6 py-4 mt-6 bg-slate-900 text-white font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 text-sm shadow-lg">
-                    <Wrench className="w-5 h-5 text-blue-400" /> Gerar Rotina Padrão (Filtros e Bombas)
-                  </button>
                 </motion.div>
               ) : (
                 tasks.map((task) => (
-                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={cn("group flex flex-col md:flex-row md:items-center gap-3 p-3 md:p-4 rounded-xl transition-all border", task.completed ? "bg-blue-50/40 border-blue-500/20" : "bg-white border-slate-100 hover:bg-slate-50")}>
+                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={cn("group flex flex-col md:flex-row md:items-center gap-3 p-3 md:p-4 rounded-xl transition-all border", task.completed ? "bg-green-50/40 border-green-500/20" : "bg-white border-slate-100 hover:bg-slate-50")}>
                     
                     <div className="flex items-center gap-3 w-full min-w-0">
-                      <button onClick={() => toggleTask(task.id)} className={cn("w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-blue-500 border-blue-500" : "border-slate-300")}>
+                      <button onClick={() => toggleTask(task.id)} className={cn("w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-green-500 border-green-500" : "border-slate-300")}>
                         <motion.div animate={{ scale: task.completed ? 1 : 0 }}><Check className="w-3 h-3 text-white" strokeWidth={3} /></motion.div>
                       </button>
-                      <div className="flex-1 min-w-0 flex items-center gap-3">
+                      
+                      <div className="flex-1 min-w-0">
                         {editingTaskId === task.id ? (
                           <input type="text" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditing()} onBlur={saveEditing} autoFocus className="w-full bg-white border border-blue-300 rounded px-2 py-1 outline-none text-sm" />
                         ) : (
-                          <p className={cn("text-sm font-medium truncate select-none", task.completed ? "text-blue-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
-                        )}
-                        
-                        {/* FOTO MINIATURA */}
-                        {previewPhotos[task.id] && (
-                           <img 
-                             src={previewPhotos[task.id]} 
-                             alt="Evidência" 
-                             onClick={() => setExpandedPhoto(previewPhotos[task.id])}
-                             className="w-10 h-10 rounded-lg object-cover shadow-sm border border-slate-200 cursor-zoom-in hover:scale-105 transition-transform" 
-                           />
+                          <p className={cn("text-sm font-medium truncate select-none", task.completed ? "text-green-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
                         )}
                       </div>
                       
-                      <div className={cn("flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity", editingTaskId === task.id && "md:opacity-100")}>
-                        {editingTaskId === task.id ? (
-                          <><button onClick={saveEditing} className="p-1.5 text-blue-600 bg-blue-50 rounded"><Check className="w-4 h-4" /></button><button onClick={cancelEditing} className="p-1.5 text-slate-400 bg-slate-100 rounded"><X className="w-4 h-4" /></button></>
+                      {/* BOTOES DE AÇÃO */}
+                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        
+                        {/* Se tiver foto, mostra o botão VER FOTO. Se não, mostra a CÂMERA */}
+                        {task.photo_url ? (
+                           <button onClick={() => setViewingPhoto(task.photo_url!)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded mr-2 flex items-center gap-1">
+                             <Eye className="w-4 h-4" /> <span className="text-[10px] font-bold">Ver Foto</span>
+                           </button>
                         ) : (
-                          <>
-                            <button onClick={() => handlePhotoClick(task.id)} title="Tirar foto" className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"><Camera className="w-4 h-4" /></button>
-                            <button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-amber-600 rounded transition-colors"><Edit2 className="w-4 h-4" /></button>
-                            <button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded transition-colors"><Trash2 className="w-4 h-4" /></button>
-                          </>
+                           <button onClick={() => openCamera(task.id)} className="p-1.5 text-slate-500 bg-slate-100 hover:text-blue-600 hover:bg-blue-50 rounded mr-2 flex items-center gap-1">
+                             <Camera className="w-4 h-4" /> <span className="text-[10px] font-bold">Foto</span>
+                           </button>
+                        )}
+
+                        {editingTaskId === task.id ? (
+                          <><button onClick={saveEditing} className="p-1.5 text-green-600 bg-green-50 rounded"><Check className="w-4 h-4" /></button><button onClick={cancelEditing} className="p-1.5 text-slate-400 bg-slate-100 rounded"><X className="w-4 h-4" /></button></>
+                        ) : (
+                          <><button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 rounded"><Edit2 className="w-4 h-4" /></button><button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button></>
                         )}
                       </div>
                     </div>
@@ -247,27 +289,6 @@ export function MaintenanceModule() {
         </div>
 
       </div>
-
-      {/* OVERLAY TELA CHEIA PARA A FOTO */}
-      <AnimatePresence>
-        {expandedPhoto && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 cursor-zoom-out"
-            onClick={() => setExpandedPhoto(null)}
-          >
-            <motion.img 
-              initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
-              src={expandedPhoto} 
-              alt="Foto Ampliada" 
-              className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain" 
-            />
-            <button onClick={() => setExpandedPhoto(null)} className="absolute top-6 right-6 bg-white/20 hover:bg-white/40 p-3 rounded-full text-white backdrop-blur-md transition-colors">
-              <X className="w-6 h-6" />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
