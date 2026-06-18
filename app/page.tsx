@@ -91,11 +91,8 @@ export default function Page() {
         return outputArray;
       };
 
-      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!publicVapidKey) {
-         alert('Erro de configuração: Chave Pública VAPID não encontrada no painel da Vercel.');
-         return;
-      }
+      // CHAVE PÚBLICA FIXADA NO CÓDIGO
+      const publicVapidKey = "BJx64L626N6Y5tY_D7goVf4l-PO2vpgax3PXFSDN59avftuq8_hWN3Neor_yff2j4GVwWhdWMKC1luKocmhClrg";
 
       // Faz a inscrição do celular no serviço de Push
       const subscription = await registration.pushManager.subscribe({
