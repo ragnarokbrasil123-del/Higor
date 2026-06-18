@@ -31,8 +31,16 @@ export function MaintenanceModule() {
   const [activeUploadTaskId, setActiveUploadTaskId] = useState<string | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
+  // Sincronização em Tempo Real (NOVO)
   useEffect(() => {
     loadTasks();
+
+    const channel = supabase.channel('maintenance_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_tasks' }, () => {
+        loadTasks(); // Recarrega automaticamente se alguém modificar!
+      }).subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [selectedDate]);
 
   const loadTasks = async () => {
@@ -51,30 +59,23 @@ export function MaintenanceModule() {
     const newTaskTitleClean = newTaskTitle.trim();
     const tempId = Date.now().toString();
 
-    // Coloca na tela na hora
     setTasks([...tasks, { id: tempId, title: newTaskTitleClean, completed: false, date: selectedDate }]);
     setNewTaskTitle('');
 
-    // Salva no banco e PEDE O ID VERDADEIRO DE VOLTA (.select())
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('maintenance_tasks')
       .insert([{ title: newTaskTitleClean, date: selectedDate, completed: false }])
       .select();
 
     if (data && data.length > 0) {
-      // Atualiza a tarefa falsa com a verdadeira que tem o ID oficial
       setTasks(current => current.map(t => t.id === tempId ? data[0] : t));
-
-      // Dispara a Notificação para o Admin!
       try {
         await fetch('/api/push', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: newTaskTitleClean })
         });
-      } catch (err) {
-        console.log("Erro ao enviar push:", err);
-      }
+      } catch (err) {}
     }
   };
 
@@ -151,6 +152,17 @@ export function MaintenanceModule() {
       const base64Image = await compressImage(file);
       setTasks(tasks.map(t => t.id === activeUploadTaskId ? { ...t, photo_url: base64Image } : t));
       await supabase.from('maintenance_tasks').update({ photo_url: base64Image }).eq('id', activeUploadTaskId);
+
+      // NOVO GATILHO: Dispara vibração no admin quando uma foto sobe!
+      const taskName = tasks.find(t => t.id === activeUploadTaskId)?.title;
+      try {
+        await fetch('/api/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: `Evidência Fotográfica: ${taskName}` })
+        });
+      } catch (err) {}
+
     } catch (err) {
       alert("Erro ao salvar foto.");
     } finally {
@@ -230,40 +242,41 @@ export function MaintenanceModule() {
                 </motion.div>
               ) : (
                 tasks.map((task) => (
-                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={cn("group flex flex-col md:flex-row md:items-center gap-3 p-3 md:p-4 rounded-xl transition-all border", task.completed ? "bg-green-50/40 border-green-500/20" : "bg-white border-slate-100 hover:bg-slate-50")}>
+                  <motion.div key={task.id} layout initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={cn("group flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl transition-all border", task.completed ? "bg-green-50/40 border-green-500/20" : "bg-white border-slate-200 shadow-sm hover:bg-slate-50")}>
                     
-                    <div className="flex items-center gap-3 w-full min-w-0">
-                      <button onClick={() => toggleTask(task.id)} className={cn("w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-green-500 border-green-500" : "border-slate-300")}>
+                    <div className="flex items-start md:items-center gap-3 flex-1 min-w-0">
+                      <button onClick={() => toggleTask(task.id)} className={cn("mt-0.5 md:mt-0 w-6 h-6 shrink-0 rounded flex items-center justify-center border-2", task.completed ? "bg-green-500 border-green-500" : "border-slate-300")}>
                         <motion.div animate={{ scale: task.completed ? 1 : 0 }}><Check className="w-3 h-3 text-white" strokeWidth={3} /></motion.div>
                       </button>
                       
                       <div className="flex-1 min-w-0">
                         {editingTaskId === task.id ? (
-                          <input type="text" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditing()} onBlur={saveEditing} autoFocus className="w-full bg-white border border-blue-300 rounded px-2 py-1 outline-none text-sm" />
+                          <input type="text" value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && saveEditing()} onBlur={saveEditing} autoFocus className="w-full bg-white border border-blue-300 rounded px-2 py-2 outline-none text-sm" />
                         ) : (
-                          <p className={cn("text-sm font-medium truncate select-none", task.completed ? "text-green-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                        
-                        {task.photo_url ? (
-                           <button onClick={() => setViewingPhoto(task.photo_url!)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded mr-2 flex items-center gap-1">
-                             <Eye className="w-4 h-4" /> <span className="text-[10px] font-bold">Ver Foto</span>
-                           </button>
-                        ) : (
-                           <button onClick={() => openCamera(task.id)} className="p-1.5 text-slate-500 bg-slate-100 hover:text-blue-600 hover:bg-blue-50 rounded mr-2 flex items-center gap-1">
-                             <Camera className="w-4 h-4" /> <span className="text-[10px] font-bold">Foto</span>
-                           </button>
-                        )}
-
-                        {editingTaskId === task.id ? (
-                          <><button onClick={saveEditing} className="p-1.5 text-green-600 bg-green-50 rounded"><Check className="w-4 h-4" /></button><button onClick={cancelEditing} className="p-1.5 text-slate-400 bg-slate-100 rounded"><X className="w-4 h-4" /></button></>
-                        ) : (
-                          <><button onClick={() => startEditing(task)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-blue-600 rounded"><Edit2 className="w-4 h-4" /></button><button onClick={() => deleteTask(task.id)} className="p-1.5 text-slate-400 bg-slate-50 hover:text-red-600 rounded"><Trash2 className="w-4 h-4" /></button></>
+                          <p className={cn("text-sm font-medium leading-relaxed break-words", task.completed ? "text-green-800/60 line-through" : "text-slate-700")} onDoubleClick={() => startEditing(task)}>{task.title}</p>
                         )}
                       </div>
                     </div>
+                    
+                    <div className="flex items-center self-end md:self-auto gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
+                      
+                      {task.photo_url ? (
+                         <button onClick={() => setViewingPhoto(task.photo_url!)} className="px-3 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center gap-2">
+                           <Eye className="w-5 h-5" /> <span className="text-xs font-bold">Ver Foto</span>
+                         </button>
+                      ) : (
+                         <button onClick={() => openCamera(task.id)} className="px-3 py-2 text-slate-500 bg-slate-100 hover:text-blue-600 hover:bg-blue-50 rounded-lg flex items-center gap-2 shadow-sm border border-slate-200/60">
+                           <Camera className="w-5 h-5" /> <span className="text-xs font-bold">Foto</span>
+                         </button>
+                      )}
+
+                      {editingTaskId === task.id ? (
+                        <><button onClick={saveEditing} className="p-2 text-green-600 bg-green-50 rounded-lg"><Check className="w-5 h-5" /></button><button onClick={cancelEditing} className="p-2 text-slate-400 bg-slate-100 rounded-lg"><X className="w-5 h-5" /></button></>
+                      ) : (
+                        <><button onClick={() => startEditing(task)} className="p-2 text-slate-400 bg-slate-50 hover:text-blue-600 hover:bg-blue-50 rounded-lg shadow-sm border border-slate-200/60"><Edit2 className="w-4 h-4" /></button><button onClick={() => deleteTask(task.id)} className="p-2 text-slate-400 bg-slate-50 hover:text-red-600 hover:bg-red-50 rounded-lg shadow-sm border border-slate-200/60"><Trash2 className="w-4 h-4" /></button></>
+                      )}
+                    </div>
+
                   </motion.div>
                 ))
               )}
