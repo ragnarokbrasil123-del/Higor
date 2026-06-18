@@ -44,7 +44,7 @@ export function ScheduleModule() {
 
   const [form, setForm] = useState({
     teacher_name: '',
-    day_of_week: 'Segunda-feira',
+    days_of_week: ['Segunda-feira'],
     start_time: '08:00',
     end_time: '08:45',
     slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 } as Record<string, number>
@@ -70,35 +70,46 @@ export function ScheduleModule() {
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.teacher_name.trim()) return alert("Digite o nome do professor");
+    if (form.days_of_week.length === 0) return alert("Selecione pelo menos um dia da semana");
     
     const totalSlots = Object.values(form.slots).reduce((a, b) => a + b, 0);
     if (totalSlots === 0) return alert("Você precisa criar pelo menos 1 vaga para essa turma.");
 
     setIsSubmitting(true);
     try {
-      const { data: newClass, error: classErr } = await supabase.from('classes').insert([{
-        teacher_name: form.teacher_name.trim(),
-        day_of_week: form.day_of_week,
-        start_time: form.start_time,
-        end_time: form.end_time
-      }]).select().single();
+      
+      // Loop para criar a mesma turma em múltiplos dias
+      for (const day of form.days_of_week) {
+        
+        // 1. Cria a Gaveta da Turma
+        const { data: newClass, error: classErr } = await supabase.from('classes').insert([{
+          teacher_name: form.teacher_name.trim(),
+          day_of_week: day,
+          start_time: form.start_time,
+          end_time: form.end_time
+        }]).select().single();
 
-      if (classErr) throw classErr;
+        if (classErr) throw classErr;
 
-      const slotsToInsert = [];
-      for (const [color, amount] of Object.entries(form.slots)) {
-        for (let i = 0; i < amount; i++) {
-          slotsToInsert.push({ class_id: newClass.id, cap_color: color });
+        // 2. Prepara as vagas de acordo com as cores
+        const slotsToInsert = [];
+        for (const [color, amount] of Object.entries(form.slots)) {
+          for (let i = 0; i < amount; i++) {
+            slotsToInsert.push({ class_id: newClass.id, cap_color: color });
+          }
         }
-      }
 
-      if (slotsToInsert.length > 0) {
-        await supabase.from('class_slots').insert(slotsToInsert);
+        // 3. Insere as vagas
+        if (slotsToInsert.length > 0) {
+          await supabase.from('class_slots').insert(slotsToInsert);
+        }
       }
 
       await loadClasses();
       setIsModalOpen(false);
-      setForm({ ...form, teacher_name: '', slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 }});
+      
+      // Reset
+      setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 }});
     } catch (err) {
       console.error(err);
       alert("Erro ao criar turma.");
@@ -113,8 +124,18 @@ export function ScheduleModule() {
     loadClasses();
   };
 
+  const toggleDay = (day: string) => {
+    if (form.days_of_week.includes(day)) {
+      setForm({ ...form, days_of_week: form.days_of_week.filter(d => d !== day) });
+    } else {
+      setForm({ ...form, days_of_week: [...form.days_of_week, day] });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
+      
+      {/* CABEÇALHO */}
       <div className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 md:mt-0">
           <div>
@@ -132,6 +153,7 @@ export function ScheduleModule() {
           </button>
         </div>
 
+        {/* LISTA DE HORÁRIOS */}
         <div className="space-y-6">
           {DAYS.map(day => {
             const classesOnDay = classes.filter(c => c.day_of_week === day);
@@ -163,7 +185,7 @@ export function ScheduleModule() {
                       <div className="space-y-2">
                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vagas ({cls.class_slots?.length || 0}):</div>
                         <div className="flex flex-wrap gap-2">
-                          {cls.class_slots?.map((slot) => {
+                          {cls.class_slots?.map((slot, index) => {
                             const colorObj = CAP_COLORS.find(c => c.id === slot.cap_color);
                             return (
                               <div key={slot.id} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1", colorObj?.colorCode || 'bg-slate-200 text-slate-700')}>
@@ -191,6 +213,7 @@ export function ScheduleModule() {
         </div>
       </div>
 
+      {/* MODAL CRIAR TURMA */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -205,30 +228,43 @@ export function ScheduleModule() {
 
               <div className="p-6 overflow-y-auto custom-scrollbar">
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
-                  <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                  
+                  {/* Info Basica */}
+                  <div className="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <div>
                       <label className="block text-sm font-bold text-slate-700 mb-2">Nome do Professor</label>
-                      <input type="text" required value={form.teacher_name} onChange={e => setForm({...form, teacher_name: e.target.value})} placeholder="Ex: Prof. João da Silva" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium" />
+                      <input type="text" required value={form.teacher_name} onChange={e => setForm({...form, teacher_name: e.target.value})} placeholder="Ex: Letícia" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium" />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-1">
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Dia</label>
-                        <select value={form.day_of_week} onChange={e => setForm({...form, day_of_week: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700">
-                          {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
-                        </select>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2">Quais dias ela dá essa aula?</label>
+                      <div className="flex flex-wrap gap-2">
+                        {DAYS.map(d => (
+                          <button 
+                            type="button" 
+                            key={d}
+                            onClick={() => toggleDay(d)}
+                            className={cn("px-4 py-2 rounded-xl text-sm font-bold border transition-all", form.days_of_week.includes(d) ? "bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300")}
+                          >
+                            {d.split('-')[0]}
+                          </button>
+                        ))}
                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Início</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Horário Início</label>
                         <input type="time" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Fim</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-2">Horário Fim</label>
                         <input type="time" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" />
                       </div>
                     </div>
                   </div>
 
+                  {/* Gerador de Vagas */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <h3 className="text-lg font-black text-slate-800">Quantas Vagas por Cor?</h3>
@@ -250,12 +286,13 @@ export function ScheduleModule() {
                       ))}
                     </div>
                   </div>
+
                 </form>
               </div>
 
               <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
                 <button form="classForm" type="submit" disabled={isSubmitting} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                  {isSubmitting ? 'Criando gavetas...' : 'Criar Turma e Vagas'}
+                  {isSubmitting ? 'Multiplicando Horários...' : 'Criar Turmas em Massa'}
                 </button>
               </div>
 
@@ -263,6 +300,7 @@ export function ScheduleModule() {
           </div>
         )}
       </AnimatePresence>
+
     </div>
   );
 }
