@@ -46,8 +46,7 @@ export default function Page() {
 
   if (user.role === 'client') {
     return <ClientPortal 
-      studentId={user.data.id} 
-      studentName={user.data.name} 
+      student={user.data} 
       onLogout={() => {
         localStorage.removeItem('olimpo_session');
         setUser(null);
