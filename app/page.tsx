@@ -26,44 +26,48 @@ type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 // ==========================================
 function GlobalNotifier() {
   const [alert, setAlert] = useState<{title: string, message: string} | null>(null);
+  const [soundUnlocked, setSoundUnlocked] = useState(false);
+
+  // Truque para o Navegador liberar o Som!
+  const unlockSound = () => {
+    setSoundUnlocked(true);
+    try {
+      const audio = new Audio('https://www.soundjay.com/buttons/button-09.mp3');
+      audio.volume = 0.1;
+      audio.play().catch(()=>{});
+    } catch(e) {}
+  };
 
   useEffect(() => {
-    // Função para tocar um "Beep" alto!
     const playSound = () => {
       try {
+        // Comando para Vibrar o Android no máximo
+        if ("vibrate" in navigator) {
+          navigator.vibrate([500, 200, 500, 200, 500]);
+        }
+        
+        // Comando para tocar o Alarme
         const audio = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
+        audio.volume = 1.0;
         audio.play().catch(() => {});
       } catch(e) {}
     };
 
     const handlePayload = (payload: any) => {
       const isInsert = payload.eventType === 'INSERT';
-      // Se a foto antiga era vazia e a nova tem algo, é uma foto nova!
       const isPhotoUpdate = payload.eventType === 'UPDATE' && payload.new.photo_url && payload.old.photo_url !== payload.new.photo_url;
       
       if (isInsert) {
         playSound();
-        setAlert({
-          title: "🚨 NOVO CHAMADO!",
-          message: `Tarefa criada: ${payload.new.title}`
-        });
+        setAlert({ title: "🚨 NOVO CHAMADO!", message: `Tarefa criada: ${payload.new.title}` });
       } else if (isPhotoUpdate) {
         playSound();
-        setAlert({
-          title: "📸 NOVA FOTO ANEXADA!",
-          message: `A foto foi enviada para: ${payload.new.title}`
-        });
+        setAlert({ title: "📸 NOVA FOTO ANEXADA!", message: `A foto foi enviada para: ${payload.new.title}` });
       }
     };
 
-    // Fica ouvindo o Supabase 24h por dia
-    const channelM = supabase.channel('global_m')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_tasks' }, handlePayload)
-      .subscribe();
-      
-    const channelC = supabase.channel('global_c')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cleaning_tasks' }, handlePayload)
-      .subscribe();
+    const channelM = supabase.channel('global_m').on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_tasks' }, handlePayload).subscribe();
+    const channelC = supabase.channel('global_c').on('postgres_changes', { event: '*', schema: 'public', table: 'cleaning_tasks' }, handlePayload).subscribe();
 
     return () => {
       supabase.removeChannel(channelM);
@@ -72,34 +76,42 @@ function GlobalNotifier() {
   }, []);
 
   return (
-    <AnimatePresence>
-      {alert && (
-        <motion.div 
-          initial={{ opacity: 0, y: -100 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-red-600 text-white rounded-3xl p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-red-400"
-        >
-          <button onClick={() => setAlert(null)} className="absolute top-4 right-4 p-2 bg-red-700/50 hover:bg-red-800 rounded-full transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-4 mb-3">
-            <div className="p-3 bg-red-500 rounded-2xl animate-pulse">
-              <AlertTriangle className="w-10 h-10 text-yellow-300" />
-            </div>
-            <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{alert.title}</h2>
-          </div>
-          <p className="text-red-100 font-bold ml-16 text-lg">{alert.message}</p>
-          <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-red-700 font-black py-4 rounded-xl hover:bg-red-50 active:scale-95 transition-all text-lg shadow-lg">
-            Ciente!
-          </button>
-        </motion.div>
+    <>
+      {/* Botão para destravar o som logo que o admin entra */}
+      {!soundUnlocked && (
+        <button onClick={unlockSound} className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[99999] bg-amber-500 text-black px-6 py-3 rounded-full font-bold shadow-2xl animate-bounce hover:bg-amber-400 transition-colors">
+          🔊 Clique aqui para Ligar o Alarme Sonoro
+        </button>
       )}
-    </AnimatePresence>
+
+      <AnimatePresence>
+        {alert && (
+          <motion.div 
+            initial={{ opacity: 0, y: -100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-red-600 text-white rounded-3xl p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-red-400"
+          >
+            <button onClick={() => setAlert(null)} className="absolute top-4 right-4 p-2 bg-red-700/50 hover:bg-red-800 rounded-full transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="p-3 bg-red-500 rounded-2xl animate-pulse">
+                <AlertTriangle className="w-10 h-10 text-yellow-300" />
+              </div>
+              <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{alert.title}</h2>
+            </div>
+            <p className="text-red-100 font-bold ml-16 text-lg">{alert.message}</p>
+            <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-red-700 font-black py-4 rounded-xl hover:bg-red-50 active:scale-95 transition-all text-lg shadow-lg">
+              Ciente!
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 // ==========================================
-
 
 export default function Page() {
   const [user, setUser] = useState<UserState>(null);
