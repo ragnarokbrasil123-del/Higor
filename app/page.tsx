@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { SwimmingModule } from '@/components/swimming-module';
 import { ChecklistModule } from '@/components/checklist-module';
 import { MaintenanceModule } from '@/components/maintenance-module';
@@ -8,7 +9,7 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
-import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench } from 'lucide-react';
+import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench, BellRing } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -63,18 +64,85 @@ export default function Page() {
     setUser(null);
   };
 
+  // SISTEMA DE ATIVAÇÃO DE NOTIFICAÇÕES (PWA PUSH)
+  const activateNotifications = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        alert('O seu navegador não suporta notificações de aplicativo nativo.');
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Você precisa Clicar em PERMITIR no aviso do navegador para o celular tocar!');
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      };
+
+      const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!publicVapidKey) {
+         alert('Erro de configuração: Chave Pública VAPID não encontrada no painel da Vercel.');
+         return;
+      }
+
+      // Faz a inscrição do celular no serviço de Push
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+      });
+
+      // Salva a "Identidade do seu celular" no Banco de Dados
+      const { error } = await supabase.from('push_subscriptions').insert([
+        { subscription: subscription }
+      ]);
+
+      if (error) {
+        console.error("Erro banco:", error);
+        alert('Erro ao salvar aparelho. A tabela "push_subscriptions" existe no Supabase?');
+      } else {
+        alert('🔔 FEITO! Aparelho Registrado! Agora toda vez que a equipe adicionar algo, seu celular vai vibrar e avisar!');
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      alert('Erro técnico ao ativar: ' + err.message);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-slate-50 font-sans overflow-hidden">
       
-      {/* === HEADER MOBILE (Visível apenas no celular) === */}
+      {/* === HEADER MOBILE (Visível apenas em celular) === */}
       <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
           <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-amber-500">Olimpo</span></span>
         </div>
-        <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-white transition-colors bg-slate-900 rounded-lg">
-          <LogOut className="w-5 h-5" />
-        </button>
+        
+        <div className="flex items-center gap-2">
+          {/* BOTÃO DO SINO (APARECE SÓ PRO ADMIN) */}
+          {isAdmin && (
+             <button onClick={activateNotifications} className="p-2 text-amber-400 hover:text-white transition-colors bg-slate-900 rounded-lg border border-amber-500/30 shadow-lg shadow-amber-500/10 animate-pulse">
+               <BellRing className="w-5 h-5" />
+             </button>
+          )}
+
+          <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-white transition-colors bg-slate-900 rounded-lg">
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* === MENU LATERAL DESKTOP (Oculto no celular) === */}
@@ -118,6 +186,16 @@ export default function Page() {
               <ShieldCheck className="w-5 h-5" />
               <span className="font-bold text-sm">Equipe & Senhas</span>
             </button>
+          )}
+
+          {/* SINO DO ADMIN NO DESKTOP */}
+          {isAdmin && (
+            <div className="pt-4 mt-4 border-t border-slate-800">
+               <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-black rounded-xl transition-all border border-amber-500/30">
+                 <BellRing className="w-5 h-5 animate-pulse" />
+                 <span className="font-bold text-sm">Ativar Alertas</span>
+               </button>
+            </div>
           )}
         </nav>
 
