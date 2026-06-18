@@ -27,7 +27,6 @@ export function MaintenanceModule() {
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   
-  // Controle da Câmera
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeUploadTaskId, setActiveUploadTaskId] = useState<string | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
@@ -52,27 +51,36 @@ export function MaintenanceModule() {
     const newTaskTitleClean = newTaskTitle.trim();
     const tempId = Date.now().toString();
 
+    // Coloca na tela na hora
     setTasks([...tasks, { id: tempId, title: newTaskTitleClean, completed: false, date: selectedDate }]);
     setNewTaskTitle('');
 
-    const { error } = await supabase
+    // Salva no banco e PEDE O ID VERDADEIRO DE VOLTA (.select())
+    const { data, error } = await supabase
       .from('maintenance_tasks')
-      .insert([{ title: newTaskTitleClean, date: selectedDate, completed: false }]);
+      .insert([{ title: newTaskTitleClean, date: selectedDate, completed: false }])
+      .select();
 
-    if (!error) {
-      // Dispara a Notificação Push nativa!
-      fetch('/api/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTaskTitleClean })
-      });
+    if (data && data.length > 0) {
+      // Atualiza a tarefa falsa com a verdadeira que tem o ID oficial
+      setTasks(current => current.map(t => t.id === tempId ? data[0] : t));
+
+      // Dispara a Notificação para o Admin!
+      try {
+        await fetch('/api/push', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTaskTitleClean })
+        });
+      } catch (err) {
+        console.log("Erro ao enviar push:", err);
+      }
     }
   };
 
   const toggleTask = async (id: string) => {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    
     setTasks(tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
     await supabase.from('maintenance_tasks').update({ completed: !task.completed }).eq('id', id);
   };
@@ -89,7 +97,6 @@ export function MaintenanceModule() {
 
   const saveEditing = async () => {
     if (!editingTaskId || !editingTitle.trim()) return cancelEditing();
-    
     setTasks(tasks.map(t => t.id === editingTaskId ? { ...t, title: editingTitle.trim() } : t));
     await supabase.from('maintenance_tasks').update({ title: editingTitle.trim() }).eq('id', editingTaskId);
     cancelEditing();
@@ -110,9 +117,6 @@ export function MaintenanceModule() {
   const completedCount = tasks.filter(t => t.completed).length;
   const progress = tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
 
-  // ==========================================
-  // COMPRESSOR DE IMAGEM E UPLOAD
-  // ==========================================
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -120,13 +124,13 @@ export function MaintenanceModule() {
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800; // Reduz a resolução para não lotar o banco
+          const MAX_WIDTH = 800;
           const scaleSize = MAX_WIDTH / img.width;
           canvas.width = MAX_WIDTH;
           canvas.height = img.height * scaleSize;
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL('image/jpeg', 0.6)); // 60% de qualidade
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
         };
         img.src = e.target?.result as string;
       };
@@ -145,11 +149,7 @@ export function MaintenanceModule() {
 
     try {
       const base64Image = await compressImage(file);
-      
-      // Atualiza a tela instantaneamente
       setTasks(tasks.map(t => t.id === activeUploadTaskId ? { ...t, photo_url: base64Image } : t));
-      
-      // Salva no banco de dados
       await supabase.from('maintenance_tasks').update({ photo_url: base64Image }).eq('id', activeUploadTaskId);
     } catch (err) {
       alert("Erro ao salvar foto.");
@@ -161,27 +161,12 @@ export function MaintenanceModule() {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 to-slate-200">
-      {/* INPUT OCULTO DA CÂMERA */}
-      <input 
-        type="file" 
-        accept="image/*" 
-        capture="environment" // Abre a câmera traseira direto no celular!
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-        className="hidden" 
-      />
+      <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
-      {/* MODAL DE VER FOTO TELA CHEIA */}
       <AnimatePresence>
         {viewingPhoto && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
-          >
-            <button 
-              onClick={() => setViewingPhoto(null)} 
-              className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
-            >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
+            <button onClick={() => setViewingPhoto(null)} className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
               <X className="w-8 h-8" />
             </button>
             <img src={viewingPhoto} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" alt="Evidência" />
@@ -260,10 +245,8 @@ export function MaintenanceModule() {
                         )}
                       </div>
                       
-                      {/* BOTOES DE AÇÃO */}
                       <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         
-                        {/* Se tiver foto, mostra o botão VER FOTO. Se não, mostra a CÂMERA */}
                         {task.photo_url ? (
                            <button onClick={() => setViewingPhoto(task.photo_url!)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded mr-2 flex items-center gap-1">
                              <Eye className="w-4 h-4" /> <span className="text-[10px] font-bold">Ver Foto</span>
