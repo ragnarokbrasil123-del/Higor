@@ -9,7 +9,8 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
-import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench, BellRing, AlertTriangle, X } from 'lucide-react';
+import { ScheduleModule } from '@/components/schedule-module'; // NOVO MÓDULO AQUI!
+import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'motion/react';
@@ -18,7 +19,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
 }
 
-type Tab = 'swimming' | 'cleaning' | 'maintenance' | 'registration' | 'team';
+type Tab = 'swimming' | 'cleaning' | 'maintenance' | 'registration' | 'team' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 
 // ==========================================
@@ -28,7 +29,6 @@ function GlobalNotifier() {
   const [alert, setAlert] = useState<{title: string, message: string} | null>(null);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
 
-  // Truque para o Navegador liberar o Som!
   const unlockSound = () => {
     setSoundUnlocked(true);
     try {
@@ -41,12 +41,9 @@ function GlobalNotifier() {
   useEffect(() => {
     const playSound = () => {
       try {
-        // Comando para Vibrar o Android no máximo
         if ("vibrate" in navigator) {
           navigator.vibrate([500, 200, 500, 200, 500]);
         }
-        
-        // Comando para tocar o Alarme
         const audio = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
         audio.volume = 1.0;
         audio.play().catch(() => {});
@@ -77,7 +74,6 @@ function GlobalNotifier() {
 
   return (
     <>
-      {/* Botão para destravar o som logo que o admin entra */}
       {!soundUnlocked && (
         <button onClick={unlockSound} className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[99999] bg-amber-500 text-black px-6 py-3 rounded-full font-bold shadow-2xl animate-bounce hover:bg-amber-400 transition-colors">
           🔊 Clique aqui para Ligar o Alarme Sonoro
@@ -160,49 +156,32 @@ export default function Page() {
   const activateNotifications = async () => {
     try {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        alert('O seu navegador não suporta notificações de aplicativo nativo.');
+        alert('O seu navegador não suporta notificações nativas.');
         return;
       }
-
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        alert('Você precisa Clicar em PERMITIR no aviso do navegador para o celular tocar!');
-        return;
-      }
-
-      const registration = await navigator.serviceWorker.ready;
+      if (permission !== 'granted') return alert('Você precisa Clicar em PERMITIR no aviso!');
       
+      const registration = await navigator.serviceWorker.ready;
       const urlBase64ToUint8Array = (base64String: string) => {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
         const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
         const rawData = window.atob(base64);
         const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-          outputArray[i] = rawData.charCodeAt(i);
-        }
+        for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
         return outputArray;
       };
 
       const publicVapidKey = "BJx64L626N6Y5tY_D7goVf4l-PO2vpgax3PXFSDN59avftuq8_hWN3Neor_yff2j4GVwWhdWMKC1luKocmhClrg";
-
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       });
 
-      const { error } = await supabase.from('push_subscriptions').insert([
-        { subscription: subscription }
-      ]);
-
-      if (error) {
-        console.error("Erro banco:", error);
-        alert('Erro ao salvar aparelho. A tabela "push_subscriptions" existe no Supabase?');
-      } else {
-        alert('🔔 FEITO! Aparelho Registrado na Nuvem!');
-      }
-
+      const { error } = await supabase.from('push_subscriptions').insert([{ subscription }]);
+      if (error) alert('Erro ao salvar aparelho. A tabela existe?');
+      else alert('🔔 FEITO! Aparelho Registrado na Nuvem!');
     } catch (err: any) {
-      console.error(err);
       alert('Erro técnico ao ativar: ' + err.message);
     }
   };
@@ -210,7 +189,6 @@ export default function Page() {
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-slate-50 font-sans overflow-hidden">
       
-      {/* SE FOR ADMIN, COLOCA O ALARME GIGANTE NA TELA */}
       {isAdmin && <GlobalNotifier />}
 
       {/* === HEADER MOBILE === */}
@@ -276,6 +254,14 @@ export default function Page() {
             </button>
           )}
 
+          {/* NOVO MENU GRADE DE HORÁRIOS */}
+          {isAdmin && (
+            <button onClick={() => setActiveTab('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <CalendarDays className="w-5 h-5" />
+              <span className="font-bold text-sm">Grade de Horários</span>
+            </button>
+          )}
+
           {isAdmin && (
             <div className="pt-4 mt-4 border-t border-slate-800">
                <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-black rounded-xl transition-all border border-amber-500/30">
@@ -295,32 +281,40 @@ export default function Page() {
       </header>
 
       {/* === MENU MOBILE FOOTER === */}
-      <div className="md:hidden flex items-center justify-between px-2 py-3 bg-slate-950 border-t border-slate-900 z-50 shrink-0">
-        <button onClick={() => setActiveTab('registration')} className={cn("flex flex-col items-center p-2 rounded-xl border flex-1 mx-0.5", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+      <div className="md:hidden flex items-center justify-between px-2 py-3 bg-slate-950 border-t border-slate-900 z-50 shrink-0 overflow-x-auto custom-scrollbar">
+        <button onClick={() => setActiveTab('registration')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
           <UserPlus className="w-4 h-4" />
           <span className="text-[9px] font-bold tracking-wide mt-1">Alunos</span>
         </button>
-        <button onClick={() => setActiveTab('swimming')} className={cn("flex flex-col items-center p-2 rounded-xl border flex-1 mx-0.5", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+        <button onClick={() => setActiveTab('swimming')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
           <Droplets className="w-4 h-4" />
           <span className="text-[9px] font-bold tracking-wide mt-1">Natação</span>
         </button>
         
         {isStaff && (
-          <button onClick={() => setActiveTab('cleaning')} className={cn("flex flex-col items-center p-2 rounded-xl border flex-1 mx-0.5", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+          <button onClick={() => setActiveTab('cleaning')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <ClipboardList className="w-4 h-4" />
             <span className="text-[9px] font-bold tracking-wide mt-1">Limpeza</span>
           </button>
         )}
         {isStaff && (
-          <button onClick={() => setActiveTab('maintenance')} className={cn("flex flex-col items-center p-2 rounded-xl border flex-1 mx-0.5", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+          <button onClick={() => setActiveTab('maintenance')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <Wrench className="w-4 h-4" />
             <span className="text-[9px] font-bold tracking-wide mt-1">Manu.</span>
           </button>
         )}
         {isAdmin && (
-          <button onClick={() => setActiveTab('team')} className={cn("flex flex-col items-center p-2 rounded-xl border flex-1 mx-0.5", activeTab === 'team' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+          <button onClick={() => setActiveTab('team')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'team' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <ShieldCheck className="w-4 h-4" />
             <span className="text-[9px] font-bold tracking-wide mt-1">Equipe</span>
+          </button>
+        )}
+        
+        {/* NOVO MENU MOBILE DA GRADE */}
+        {isAdmin && (
+          <button onClick={() => setActiveTab('schedule')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <CalendarDays className="w-4 h-4" />
+            <span className="text-[9px] font-bold tracking-wide mt-1">Grade</span>
           </button>
         )}
       </div>
@@ -332,6 +326,9 @@ export default function Page() {
         {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
         {activeTab === 'team' && isAdmin && <TeamModule />}
+        
+        {/* NOVA TELA AQUI */}
+        {activeTab === 'schedule' && isAdmin && <ScheduleModule />}
       </main>
     </div>
   );
