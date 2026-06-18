@@ -9,9 +9,10 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
-import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench, BellRing } from 'lucide-react';
+import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench, BellRing, AlertTriangle, X } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { motion, AnimatePresence } from 'motion/react';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
@@ -19,6 +20,86 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 
 type Tab = 'swimming' | 'cleaning' | 'maintenance' | 'registration' | 'team';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
+
+// ==========================================
+// CARTA NA MANGA: ALARME GLOBAL PARA O ADMIN
+// ==========================================
+function GlobalNotifier() {
+  const [alert, setAlert] = useState<{title: string, message: string} | null>(null);
+
+  useEffect(() => {
+    // Função para tocar um "Beep" alto!
+    const playSound = () => {
+      try {
+        const audio = new Audio('https://www.soundjay.com/buttons/beep-01a.mp3');
+        audio.play().catch(() => {});
+      } catch(e) {}
+    };
+
+    const handlePayload = (payload: any) => {
+      const isInsert = payload.eventType === 'INSERT';
+      // Se a foto antiga era vazia e a nova tem algo, é uma foto nova!
+      const isPhotoUpdate = payload.eventType === 'UPDATE' && payload.new.photo_url && payload.old.photo_url !== payload.new.photo_url;
+      
+      if (isInsert) {
+        playSound();
+        setAlert({
+          title: "🚨 NOVO CHAMADO!",
+          message: `Tarefa criada: ${payload.new.title}`
+        });
+      } else if (isPhotoUpdate) {
+        playSound();
+        setAlert({
+          title: "📸 NOVA FOTO ANEXADA!",
+          message: `A foto foi enviada para: ${payload.new.title}`
+        });
+      }
+    };
+
+    // Fica ouvindo o Supabase 24h por dia
+    const channelM = supabase.channel('global_m')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'maintenance_tasks' }, handlePayload)
+      .subscribe();
+      
+    const channelC = supabase.channel('global_c')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cleaning_tasks' }, handlePayload)
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channelM);
+      supabase.removeChannel(channelC);
+    };
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {alert && (
+        <motion.div 
+          initial={{ opacity: 0, y: -100 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-red-600 text-white rounded-3xl p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-red-400"
+        >
+          <button onClick={() => setAlert(null)} className="absolute top-4 right-4 p-2 bg-red-700/50 hover:bg-red-800 rounded-full transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+          <div className="flex items-center gap-4 mb-3">
+            <div className="p-3 bg-red-500 rounded-2xl animate-pulse">
+              <AlertTriangle className="w-10 h-10 text-yellow-300" />
+            </div>
+            <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{alert.title}</h2>
+          </div>
+          <p className="text-red-100 font-bold ml-16 text-lg">{alert.message}</p>
+          <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-red-700 font-black py-4 rounded-xl hover:bg-red-50 active:scale-95 transition-all text-lg shadow-lg">
+            Ciente!
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+// ==========================================
+
 
 export default function Page() {
   const [user, setUser] = useState<UserState>(null);
@@ -64,7 +145,6 @@ export default function Page() {
     setUser(null);
   };
 
-  // SISTEMA DE ATIVAÇÃO DE NOTIFICAÇÕES (PWA PUSH)
   const activateNotifications = async () => {
     try {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -91,16 +171,13 @@ export default function Page() {
         return outputArray;
       };
 
-      // CHAVE PÚBLICA FIXADA NO CÓDIGO
       const publicVapidKey = "BJx64L626N6Y5tY_D7goVf4l-PO2vpgax3PXFSDN59avftuq8_hWN3Neor_yff2j4GVwWhdWMKC1luKocmhClrg";
 
-      // Faz a inscrição do celular no serviço de Push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
       });
 
-      // Salva a "Identidade do seu celular" no Banco de Dados
       const { error } = await supabase.from('push_subscriptions').insert([
         { subscription: subscription }
       ]);
@@ -109,7 +186,7 @@ export default function Page() {
         console.error("Erro banco:", error);
         alert('Erro ao salvar aparelho. A tabela "push_subscriptions" existe no Supabase?');
       } else {
-        alert('🔔 FEITO! Aparelho Registrado! Agora toda vez que a equipe adicionar algo, seu celular vai vibrar e avisar!');
+        alert('🔔 FEITO! Aparelho Registrado na Nuvem!');
       }
 
     } catch (err: any) {
@@ -121,7 +198,10 @@ export default function Page() {
   return (
     <div className="flex flex-col md:flex-row h-[100dvh] bg-slate-50 font-sans overflow-hidden">
       
-      {/* === HEADER MOBILE (Visível apenas em celular) === */}
+      {/* SE FOR ADMIN, COLOCA O ALARME GIGANTE NA TELA */}
+      {isAdmin && <GlobalNotifier />}
+
+      {/* === HEADER MOBILE === */}
       <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
@@ -129,9 +209,8 @@ export default function Page() {
         </div>
         
         <div className="flex items-center gap-2">
-          {/* BOTÃO DO SINO (APARECE SÓ PRO ADMIN) */}
           {isAdmin && (
-             <button onClick={activateNotifications} className="p-2 text-amber-400 hover:text-white transition-colors bg-slate-900 rounded-lg border border-amber-500/30 shadow-lg shadow-amber-500/10 animate-pulse">
+             <button onClick={activateNotifications} className="p-2 text-amber-400 hover:text-white transition-colors bg-slate-900 rounded-lg border border-amber-500/30 shadow-lg shadow-amber-500/10">
                <BellRing className="w-5 h-5" />
              </button>
           )}
@@ -142,7 +221,7 @@ export default function Page() {
         </div>
       </div>
 
-      {/* === MENU LATERAL DESKTOP (Oculto no celular) === */}
+      {/* === MENU LATERAL DESKTOP === */}
       <header className="hidden md:flex bg-slate-950 text-white shrink-0 w-72 flex-col z-20 shadow-2xl relative">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
@@ -185,12 +264,11 @@ export default function Page() {
             </button>
           )}
 
-          {/* SINO DO ADMIN NO DESKTOP */}
           {isAdmin && (
             <div className="pt-4 mt-4 border-t border-slate-800">
                <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-black rounded-xl transition-all border border-amber-500/30">
-                 <BellRing className="w-5 h-5 animate-pulse" />
-                 <span className="font-bold text-sm">Ativar Alertas</span>
+                 <BellRing className="w-5 h-5" />
+                 <span className="font-bold text-sm">Forçar PWA</span>
                </button>
             </div>
           )}
