@@ -9,7 +9,7 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { TeamModule } from '@/components/team-module';
-import { ScheduleModule } from '@/components/schedule-module'; // NOVO MÓDULO AQUI!
+import { ScheduleModule } from '@/components/schedule-module';
 import { Droplets, ClipboardList, UserPlus, ShieldCheck, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -121,7 +121,14 @@ export default function Page() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('PWA Error', err));
     }
+    
+    // MÁGICA DE TELETRANSPORTE: Permite que outros módulos troquem a aba
+    const handleJump = (e: any) => setActiveTab(e.detail);
+    window.addEventListener('jumpToTab', handleJump);
+    
     setIsLoaded(true);
+    
+    return () => window.removeEventListener('jumpToTab', handleJump);
   }, []);
 
   if (!isLoaded) return null;
@@ -191,7 +198,6 @@ export default function Page() {
       
       {isAdmin && <GlobalNotifier />}
 
-      {/* === HEADER MOBILE === */}
       <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
           <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
@@ -211,7 +217,6 @@ export default function Page() {
         </div>
       </div>
 
-      {/* === MENU LATERAL DESKTOP === */}
       <header className="hidden md:flex bg-slate-950 text-white shrink-0 w-72 flex-col z-20 shadow-2xl relative">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
@@ -254,7 +259,6 @@ export default function Page() {
             </button>
           )}
 
-          {/* NOVO MENU GRADE DE HORÁRIOS: Agora visível para Staff (Professores + Admin) */}
           {isStaff && (
             <button onClick={() => setActiveTab('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <CalendarDays className="w-5 h-5" />
@@ -280,7 +284,6 @@ export default function Page() {
         </div>
       </header>
 
-      {/* === MENU MOBILE FOOTER === */}
       <div className="md:hidden flex items-center justify-between px-2 py-3 bg-slate-950 border-t border-slate-900 z-50 shrink-0 overflow-x-auto custom-scrollbar">
         <button onClick={() => setActiveTab('registration')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
           <UserPlus className="w-4 h-4" />
@@ -290,7 +293,6 @@ export default function Page() {
           <Droplets className="w-4 h-4" />
           <span className="text-[9px] font-bold tracking-wide mt-1">Natação</span>
         </button>
-        
         {isStaff && (
           <button onClick={() => setActiveTab('cleaning')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <ClipboardList className="w-4 h-4" />
@@ -309,8 +311,6 @@ export default function Page() {
             <span className="text-[9px] font-bold tracking-wide mt-1">Equipe</span>
           </button>
         )}
-        
-        {/* NOVO MENU MOBILE DA GRADE: Agora visível para Staff (Professores + Admin) */}
         {isStaff && (
           <button onClick={() => setActiveTab('schedule')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <CalendarDays className="w-4 h-4" />
@@ -319,15 +319,12 @@ export default function Page() {
         )}
       </div>
 
-      {/* === ÁREA CENTRAL === */}
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'registration' && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
         {activeTab === 'swimming' && <SwimmingModule />}
         {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
         {activeTab === 'team' && isAdmin && <TeamModule />}
-        
-        {/* NOVA TELA AQUI: Renderiza para Professores e Admin */}
         {activeTab === 'schedule' && isStaff && <ScheduleModule />}
       </main>
     </div>
