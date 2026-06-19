@@ -73,9 +73,16 @@ export function ScheduleModule() {
   };
 
   const loadTeachers = async () => {
-    const { data } = await supabase.from('app_users').select('name').in('role', ['teacher', 'admin']);
+    // Busca na tabela app_users apenas quem tem a tag "teacher"
+    const { data, error } = await supabase.from('app_users').select('*').eq('role', 'teacher');
+    
+    if (error) {
+      console.error("Erro ao carregar professores:", error);
+    }
+
     if (data) {
-      const uniqueNames = Array.from(new Set(data.map(u => u.name))).sort();
+      // Pega o nome de usuário (já que leticia e rony estão gravados nessa coluna)
+      const uniqueNames = Array.from(new Set(data.map(u => u.name || u.username || u.full_name).filter(Boolean))).sort() as string[];
       setTeachersList(uniqueNames);
     }
   };
