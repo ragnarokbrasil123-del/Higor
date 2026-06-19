@@ -13,59 +13,80 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
 }
 
-// === MODELOS DE AVALIAÇÃO OFICIAIS ===
+// === MODELOS DE AVALIAÇÃO OFICIAIS 100% ATUALIZADOS ===
 const EVALUATION_CRITERIA: Record<string, { id: string; label: string }[]> = {
   yellow: [
-    { id: 'y1', label: '1. Adaptação poli sensorial: Colocar o rosto na água, executa a respiração pela boca ou nariz ou os dois.' },
-    { id: 'y2', label: '2. A criança deve ser capaz de flutuar com apoio de um adulto ou de um material de flutuação, mantendo o corpo na horizontal.' },
-    { id: 'y3', label: '3. Realizar bolinhas na água.' },
-    { id: 'y4', label: '4. Mergulhar a cabeça na água por alguns segundos.' },
-    { id: 'y5', label: '5. Deslocamento de 3 a 5 metros com apoio.' }
+    { id: 'y1', label: '1. Adaptação poli sensorial: A colocar o rosto na água, executa a respiração pela boca ou nariz ou os dois.' },
+    { id: 'y2', label: '2. A criança deve ser capaz de flutuar com apoio de um adulto ou de um objeto flutuante.' },
+    { id: 'y3', label: '3. Chutar com os pés enquanto está segurando na borda da piscina.' },
+    { id: 'y4', label: '4. A criança deve ser capaz de realizar movimentos básicos de braços e pernas, como movimentos de remo e pedalada.' },
+    { id: 'y5', label: '5. Flutuar sem apoio por 5 segundos.' },
+    { id: 'y6', label: '6. Nadar 2 metros sem apoio.' },
+    { id: 'y7', label: '7. Executar uma virada básica: como a transição de costas para bruços.' },
+    { id: 'y8', label: '8. Flutuar de costas sem apoio.' },
+    { id: 'y9', label: '9. Chutar com os pés sem apoio.' },
+    { id: 'y10', label: '10. Explorar o meio aquático, resgatando objetos submersos com ou sem auxílio.' }
   ],
   orange: [
-    { id: 'o1', label: '1. Controle da respiração, a criança deve ser capaz de realizar de 5 a 10 respirações submerso.' },
-    { id: 'o2', label: '2. Deslocamento na água com apoio.' },
-    { id: 'o3', label: '3. Flutuação de decúbito dorsal (Barriga pra cima) sem o auxílio do macarrão.' },
-    { id: 'o4', label: '4. Flutuação de decúbito ventral (Barriga pra baixo) sem o auxílio do macarrão.' },
-    { id: 'o5', label: '5. Batimento de pernas.' },
-    { id: 'o6', label: '6. Propulsão de braços (Cachorrinho).' },
-    { id: 'o7', label: '7. Salto da borda com e sem auxílio.' },
-    { id: 'o8', label: '8. Sobrevivência (Cair na água e retornar à borda).' }
+    { id: 'o1', label: '1. Flutuação: Capacidade de flutuar sem apoio por 10 segundos.' },
+    { id: 'o2', label: '2. Movimentação: Coordenação de braços e pernas durante natação.' },
+    { id: 'o3', label: '3. Respiração: Técnica de respiração correta durante a natação.' },
+    { id: 'o4', label: '4. Deslocamento: Capacidade de se deslocar por 5 metros sem apoio.' },
+    { id: 'o5', label: '5. Salta da borda e se desloca até a plataforma sem ajuda do professor.' },
+    { id: 'o6', label: '6. Entrada: Capacidade de entrar na água de forma segura.' },
+    { id: 'o7', label: '7. Natação com apoio: capacidade de nadar com apoio por 2 metros.' },
+    { id: 'o8', label: '8. Virada: Capacidade de virar o corpo na água.' },
+    { id: 'o9', label: '9. Mergulho: capacidade de mergulhar até o fundo da piscina.' },
+    { id: 'o10', label: '10. Saída da água: Capacidade de sair da água de forma segura.' }
   ],
   red: [
-    { id: 'r1', label: '1. Posição de deslize: a criança deve ser capaz de deslizar na água com o corpo alinhado e o rosto submerso.' },
-    { id: 'r2', label: '2. Nado Crawl sem respiração lateral.' },
-    { id: 'r3', label: '3. Nado costas: a criança deve ser capaz de nadar de costas de forma mais eficiente, com braçadas e pernadas coordenadas.' },
-    { id: 'r4', label: '4. Salto de borda com retorno à parede.' },
-    { id: 'r5', label: '5. Sustentação na água vertical de 10 a 20s.' },
-    { id: 'r6', label: '6. Deslize (A criança deve ser capaz de deslizar submersa até acabar o fôlego).' },
-    { id: 'r7', label: '7. Nado submerso: conseguir nadar submerso.' },
-    { id: 'r8', label: '8. Virada Simples.' }
+    { id: 'r1', label: '1. Nado Crawl: Posição hidro dinâmica (deslizar na posição ventral).' },
+    { id: 'r2', label: '2. Nado Crawl: Eficiência na movimentação de pernas.' },
+    { id: 'r3', label: '3. Nado Crawl: Eficiência na movimentação de braços.' },
+    { id: 'r4', label: '4. Nado Crawl: Eficiência na respiração unilateral.' },
+    { id: 'r5', label: '5. Nado Crawl: Atravessar a piscina com coordenação e eficiência com movimentos globais.' },
+    { id: 'r6', label: '6. Nado Crawl: Saltar da borda.' },
+    { id: 'r7', label: '7. Nado Costas: Posição hidrodinâmica (deslizar na posição dorsal).' },
+    { id: 'r8', label: '8. Nado Costas: Eficiência na movimentação de pernas.' },
+    { id: 'r9', label: '9. Nado Costas: Eficiência na movimentação de braços.' },
+    { id: 'r10', label: '10. Nado Costas: Coordenção do nado costas.' },
+    { id: 'r11', label: '11. Iniciação Nado Peito: Eficiência no braço do nado peito.' }
   ],
   green: [
-    { id: 'g1', label: '1. Nado Crawl com respiração lateral (No mínimo 12,5m).' },
-    { id: 'g2', label: '2. Nado de costas.' },
-    { id: 'g3', label: '3. Introdução ao nado Peito (pernada de peito de borda e com a prancha).' },
-    { id: 'g4', label: '4. Sustentação vertical 30 a 60s.' },
-    { id: 'g5', label: '5. Introdução nado submerso.' },
-    { id: 'g6', label: '6. Virada simples crawl e costas.' },
-    { id: 'g7', label: '7. Mergulho de borda (de joelho).' }
+    { id: 'g1', label: '1. Crawl e Costas: com técnica aperfeiçoada.' },
+    { id: 'g2', label: '2. Respiração: crawl 2x1 e 3x1 / Costas Inspira pela boca e expira pelo nariz.' },
+    { id: 'g3', label: '3. Saídas: Crawl e Costas com técnica e mantém o nado até a borda da piscina.' },
+    { id: 'g4', label: '4. Salto: Executa a saída da borda ou do bloco e pressegue com o nado até a borda final da piscina.' },
+    { id: 'g5', label: '5. Nado peito: pernas e braços (tecnica rudimentar).' },
+    { id: 'g6', label: '6. Nado peito: submerso 12,5 a 15 metros.' },
+    { id: 'g7', label: '7. Nado peito: pernas e braços com Coordenação e propulsão (rudimentar).' },
+    { id: 'g8', label: '8. Borboleta: Executa a perna do nado (rudimentar).' },
+    { id: 'g9', label: '9. Crawl e Costas: 25 metros mantendo a técnica aperfeiçoada.' },
+    { id: 'g10', label: '10. Peito: 12,5 metros, nado completo mantendo a técnica rudimentar.' }
   ],
   lightBlue: [
-    { id: 'lb1', label: '1. Aperfeiçoamento do Nado Crawl e costas.' },
-    { id: 'lb2', label: '2. Nado peito: A criança deve ser capaz de executar o nado peito (Mínimo 12,5m).' },
-    { id: 'lb3', label: '3. Virada simples do Peito.' },
-    { id: 'lb4', label: '4. Virada Olímpica do Crawl e Costas.' },
-    { id: 'lb5', label: '5. Mergulho da borda na posição em pé.' },
-    { id: 'lb6', label: '6. Ondulação: introdução da ondulação do nado borboleta com a prancha.' },
-    { id: 'lb7', label: '7. Sustentação de 60s a 2 minutos.' }
+    { id: 'lb1', label: '1. Executa nado peito com saída Filipina.' },
+    { id: 'lb2', label: '2. Executa braçada do nado borboleta com variações de pernas.' },
+    { id: 'lb3', label: '3. Executa o nado borboleta rudimentar.' },
+    { id: 'lb4', label: '4. 15 metros de ondulação dorsal.' },
+    { id: 'lb5', label: '5. 15 metros nado peito com saída Filipina.' },
+    { id: 'lb6', label: '6. 12,5 metros de borboleta rudimentar.' },
+    { id: 'lb7', label: '7. Executa o medley rudimentar.' },
+    { id: 'lb8', label: '8. Executa a virada olímpica rudmentar nado crawl.' },
+    { id: 'lb9', label: '9. Sustentação com Palmateios na posição ventral.' },
+    { id: 'lb10', label: '10. 15 metros de ondulação submersa frontal.' }
   ],
   darkBlue: [
-    { id: 'db1', label: '1. Nado Borboleta: A criança deve ser capaz de executar o nado borboleta (Mínimo de 12,5m).' },
-    { id: 'db2', label: '2. Aperfeiçoamento do Nado Peito.' },
-    { id: 'db3', label: '3. Resistência Nado Crawl e Costas (Mínimo de 50 metros cada nado).' },
-    { id: 'db4', label: '4. Virada olímpica em todos os nados.' },
-    { id: 'db5', label: '5. Mergulho do Bloco.' }
+    { id: 'db1', label: '1. Nado crawl e costas 100 metros, 50 metros nado peito.' },
+    { id: 'db2', label: '2. Nado borboleta 25 metros.' },
+    { id: 'db3', label: '3. Salta da plataforma na posição correta (sem exigencia de perfeição).' },
+    { id: 'db4', label: '4. Saída e viradas dos 4 nados.' },
+    { id: 'db5', label: '5. Respiração técnica dos 4 nados.' },
+    { id: 'db6', label: '6. Os 4 nados executados com tecnicas aperfeiçoadas.' },
+    { id: 'db7', label: '7. Executa o Medley (rudimentar).' },
+    { id: 'db8', label: '8. Nadar 12,5 metros em apneia.' },
+    { id: 'db9', label: '9. Preparado para nadar em piscina semi olímpica e olímpica.' },
+    { id: 'db10', label: '10. Nadar 250 metros crawl em 7 minutos.' }
   ],
   black: [
     { id: 'bk1', label: '1. Melhora de Tempo (Crawl, Costas, Peito e Borboleta).' },
@@ -137,24 +158,22 @@ export function SwimmingModule() {
 
     // 3. Aplica a Trava de Professor (Se não for Admin, só vê os seus)
     if (isTeacher && teacherName) {
-      // Pega as turmas desse professor
       const { data: myClasses } = await supabase.from('classes').select('id').eq('teacher_name', teacherName);
       if (myClasses && myClasses.length > 0) {
         const classIds = myClasses.map(c => c.id);
-        // Pega os alunos vinculados nessas turmas
         const { data: mySlots } = await supabase.from('class_slots').select('student_id').in('class_id', classIds);
         
         if (mySlots) {
           const myStudentIds = mySlots.map(s => s.student_id).filter(Boolean) as string[];
           setAllowedStudentIds(myStudentIds);
         } else {
-          setAllowedStudentIds([]); // Professor não tem nenhum aluno ainda
+          setAllowedStudentIds([]); 
         }
       } else {
-        setAllowedStudentIds([]); // Professor não tem nenhuma turma
+        setAllowedStudentIds([]); 
       }
     } else {
-      setAllowedStudentIds('all'); // Admin ou outro perfil vê todos
+      setAllowedStudentIds('all'); 
     }
 
     if (stdData) setStudents(stdData);
@@ -164,13 +183,9 @@ export function SwimmingModule() {
 
   const getFilteredStudents = () => {
     return students.filter(s => {
-      // Regra 1: Tem que estar na lista de permissões do Professor
       if (allowedStudentIds !== 'all' && !allowedStudentIds.includes(s.id)) return false;
-      // Regra 2: Pesquisa por nome
       if (searchQuery && !s.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      // Regra 3: Filtro de Touca
       if (filterLevel !== 'all' && s.level !== filterLevel) return false;
-      
       return true;
     });
   };
@@ -217,7 +232,7 @@ export function SwimmingModule() {
     }
 
     setIsEvaluating(false);
-    fetchData(); // Recarrega tudo
+    fetchData(); 
   };
 
   const deleteEvaluation = async (id: string) => {
@@ -226,16 +241,13 @@ export function SwimmingModule() {
     fetchData();
   };
 
-  // === GERAÇÃO DO BOLETIM PDF COM O NOVO DESIGN ===
   const exportPDF = (evaluation: any, student: Student) => {
     const doc = new jsPDF();
     const isApproved = evaluation.approved;
     
-    // Fundo
     doc.setFillColor(248, 250, 252);
     doc.rect(0, 0, 210, 297, 'F');
     
-    // Cabeçalho Lindo
     doc.setFillColor(30, 41, 59);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
@@ -246,7 +258,6 @@ export function SwimmingModule() {
     doc.setFontSize(12);
     doc.text("Boletim de Avaliação Trimestral - Natação", 105, 30, { align: "center" });
 
-    // Informações do Aluno
     doc.setTextColor(30, 41, 59);
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
@@ -256,52 +267,48 @@ export function SwimmingModule() {
     doc.text(`Nível Avaliado: Touca ${levels[evaluation.level as CapLevel]?.name || 'Avaliada'}`, 20, 65);
     doc.text(`Data: ${new Date(evaluation.date).toLocaleDateString('pt-BR')}`, 20, 72);
 
-    // Título das Notas
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.text("Critérios Avaliados:", 20, 90);
     
-    // Desenhar Tabela Manual para ficar mais chique
     let y = 100;
     const criteriaList = EVALUATION_CRITERIA[evaluation.level as string] || [];
     
     criteriaList.forEach((crit) => {
       const status = evaluation.scores[crit.id] || 'pending';
-      const statusText = status === 'passed' ? 'Aprovado' : status === 'failed' ? 'Praticar' : 'Pendente';
-      
-      // Quebra linha se o critério for grande
       const splitText = doc.splitTextToSize(crit.label, 130);
       
-      // Retângulo do Critério
       doc.setDrawColor(226, 232, 240);
       doc.setFillColor(255, 255, 255);
       doc.rect(20, y - 5, 170, (splitText.length * 6) + 6, 'FD');
       
-      // Texto
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
       doc.setTextColor(71, 85, 105);
       doc.text(splitText, 25, y);
       
-      // Badge de Status
       doc.setFont("helvetica", "bold");
       if (status === 'passed') {
-        doc.setTextColor(22, 163, 74); // Verde
+        doc.setTextColor(22, 163, 74); 
         doc.text("APROVADO", 160, y);
       } else if (status === 'failed') {
-        doc.setTextColor(220, 38, 38); // Vermelho
+        doc.setTextColor(220, 38, 38); 
         doc.text("PRATICAR", 160, y);
       } else {
-        doc.setTextColor(148, 163, 184); // Cinza
+        doc.setTextColor(148, 163, 184); 
         doc.text("PENDENTE", 160, y);
       }
       
       y += (splitText.length * 6) + 10;
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
     });
 
-    // Observações
     if (evaluation.notes) {
       y += 5;
+      if (y > 270) { doc.addPage(); y = 20; }
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 41, 59);
       doc.text("Observações do Professor:", 20, y);
@@ -314,8 +321,8 @@ export function SwimmingModule() {
       y += (splitNotes.length * 6);
     }
 
-    // Resultado Final - Grandão
     y = Math.max(y + 15, 250);
+    if (y > 270) { doc.addPage(); y = 20; }
     doc.setDrawColor(isApproved ? 34 : 220, isApproved ? 197 : 38, isApproved ? 94 : 38);
     doc.setFillColor(isApproved ? 240 : 254, isApproved ? 253 : 226, isApproved ? 244 : 226);
     doc.rect(20, y, 170, 25, 'FD');
