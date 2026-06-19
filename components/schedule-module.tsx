@@ -43,11 +43,7 @@ export function ScheduleModule() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  
-  // Dicionário para traduzir o ID do aluno para o Nome real dele
   const [studentsMap, setStudentsMap] = useState<Record<string, string>>({});
-  
-  // Controle do menu inteligente de professores
   const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
   const [showFullList, setShowFullList] = useState(false);
 
@@ -74,7 +70,6 @@ export function ScheduleModule() {
 
     let query = supabase.from('classes').select('*').order('start_time', { ascending: true });
     
-    // Filtro Mágico de Segurança: Se não for Admin, mostra só as aulas dele(a) mesmo!
     if (u && u.role !== 'admin') {
       const tName = u.name || u.username;
       if (tName) {
@@ -84,15 +79,11 @@ export function ScheduleModule() {
 
     const { data: clsData } = await query;
     const { data: slotData } = await supabase.from('class_slots').select('*');
-    
-    // Busca os nomes de todos os alunos do Clube para renderizar na grade
     const { data: stuData } = await supabase.from('students').select('id, name');
+    
     if (stuData) {
       const map: Record<string, string> = {};
-      // CORREÇÃO: Agora puxamos o nome exatamente como foi cadastrado, sem cortar!
-      stuData.forEach(s => {
-        map[s.id] = s.name; 
-      });
+      stuData.forEach(s => { map[s.id] = s.name; });
       setStudentsMap(map);
     }
 
@@ -177,6 +168,17 @@ export function ScheduleModule() {
     ? teachersList 
     : teachersList.filter(t => t.toLowerCase().includes(form.teacher_name.toLowerCase()));
 
+  // MÁGICA DO CLIQUE: Teletransporte para a Avaliação
+  const handleStudentClick = (studentId: string | null) => {
+    if (!studentId) return;
+    
+    // 1. Salva o ID do aluno no bolso
+    localStorage.setItem('olympus_jump_eval', studentId);
+    
+    // 2. Avisa o Page para pular de aba
+    window.dispatchEvent(new CustomEvent('jumpToTab', { detail: 'swimming' }));
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
       
@@ -238,9 +240,16 @@ export function ScheduleModule() {
                             const studentName = slot.student_id ? studentsMap[slot.student_id] : null;
 
                             return (
-                              <div key={slot.id} className={cn("px-3 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 border transition-all", colorObj?.colorCode || 'bg-slate-200 text-slate-700 border-transparent', studentName ? 'border-white/20' : 'opacity-70 border-dashed')}>
-                                <div className={cn("w-2 h-2 rounded-full shrink-0", studentName ? "bg-white" : "bg-white/50 animate-pulse")}></div>
-                                {/* CORREÇÃO: Adicionada a quebra de linha inteligente para não vazar em nenhuma tela */}
+                              <div 
+                                key={slot.id} 
+                                onClick={() => handleStudentClick(slot.student_id)}
+                                className={cn(
+                                  "px-3 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 border transition-all", 
+                                  colorObj?.colorCode || 'bg-slate-200 text-slate-700 border-transparent', 
+                                  studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95 hover:shadow-md' : 'opacity-70 border-dashed cursor-default'
+                                )}
+                              >
+                                <div className={cn("w-2 h-2 rounded-full shrink-0", studentName ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "bg-white/50 animate-pulse")}></div>
                                 <span className="flex-1 break-words leading-tight">
                                   {studentName ? studentName : `${slot.cap_color} (Vazia)`}
                                 </span>
