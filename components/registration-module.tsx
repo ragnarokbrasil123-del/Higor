@@ -44,13 +44,14 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   }, []);
 
   const fetchScheduleData = async () => {
+    // Agora puxamos tudo e filtramos internamente para evitar que o banco de dados esconda as vagas vazias!
     const { data: clsData } = await supabase.from('classes').select('*').order('start_time');
-    // Pega APENAS as vagas que não tem dono
-    const { data: slotData } = await supabase.from('class_slots').select('*').is('student_id', null);
+    const { data: slotData } = await supabase.from('class_slots').select('*');
     
     if (clsData && slotData) {
       setClasses(clsData);
-      setAvailableSlots(slotData);
+      // Pega APENAS as vagas que não tem aluno preenchido
+      setAvailableSlots(slotData.filter(s => !s.student_id || s.student_id === ''));
     }
   };
 
@@ -223,22 +224,22 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   {/* NOVO CAMPO INTELIGENTE - GRADE DE HORÁRIOS */}
                   <div className="space-y-1 md:space-y-2 md:col-span-2">
                     <label className="text-xs md:text-sm font-bold text-emerald-600 flex items-center gap-2 uppercase tracking-wider">
-                      <CalendarCheck className="w-4 h-4" /> Alocar na Turma / Horário
+                      <CalendarCheck className="w-4 h-4" /> Escolha o Horário (Com base nas vagas disponíveis)
                     </label>
                     <select value={selectedSlotId} onChange={(e) => setSelectedSlotId(e.target.value)} className="w-full px-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl font-bold text-sm md:text-base text-emerald-900 appearance-none focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all">
-                      <option value="">Deixar sem turma (Lista de Espera)</option>
+                      <option value="">Deixar sem turma por enquanto (Lista de Espera)</option>
                       {classesWithEmptySlots.map(c => {
                         // Pega uma vaga vazia dessa turma específica
                         const slot = emptySlotsForColor.find(s => s.class_id === c.id);
                         return (
                           <option key={c.id} value={slot?.id}>
-                            {c.day_of_week} • {c.start_time.slice(0,5)} às {c.end_time.slice(0,5)} (Prof: {c.teacher_name})
+                            ✅ {c.day_of_week} • {c.start_time.slice(0,5)} às {c.end_time.slice(0,5)} (Prof: {c.teacher_name})
                           </option>
                         )
                       })}
                     </select>
                     {classesWithEmptySlots.length === 0 && (
-                      <p className="text-xs font-bold text-amber-600 mt-1">⚠️ Não há horários cadastrados com vagas livres para esta cor de touca.</p>
+                      <p className="text-xs font-bold text-amber-600 mt-1">⚠️ Crie mais turmas na "Grade de Horários", pois não há vagas sobrando para essa cor de touca.</p>
                     )}
                   </div>
 
