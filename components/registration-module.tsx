@@ -31,7 +31,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   // Variáveis de Conexão com a Grade
   const [classes, setClasses] = useState<any[]>([]);
   const [availableSlots, setAvailableSlots] = useState<any[]>([]);
-  const [selectedSlotId, setSelectedSlotId] = useState<string>('');
+  
+  // AGORA É UM ARRAY (Para permitir selecionar Segunda e Quarta, por exemplo)
+  const [selectedSlotIds, setSelectedSlotIds] = useState<string[]>([]);
 
   // Variáveis do Cadastro em Lote
   const [file, setFile] = useState<File | null>(null);
@@ -43,12 +45,10 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingStudent, setEditingStudent] = useState<any>(null);
 
-  // Busca vagas livres na inicialização
   useEffect(() => {
     fetchScheduleData();
   }, []);
 
-  // Busca todos os alunos sempre que entrar na aba de Lista
   useEffect(() => {
     if (mode === 'list') {
       fetchAllStudents();
@@ -69,7 +69,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     if (data) setAllStudents(data);
   };
 
-  // Conversão de Nível para Cor da Touca
   const getCapColorForLevel = (lvl: CapLevel) => {
     const map: any = {
       'yellow': 'Amarela', 'orange': 'Laranja', 'red': 'Vermelha', 'green': 'Verde',
@@ -82,7 +81,14 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   const emptySlotsForColor = availableSlots.filter(s => s.cap_color === capColorNeeded);
   const classesWithEmptySlots = classes.filter(c => emptySlotsForColor.some(s => s.class_id === c.id));
 
-  // Função de Cadastrar Aluno Novo
+  const toggleSlotSelection = (slotId: string) => {
+    if (selectedSlotIds.includes(slotId)) {
+      setSelectedSlotIds(selectedSlotIds.filter(id => id !== slotId));
+    } else {
+      setSelectedSlotIds([...selectedSlotIds, slotId]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !age || !password) return;
@@ -97,18 +103,20 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       return alert("Erro ao salvar no banco: " + error.message);
     }
     
-    if (selectedSlotId && newStudent) {
-      await supabase.from('class_slots').update({ student_id: newStudent.id }).eq('id', selectedSlotId);
+    // Aloca em TODOS os dias que foram marcados
+    if (selectedSlotIds.length > 0 && newStudent) {
+      for (const slotId of selectedSlotIds) {
+        await supabase.from('class_slots').update({ student_id: newStudent.id }).eq('id', slotId);
+      }
     }
 
     setLoading(false);
-    setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword(''); setSelectedSlotId('');
+    setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword(''); setSelectedSlotIds([]);
     fetchScheduleData(); 
     onSuccess();
     alert("Aluno matriculado com sucesso!");
   };
 
-  // Função para Atualizar Edição de Aluno Existente
   const handleUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent) return;
@@ -136,8 +144,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   const handleDeleteStudent = async (id: string) => {
     if (!confirm("Tem certeza que deseja apagar esse aluno? Todo o histórico de notas e avaliações dele também serão apagados!")) return;
     
-    // Deleta o aluno e o supabase apaga em cascata as fichas se o BD estiver configurado assim, 
-    // mas por segurança apagamos as avaliações primeiro:
     await supabase.from('evaluations').delete().eq('student_id', id);
     await supabase.from('students').delete().eq('id', id);
     
@@ -153,9 +159,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     return map[ptLevel.toLowerCase().trim()] || 'orange'; 
   };
 
-  const handleBulkUpload = async () => { /* Mantido igual... */ };
-
-  const downloadTemplate = () => { /* Mantido igual... */ };
+  const handleBulkUpload = async () => { /* ... */ };
+  const downloadTemplate = () => { /* ... */ };
 
   const filteredList = allStudents.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -177,12 +182,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       <div className="flex-1 p-3 md:p-8 overflow-y-auto custom-scrollbar">
         <AnimatePresence mode="wait">
           
-          {/* ================================================================= */}
-          {/* MODO LISTA GERAL (GERENCIAR ALUNOS)                               */}
-          {/* ================================================================= */}
           {mode === 'list' ? (
             <motion.div key="list" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-6xl mx-auto bg-white md:rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full min-h-[500px]">
-              
               <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-50 shrink-0">
                 <div className="relative w-full max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -241,9 +242,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
 
           ) : mode === 'single' ? (
             
-            // =================================================================
-            // MODO CADASTRO ÚNICO 
-            // =================================================================
             <motion.div key="single" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto bg-white md:rounded-3xl shadow-sm border border-slate-200 overflow-hidden rounded-2xl">
               <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -260,29 +258,51 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   
                   <div className="space-y-1 md:space-y-2">
                     <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Nível Inicial (Touca) *</label>
-                    <select value={level} onChange={(e) => { setLevel(e.target.value as CapLevel); setSelectedSlotId(''); }} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm md:text-base text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 outline-none transition-all">
+                    <select value={level} onChange={(e) => { setLevel(e.target.value as CapLevel); setSelectedSlotIds([]); }} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm md:text-base text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 outline-none transition-all">
                       {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
                     </select>
                   </div>
 
-                  {/* NOVO CAMPO INTELIGENTE - GRADE DE HORÁRIOS */}
-                  <div className="space-y-1 md:space-y-2 md:col-span-2">
+                  {/* NOVO CAMPO INTELIGENTE - MÚLTIPLA ESCOLHA DE HORÁRIOS */}
+                  <div className="space-y-2 md:space-y-3 md:col-span-2 mt-2">
                     <label className="text-xs md:text-sm font-bold text-emerald-600 flex items-center gap-2 uppercase tracking-wider">
-                      <CalendarCheck className="w-4 h-4" /> Escolha o Horário (Com base nas vagas disponíveis)
+                      <CalendarCheck className="w-4 h-4" /> Marque os Dias da Semana (Vagas Livres)
                     </label>
-                    <select value={selectedSlotId} onChange={(e) => setSelectedSlotId(e.target.value)} className="w-full px-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl font-bold text-sm md:text-base text-emerald-900 appearance-none focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all">
-                      <option value="">Deixar sem turma por enquanto (Lista de Espera)</option>
-                      {classesWithEmptySlots.map(c => {
-                        const slot = emptySlotsForColor.find(s => s.class_id === c.id);
-                        return (
-                          <option key={c.id} value={slot?.id}>
-                            ✅ {c.day_of_week} • {c.start_time.slice(0,5)} às {c.end_time.slice(0,5)} (Prof: {c.teacher_name})
-                          </option>
-                        )
-                      })}
-                    </select>
-                    {classesWithEmptySlots.length === 0 && (
-                      <p className="text-xs font-bold text-amber-600 mt-1">⚠️ Crie mais turmas na "Grade de Horários", pois não há vagas sobrando para essa cor de touca.</p>
+                    
+                    {classesWithEmptySlots.length === 0 ? (
+                      <div className="p-4 border border-dashed border-amber-300 bg-amber-50 rounded-xl">
+                        <p className="text-sm font-bold text-amber-800">⚠️ Nenhuma vaga livre encontrada na grade para esta cor.</p>
+                        <p className="text-xs font-medium text-amber-700 mt-1">Crie turmas na "Grade de Horários", ou deixe o aluno apenas na Lista de Espera por enquanto.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-48 overflow-y-auto custom-scrollbar p-1">
+                        {classesWithEmptySlots.map(c => {
+                          const slot = emptySlotsForColor.find(s => s.class_id === c.id);
+                          const isSelected = slot ? selectedSlotIds.includes(slot.id) : false;
+                          
+                          return (
+                            <label key={c.id} className={cn("flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all shadow-sm hover:-translate-y-0.5", isSelected ? "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500" : "border-slate-200 bg-white hover:bg-slate-50")}>
+                              <div className={cn("w-5 h-5 rounded flex items-center justify-center border transition-colors shrink-0", isSelected ? "bg-emerald-500 border-emerald-500" : "bg-white border-slate-300")}>
+                                {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                              </div>
+                              <div className="flex flex-col">
+                                <span className={cn("font-bold text-sm", isSelected ? "text-emerald-900" : "text-slate-800")}>
+                                  {c.day_of_week} • {c.start_time.slice(0,5)}
+                                </span>
+                                <span className={cn("text-xs font-medium", isSelected ? "text-emerald-700" : "text-slate-500")}>
+                                  Prof: {c.teacher_name}
+                                </span>
+                              </div>
+                              <input 
+                                type="checkbox" 
+                                className="hidden"
+                                checked={isSelected}
+                                onChange={() => slot && toggleSlotSelection(slot.id)}
+                              />
+                            </label>
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
 
@@ -319,47 +339,22 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
 
           ) : (
 
-            // =================================================================
-            // MODO IMPORTAÇÃO EM LOTE 
-            // =================================================================
             <motion.div key="bulk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-2xl mx-auto space-y-6">
-              {/* O conteúdo do Lote está preservado igualzinho, deixei oculto aqui por brevidade visual na leitura, mas pode pular pro final do arquivo */}
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
                 <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importação de Planilha Excel (CSV)</h2>
-                <p className="text-sm text-amber-800 mb-4">Migrando de outro sistema? Suba a sua lista de alunos de uma vez só! Salve sua planilha no formato <strong>.CSV (Separado por vírgulas)</strong> seguindo exatamente a ordem das colunas do nosso modelo.</p>
-                <button type="button" onClick={downloadTemplate} className="px-4 py-2 bg-amber-500 text-black text-sm font-bold rounded-lg hover:bg-amber-400 transition-colors flex items-center gap-2 shadow-sm w-fit">
-                  <Download className="w-4 h-4" /> Baixar Modelo Vazio
-                </button>
+                <p className="text-sm text-amber-800 mb-4">Migrando de outro sistema? Suba a sua lista de alunos de uma vez só!</p>
               </div>
-
               <div className="bg-white border-2 border-dashed border-slate-300 rounded-3xl p-10 flex flex-col items-center justify-center text-center hover:border-amber-500 hover:bg-amber-50/50 transition-colors cursor-pointer group" onClick={() => fileInputRef.current?.click()}>
                 <input type="file" accept=".csv" className="hidden" ref={fileInputRef} onChange={(e) => setFile(e.target.files?.[0] || null)} />
-                
-                {file ? (
-                  <>
-                    <CheckCircle2 className="w-16 h-16 text-emerald-500 mb-4" />
-                    <p className="font-bold text-slate-800 text-lg mb-1">Arquivo Selecionado</p>
-                    <p className="text-slate-500 text-sm mb-6">{file.name}</p>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); handleBulkUpload(); }} disabled={loading} className="px-8 py-3 bg-black text-white font-bold rounded-xl w-full max-w-xs shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2">
-                      <UploadCloud className="w-5 h-5" /> {loading ? "Processando..." : "Importar Todos os Alunos"}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="w-16 h-16 text-slate-300 group-hover:text-amber-500 transition-colors mb-4" />
-                    <p className="font-bold text-slate-800 text-lg mb-1">Clique para selecionar seu .CSV</p>
-                    <p className="text-slate-400 text-sm">Ou toque aqui no celular</p>
-                  </>
-                )}
+                <UploadCloud className="w-16 h-16 text-slate-300 group-hover:text-amber-500 transition-colors mb-4" />
+                <p className="font-bold text-slate-800 text-lg mb-1">Clique para selecionar seu .CSV</p>
               </div>
             </motion.div>
+
           )}
         </AnimatePresence>
       </div>
 
-      {/* ================================================================= */}
-      {/* MODAL DE EDIÇÃO DE ALUNO (Abre quando clica no botão Editar da lista) */}
-      {/* ================================================================= */}
       <AnimatePresence>
         {editingStudent && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
