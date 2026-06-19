@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertCircle } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertCircle, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -42,6 +42,9 @@ export function ScheduleModule() {
   const [teachersList, setTeachersList] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Controle do menu inteligente de professores
+  const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
 
   const [form, setForm] = useState({
     teacher_name: '',
@@ -70,7 +73,6 @@ export function ScheduleModule() {
   };
 
   const loadTeachers = async () => {
-    // Busca na tabela app_users todo mundo que é professor (ou admin que queira dar aula)
     const { data } = await supabase.from('app_users').select('name').in('role', ['teacher', 'admin']);
     if (data) {
       const uniqueNames = Array.from(new Set(data.map(u => u.name))).sort();
@@ -88,9 +90,7 @@ export function ScheduleModule() {
 
     setIsSubmitting(true);
     try {
-      
       for (const day of form.days_of_week) {
-        
         const { data: newClass, error: classErr } = await supabase.from('classes').insert([{
           teacher_name: form.teacher_name.trim(),
           day_of_week: day,
@@ -98,9 +98,7 @@ export function ScheduleModule() {
           end_time: form.end_time
         }]).select().single();
 
-        if (classErr) {
-          throw new Error("Erro na Tabela Classes: " + classErr.message);
-        }
+        if (classErr) throw new Error("Erro na Tabela Classes: " + classErr.message);
 
         const slotsToInsert = [];
         for (const [color, amount] of Object.entries(form.slots)) {
@@ -111,15 +109,12 @@ export function ScheduleModule() {
 
         if (slotsToInsert.length > 0) {
           const { error: slotsErr } = await supabase.from('class_slots').insert(slotsToInsert);
-          if (slotsErr) {
-            throw new Error("Erro na Tabela Class_Slots: " + slotsErr.message);
-          }
+          if (slotsErr) throw new Error("Erro na Tabela Class_Slots: " + slotsErr.message);
         }
       }
 
       await loadClasses();
       setIsModalOpen(false);
-      
       setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 }});
     } catch (err: any) {
       console.error(err);
@@ -142,6 +137,9 @@ export function ScheduleModule() {
       setForm({ ...form, days_of_week: [...form.days_of_week, day] });
     }
   };
+
+  // Filtra a lista baseada no que o usuário digitou
+  const filteredTeachers = teachersList.filter(t => t.toLowerCase().includes(form.teacher_name.toLowerCase()));
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -194,7 +192,7 @@ export function ScheduleModule() {
                       <div className="space-y-2">
                         <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vagas ({cls.class_slots?.length || 0}):</div>
                         <div className="flex flex-wrap gap-2">
-                          {cls.class_slots?.map((slot, index) => {
+                          {cls.class_slots?.map((slot) => {
                             const colorObj = CAP_COLORS.find(c => c.id === slot.cap_color);
                             return (
                               <div key={slot.id} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1", colorObj?.colorCode || 'bg-slate-200 text-slate-700')}>
@@ -238,22 +236,52 @@ export function ScheduleModule() {
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
                   
                   <div className="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                    <div>
+                    
+                    {/* CAMPO DE PROFESSOR INTELIGENTE */}
+                    <div className="relative">
                       <label className="block text-sm font-bold text-slate-700 mb-2">Nome do Professor</label>
-                      <input 
-                        type="text" 
-                        required 
-                        list="teachersList"
-                        value={form.teacher_name} 
-                        onChange={e => setForm({...form, teacher_name: e.target.value})} 
-                        placeholder="Pesquise ou digite um novo..." 
-                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium" 
-                      />
-                      <datalist id="teachersList">
-                        {teachersList.map((name, idx) => (
-                          <option key={idx} value={name} />
-                        ))}
-                      </datalist>
+                      <div className="relative">
+                        <input 
+                          type="text" 
+                          required 
+                          value={form.teacher_name} 
+                          onChange={e => {
+                            setForm({...form, teacher_name: e.target.value});
+                            setIsTeacherDropdownOpen(true);
+                          }}
+                          onFocus={() => setIsTeacherDropdownOpen(true)}
+                          onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)} // Delay para o clique no menu funcionar
+                          placeholder="Clique para ver a lista ou digite..." 
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium pr-10" 
+                        />
+                        <ChevronDown className="absolute right-3 top-3.5 w-5 h-5 text-slate-400 pointer-events-none" />
+                      </div>
+
+                      {/* Menu Suspenso Fantasma */}
+                      <AnimatePresence>
+                        {isTeacherDropdownOpen && filteredTeachers.length > 0 && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar"
+                          >
+                            {filteredTeachers.map((name, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setForm({...form, teacher_name: name});
+                                  setIsTeacherDropdownOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-3 hover:bg-indigo-50 text-slate-700 font-bold transition-colors border-b border-slate-50 last:border-0"
+                              >
+                                {name}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
                     <div>
