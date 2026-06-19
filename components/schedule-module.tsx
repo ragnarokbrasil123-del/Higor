@@ -89,7 +89,9 @@ export function ScheduleModule() {
           end_time: form.end_time
         }]).select().single();
 
-        if (classErr) throw classErr;
+        if (classErr) {
+          throw new Error("Erro na Tabela Classes: " + classErr.message);
+        }
 
         // 2. Prepara as vagas de acordo com as cores
         const slotsToInsert = [];
@@ -101,7 +103,10 @@ export function ScheduleModule() {
 
         // 3. Insere as vagas
         if (slotsToInsert.length > 0) {
-          await supabase.from('class_slots').insert(slotsToInsert);
+          const { error: slotsErr } = await supabase.from('class_slots').insert(slotsToInsert);
+          if (slotsErr) {
+            throw new Error("Erro na Tabela Class_Slots: " + slotsErr.message);
+          }
         }
       }
 
@@ -110,9 +115,9 @@ export function ScheduleModule() {
       
       // Reset
       setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 }});
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Erro ao criar turma.");
+      alert("🚨 ALERTA DO DETETIVE: " + (err.message || "Erro desconhecido ao criar turma"));
     } finally {
       setIsSubmitting(false);
     }
