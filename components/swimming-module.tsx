@@ -6,7 +6,7 @@ import { Droplets, Search, Check, Award, ChevronRight, Filter, Trash2, MessageCi
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { jsPDF } from 'jspdf';
-import { Student, CapLevel, EvalStatus, Evaluation, levels } from '@/types';
+import { Student, CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -14,7 +14,6 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 // === MODELOS DE AVALIAÇÃO OFICIAIS ===
-// CORREÇÃO AQUI: Mudamos "CapLevel" para "string" para o Vercel parar de travar a Touca Prata!
 const EVALUATION_CRITERIA: Record<string, { id: string; label: string }[]> = {
   yellow: [
     { id: 'y1', label: '1. Adaptação poli sensorial: Colocar o rosto na água, executa a respiração pela boca ou nariz ou os dois.' },
@@ -85,7 +84,7 @@ const EVALUATION_CRITERIA: Record<string, { id: string; label: string }[]> = {
 
 export function SwimmingModule() {
   const [students, setStudents] = useState<Student[]>([]);
-  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
+  const [evaluations, setEvaluations] = useState<any[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLevel, setFilterLevel] = useState<CapLevel | 'all'>('all');
@@ -96,7 +95,7 @@ export function SwimmingModule() {
 
   // Estados do Formulário de Avaliação
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [evalScores, setEvalScores] = useState<Record<string, EvalStatus>>({});
+  const [evalScores, setEvalScores] = useState<Record<string, any>>({});
   const [evalNotes, setEvalNotes] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -178,7 +177,7 @@ export function SwimmingModule() {
 
   const startEvaluation = (student: Student) => {
     setIsEvaluating(true);
-    const initialScores: Record<string, EvalStatus> = {};
+    const initialScores: Record<string, any> = {};
     EVALUATION_CRITERIA[student.level as string]?.forEach(crit => {
       initialScores[crit.id] = 'pending';
     });
@@ -228,7 +227,7 @@ export function SwimmingModule() {
   };
 
   // === GERAÇÃO DO BOLETIM PDF COM O NOVO DESIGN ===
-  const exportPDF = (evaluation: Evaluation, student: Student) => {
+  const exportPDF = (evaluation: any, student: Student) => {
     const doc = new jsPDF();
     const isApproved = evaluation.approved;
     
