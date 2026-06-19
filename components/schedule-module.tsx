@@ -57,7 +57,8 @@ export function ScheduleModule() {
   });
 
   useEffect(() => {
-    const userStr = localStorage.getItem('olympus_user');
+    // CORRIGIDO: Chave correta do seu aplicativo
+    const userStr = localStorage.getItem('olimpo_session');
     if (userStr) {
       setCurrentUser(JSON.parse(userStr));
     }
@@ -66,8 +67,10 @@ export function ScheduleModule() {
   }, []);
 
   const loadClasses = async () => {
-    const userStr = localStorage.getItem('olympus_user');
-    const u = userStr ? JSON.parse(userStr) : null;
+    // CORRIGIDO: Lendo os dados com a chave exata
+    const userStr = localStorage.getItem('olimpo_session');
+    const session = userStr ? JSON.parse(userStr) : null;
+    const u = session?.data; // Onde os nomes realmente ficam guardados
 
     // Traz todas as aulas do banco de dados primeiro
     const { data: clsData } = await supabase.from('classes').select('*').order('start_time', { ascending: true });
@@ -76,8 +79,8 @@ export function ScheduleModule() {
     if (clsData) {
       let finalClasses = clsData;
 
-      // Filtro Mágico BLINDADO: Ignora maiúsculas, minúsculas e espaços.
-      if (u && u.role !== 'admin') {
+      // Filtro Mágico BLINDADO: Se for professor, esconde as aulas dos outros!
+      if (session && session.role !== 'admin' && u) {
         const myNames = [u.name, u.username, u.full_name]
           .filter(Boolean)
           .map(n => String(n).trim().toLowerCase());
@@ -252,8 +255,14 @@ export function ScheduleModule() {
           {classes.length === 0 && (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
               <LayoutGrid className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-700">Nenhum horário criado</h3>
-              <p className="text-slate-500 mt-2">Clique no botão acima para montar a sua primeira turma.</p>
+              <h3 className="text-xl font-bold text-slate-700">
+                {currentUser?.role === 'admin' ? 'Nenhum horário criado' : 'Você não possui aulas no momento'}
+              </h3>
+              <p className="text-slate-500 mt-2">
+                {currentUser?.role === 'admin' 
+                  ? 'Clique no botão acima para montar a sua primeira turma.' 
+                  : 'Fale com a gerência se achar que isso é um erro.'}
+              </p>
             </div>
           )}
         </div>
