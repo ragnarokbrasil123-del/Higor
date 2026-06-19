@@ -44,6 +44,9 @@ export function ScheduleModule() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   
+  // Dicionário para traduzir o ID do aluno para o Nome real dele
+  const [studentsMap, setStudentsMap] = useState<Record<string, string>>({});
+  
   // Controle do menu inteligente de professores
   const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
   const [showFullList, setShowFullList] = useState(false);
@@ -57,8 +60,7 @@ export function ScheduleModule() {
   });
 
   useEffect(() => {
-    // CORRIGIDO: Chave correta do seu aplicativo
-    const userStr = localStorage.getItem('olimpo_session');
+    const userStr = localStorage.getItem('olympus_user');
     if (userStr) {
       setCurrentUser(JSON.parse(userStr));
     }
@@ -67,31 +69,37 @@ export function ScheduleModule() {
   }, []);
 
   const loadClasses = async () => {
-    // CORRIGIDO: Lendo os dados com a chave exata
-    const userStr = localStorage.getItem('olimpo_session');
-    const session = userStr ? JSON.parse(userStr) : null;
-    const u = session?.data; // Onde os nomes realmente ficam guardados
+    const userStr = localStorage.getItem('olympus_user');
+    const u = userStr ? JSON.parse(userStr) : null;
 
-    // Traz todas as aulas do banco de dados primeiro
-    const { data: clsData } = await supabase.from('classes').select('*').order('start_time', { ascending: true });
+    let query = supabase.from('classes').select('*').order('start_time', { ascending: true });
+    
+    // Filtro Mágico de Segurança: Se não for Admin, mostra só as aulas dele(a) mesmo!
+    if (u && u.role !== 'admin') {
+      const tName = u.name || u.username;
+      if (tName) {
+        query = query.eq('teacher_name', tName);
+      }
+    }
+
+    const { data: clsData } = await query;
     const { data: slotData } = await supabase.from('class_slots').select('*');
+    
+    // Busca os nomes de todos os alunos do Clube para renderizar na grade
+    const { data: stuData } = await supabase.from('students').select('id, name');
+    if (stuData) {
+      const map: Record<string, string> = {};
+      stuData.forEach(s => {
+        // Pega apenas o primeiro nome e o primeiro sobrenome para não quebrar a tela
+        const nameParts = s.name.split(' ');
+        const shortName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
+        map[s.id] = shortName;
+      });
+      setStudentsMap(map);
+    }
 
     if (clsData) {
-      let finalClasses = clsData;
-
-      // Filtro Mágico BLINDADO: Se for professor, esconde as aulas dos outros!
-      if (session && session.role !== 'admin' && u) {
-        const myNames = [u.name, u.username, u.full_name]
-          .filter(Boolean)
-          .map(n => String(n).trim().toLowerCase());
-
-        finalClasses = clsData.filter(c => {
-          const classTeacherName = (c.teacher_name || '').trim().toLowerCase();
-          return myNames.includes(classTeacherName);
-        });
-      }
-
-      const formatted = finalClasses.map(c => ({
+      const formatted = clsData.map(c => ({
         ...c,
         class_slots: slotData?.filter(s => s.class_id === c.id) || []
       }));
@@ -100,12 +108,8 @@ export function ScheduleModule() {
   };
 
   const loadTeachers = async () => {
-    // Busca na tabela app_users apenas quem tem a tag "teacher"
     const { data, error } = await supabase.from('app_users').select('*').eq('role', 'teacher');
-    
-    if (error) {
-      console.error("Erro ao carregar professores:", error);
-    }
+    if (error) console.error("Erro ao carregar professores:", error);
 
     if (data) {
       const uniqueNames = Array.from(new Set(data.map(u => u.name || u.username || u.full_name).filter(Boolean))).sort() as string[];
@@ -151,7 +155,7 @@ export function ScheduleModule() {
       setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 }});
     } catch (err: any) {
       console.error(err);
-      alert("🚨 ALERTA DO DETETIVE: " + (err.message || "Erro desconhecido ao criar turma"));
+      alert("Erro ao criar turma: " + (err.message || "Erro desconhecido"));
     } finally {
       setIsSubmitting(false);
     }
@@ -171,7 +175,6 @@ export function ScheduleModule() {
     }
   };
 
-  // Se o usuário clicar no campo, mostra todos. Se ele começar a digitar, filtra a lista.
   const activeList = showFullList 
     ? teachersList 
     : teachersList.filter(t => t.toLowerCase().includes(form.teacher_name.toLowerCase()));
@@ -188,10 +191,9 @@ export function ScheduleModule() {
               </div>
               <h1 className="text-3xl font-black text-slate-800 tracking-tight">Grade de Horários</h1>
             </div>
-            <p className="text-slate-500 font-medium ml-16">Planejamento visual de Turmas e Vagas (Slots).</p>
+            <p className="text-slate-500 font-medium ml-16">Planejamento visual de Turmas e Vagas.</p>
           </div>
 
-          {/* Botão de criar só aparece para Admin */}
           {currentUser?.role === 'admin' && (
             <button onClick={() => setIsModalOpen(true)} className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
               <Plus className="w-5 h-5" /> Adicionar Horário
@@ -212,9 +214,8 @@ export function ScheduleModule() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {classesOnDay.map(cls => (
-                    <div key={cls.id} className="relative bg-slate-50 rounded-2xl p-4 border border-slate-200 group hover:border-indigo-300 transition-colors">
+                    <div key={cls.id} className="relative bg-slate-50 rounded-2xl p-4 border border-slate-200 group hover:border-indigo-300 transition-colors shadow-sm hover:shadow-md">
                       
-                      {/* Lixeirinha só aparece para Admin */}
                       {currentUser?.role === 'admin' && (
                         <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
                           <Trash2 className="w-4 h-4" />
@@ -222,24 +223,28 @@ export function ScheduleModule() {
                       )}
 
                       <div className="flex items-center gap-2 text-slate-700 font-black text-lg mb-1">
-                        <Clock className="w-5 h-5 text-slate-400" />
+                        <Clock className="w-5 h-5 text-indigo-400" />
                         {cls.start_time.slice(0,5)} às {cls.end_time.slice(0,5)}
                       </div>
                       
                       <div className="flex items-center gap-2 text-slate-500 font-bold mb-4">
                         <User className="w-4 h-4" />
-                        {cls.teacher_name}
+                        Prof. {cls.teacher_name}
                       </div>
 
                       <div className="space-y-2">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Alunos ({cls.class_slots?.length || 0}):</div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Alunos na Turma:</div>
+                        <div className="flex flex-col gap-2">
                           {cls.class_slots?.map((slot) => {
                             const colorObj = CAP_COLORS.find(c => c.id === slot.cap_color);
+                            const studentName = slot.student_id ? studentsMap[slot.student_id] : null;
+
                             return (
-                              <div key={slot.id} className={cn("px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm flex items-center gap-1", colorObj?.colorCode || 'bg-slate-200 text-slate-700')}>
-                                <div className="w-1.5 h-1.5 bg-white/50 rounded-full"></div>
-                                {slot.cap_color} {slot.student_id ? '✅' : '(Vazia)'}
+                              <div key={slot.id} className={cn("px-3 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 border transition-all", colorObj?.colorCode || 'bg-slate-200 text-slate-700 border-transparent', studentName ? 'border-white/20' : 'opacity-70 border-dashed')}>
+                                <div className={cn("w-2 h-2 rounded-full", studentName ? "bg-white" : "bg-white/50 animate-pulse")}></div>
+                                <span className="flex-1">
+                                  {studentName ? studentName : `${slot.cap_color} (Vazia)`}
+                                </span>
                               </div>
                             )
                           })}
@@ -255,14 +260,8 @@ export function ScheduleModule() {
           {classes.length === 0 && (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
               <LayoutGrid className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-700">
-                {currentUser?.role === 'admin' ? 'Nenhum horário criado' : 'Você não possui aulas no momento'}
-              </h3>
-              <p className="text-slate-500 mt-2">
-                {currentUser?.role === 'admin' 
-                  ? 'Clique no botão acima para montar a sua primeira turma.' 
-                  : 'Fale com a gerência se achar que isso é um erro.'}
-              </p>
+              <h3 className="text-xl font-bold text-slate-700">Nenhum horário criado</h3>
+              <p className="text-slate-500 mt-2">Clique no botão acima para montar a sua primeira turma.</p>
             </div>
           )}
         </div>
@@ -284,52 +283,20 @@ export function ScheduleModule() {
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
                   
                   <div className="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                    
-                    {/* CAMPO DE PROFESSOR INTELIGENTE */}
                     <div className="relative">
                       <label className="block text-sm font-bold text-slate-700 mb-2">Nome do Professor</label>
                       <div className="relative">
-                        <input 
-                          type="text" 
-                          required 
-                          value={form.teacher_name} 
-                          onChange={e => {
-                            setForm({...form, teacher_name: e.target.value});
-                            setIsTeacherDropdownOpen(true);
-                            setShowFullList(false); // Quando digita, ele filtra
-                          }}
-                          onFocus={() => {
-                            setIsTeacherDropdownOpen(true);
-                            setShowFullList(true); // Quando clica, mostra todos
-                          }}
-                          onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)} // Delay para o clique no menu funcionar
-                          placeholder="Clique para ver a lista ou digite..." 
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium pr-10" 
-                        />
+                        <input type="text" required value={form.teacher_name} onChange={e => { setForm({...form, teacher_name: e.target.value}); setIsTeacherDropdownOpen(true); setShowFullList(false); }} onFocus={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }} onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)} placeholder="Clique para ver a lista ou digite..." className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium pr-10" />
                         <button type="button" tabIndex={-1} className="absolute right-3 top-3.5" onClick={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}>
                           <ChevronDown className="w-5 h-5 text-slate-400 hover:text-indigo-500 transition-colors" />
                         </button>
                       </div>
 
-                      {/* Menu Suspenso Fantasma */}
                       <AnimatePresence>
                         {isTeacherDropdownOpen && activeList.length > 0 && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: -10 }} 
-                            animate={{ opacity: 1, y: 0 }} 
-                            exit={{ opacity: 0, y: -10 }}
-                            className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar"
-                          >
+                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar">
                             {activeList.map((name, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => {
-                                  setForm({...form, teacher_name: name});
-                                  setIsTeacherDropdownOpen(false);
-                                }}
-                                className="w-full text-left px-4 py-3 hover:bg-indigo-50 text-slate-700 font-bold transition-colors border-b border-slate-50 last:border-0"
-                              >
+                              <button key={idx} type="button" onClick={() => { setForm({...form, teacher_name: name}); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-indigo-50 text-slate-700 font-bold transition-colors border-b border-slate-50 last:border-0">
                                 {name}
                               </button>
                             ))}
@@ -342,12 +309,7 @@ export function ScheduleModule() {
                       <label className="block text-sm font-bold text-slate-700 mb-2">Quais dias ela dá essa aula?</label>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
-                          <button 
-                            type="button" 
-                            key={d}
-                            onClick={() => toggleDay(d)}
-                            className={cn("px-4 py-2 rounded-xl text-sm font-bold border transition-all", form.days_of_week.includes(d) ? "bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300")}
-                          >
+                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn("px-4 py-2 rounded-xl text-sm font-bold border transition-all", form.days_of_week.includes(d) ? "bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20" : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300")}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -355,29 +317,17 @@ export function ScheduleModule() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Horário Início</label>
-                        <input type="time" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Horário Fim</label>
-                        <input type="time" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" />
-                      </div>
+                      <div><label className="block text-sm font-bold text-slate-700 mb-2">Horário Início</label><input type="time" required value={form.start_time} onChange={e => setForm({...form, start_time: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" /></div>
+                      <div><label className="block text-sm font-bold text-slate-700 mb-2">Horário Fim</label><input type="time" required value={form.end_time} onChange={e => setForm({...form, end_time: e.target.value})} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" /></div>
                     </div>
                   </div>
 
                   <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-lg font-black text-slate-800">Quantos Alunos por Cor?</h3>
-                    </div>
-
+                    <div className="flex items-center gap-2 mb-4"><h3 className="text-lg font-black text-slate-800">Quantos Alunos por Cor?</h3></div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {CAP_COLORS.map(color => (
                         <div key={color.id} className={cn("flex flex-col p-3 rounded-xl border transition-colors", form.slots[color.id] > 0 ? "bg-indigo-50 border-indigo-200" : "bg-white border-slate-200")}>
-                          <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                            <div className={cn("w-3 h-3 rounded-full shadow-sm", color.colorCode.split(' ')[0])}></div>
-                            {color.id}
-                          </label>
+                          <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><div className={cn("w-3 h-3 rounded-full shadow-sm", color.colorCode.split(' ')[0])}></div>{color.id}</label>
                           <div className="flex items-center bg-slate-100 rounded-lg p-1">
                             <button type="button" onClick={() => setForm({...form, slots: {...form.slots, [color.id]: Math.max(0, form.slots[color.id] - 1)}})} className="w-8 h-8 flex items-center justify-center bg-white rounded-md text-slate-600 font-bold shadow-sm hover:text-red-500">-</button>
                             <span className="flex-1 text-center font-black text-slate-700">{form.slots[color.id]}</span>
@@ -387,7 +337,6 @@ export function ScheduleModule() {
                       ))}
                     </div>
                   </div>
-
                 </form>
               </div>
 
