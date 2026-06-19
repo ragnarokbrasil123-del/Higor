@@ -254,8 +254,8 @@ export default function Page() {
             </button>
           )}
 
-          {/* NOVO MENU GRADE DE HORÁRIOS */}
-          {isAdmin && (
+          {/* NOVO MENU GRADE DE HORÁRIOS: Agora visível para Staff (Professores + Admin) */}
+          {isStaff && (
             <button onClick={() => setActiveTab('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <CalendarDays className="w-5 h-5" />
               <span className="font-bold text-sm">Grade de Horários</span>
@@ -310,8 +310,8 @@ export default function Page() {
           </button>
         )}
         
-        {/* NOVO MENU MOBILE DA GRADE */}
-        {isAdmin && (
+        {/* NOVO MENU MOBILE DA GRADE: Agora visível para Staff (Professores + Admin) */}
+        {isStaff && (
           <button onClick={() => setActiveTab('schedule')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <CalendarDays className="w-4 h-4" />
             <span className="text-[9px] font-bold tracking-wide mt-1">Grade</span>
@@ -327,8 +327,8 @@ export default function Page() {
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
         {activeTab === 'team' && isAdmin && <TeamModule />}
         
-        {/* NOVA TELA AQUI */}
-        {activeTab === 'schedule' && isAdmin && <ScheduleModule />}
+        {/* NOVA TELA AQUI: Renderiza para Professores e Admin */}
+        {activeTab === 'schedule' && isStaff && <ScheduleModule />}
       </main>
     </div>
   );
