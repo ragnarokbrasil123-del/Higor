@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2, CalendarCheck } from 'lucide-react';
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { default as classNames } from 'clsx';
@@ -28,36 +28,87 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Variáveis de Conexão com a Grade
+  const [classes, setClasses] = useState<any[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<any[]>([]);
+  const [selectedSlotId, setSelectedSlotId] = useState<string>('');
+
   // Variáveis do Cadastro em Lote
   const [file, setFile] = useState<File | null>(null);
   const [bulkStatus, setBulkStatus] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Busca vagas livres na inicialização
+  useEffect(() => {
+    fetchScheduleData();
+  }, []);
+
+  const fetchScheduleData = async () => {
+    const { data: clsData } = await supabase.from('classes').select('*').order('start_time');
+    // Pega APENAS as vagas que não tem dono
+    const { data: slotData } = await supabase.from('class_slots').select('*').is('student_id', null);
+    
+    if (clsData && slotData) {
+      setClasses(clsData);
+      setAvailableSlots(slotData);
+    }
+  };
+
+  // Conversão de Nível para Cor da Touca (para bater com a Grade)
+  const getCapColorForLevel = (lvl: CapLevel) => {
+    const map: any = {
+      'yellow': 'Amarela',
+      'orange': 'Laranja',
+      'red': 'Vermelha',
+      'green': 'Verde',
+      'lightBlue': 'Azul',
+      'darkBlue': 'Azul',
+      'black': 'Preta',
+      'silver': 'Prata'
+    };
+    return map[lvl] || 'Laranja';
+  };
+
+  const capColorNeeded = getCapColorForLevel(level);
+  const emptySlotsForColor = availableSlots.filter(s => s.cap_color === capColorNeeded);
+  
+  const classesWithEmptySlots = classes.filter(c => 
+    emptySlotsForColor.some(s => s.class_id === c.id)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !age || !password) return;
     setLoading(true);
 
-    const { error } = await supabase.from('students').insert([
+    // 1. Salva o Aluno no Banco
+    const { data: newStudent, error } = await supabase.from('students').insert([
       { name, age: parseInt(age), level, guardian_name: guardianName, phone, password }
-    ]);
+    ]).select().single();
 
-    setLoading(false);
     if (error) {
+      setLoading(false);
       alert("Erro ao salvar no banco: " + error.message);
       return;
     }
     
-    setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword('');
+    // 2. Se escolheu um horário, rouba a vaga na Grade!
+    if (selectedSlotId && newStudent) {
+      await supabase.from('class_slots')
+        .update({ student_id: newStudent.id })
+        .eq('id', selectedSlotId);
+    }
+
+    setLoading(false);
+    setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword(''); setSelectedSlotId('');
+    fetchScheduleData(); // Atualiza vagas
     onSuccess();
   };
 
-  // FUNÇÃO CORRIGIDA AQUI!
   const parseLevel = (ptLevel: string): CapLevel => {
     const map: any = {
-      'laranja': 'orange', 'vermelha': 'red', 
-      'azul claro': 'light_blue', 'azul escuro': 'dark_blue', 
-      'preta': 'black', 'prata': 'silver'
+      'amarela': 'yellow', 'laranja': 'orange', 'vermelha': 'red', 'verde': 'green',
+      'azul claro': 'lightBlue', 'azul escuro': 'darkBlue', 'preta': 'black', 'prata': 'silver'
     };
     return map[ptLevel.toLowerCase().trim()] || 'orange'; 
   };
@@ -164,9 +215,31 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   
                   <div className="space-y-1 md:space-y-2">
                     <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Nível Inicial (Touca) *</label>
-                    <select value={level} onChange={(e) => setLevel(e.target.value as CapLevel)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm md:text-base text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 outline-none transition-all">
+                    <select value={level} onChange={(e) => { setLevel(e.target.value as CapLevel); setSelectedSlotId(''); }} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm md:text-base text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 outline-none transition-all">
                       {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
                     </select>
+                  </div>
+
+                  {/* NOVO CAMPO INTELIGENTE - GRADE DE HORÁRIOS */}
+                  <div className="space-y-1 md:space-y-2 md:col-span-2">
+                    <label className="text-xs md:text-sm font-bold text-emerald-600 flex items-center gap-2 uppercase tracking-wider">
+                      <CalendarCheck className="w-4 h-4" /> Alocar na Turma / Horário
+                    </label>
+                    <select value={selectedSlotId} onChange={(e) => setSelectedSlotId(e.target.value)} className="w-full px-4 py-3 bg-emerald-50/50 border border-emerald-200 rounded-xl font-bold text-sm md:text-base text-emerald-900 appearance-none focus:ring-2 focus:ring-emerald-500/30 outline-none transition-all">
+                      <option value="">Deixar sem turma (Lista de Espera)</option>
+                      {classesWithEmptySlots.map(c => {
+                        // Pega uma vaga vazia dessa turma específica
+                        const slot = emptySlotsForColor.find(s => s.class_id === c.id);
+                        return (
+                          <option key={c.id} value={slot?.id}>
+                            {c.day_of_week} • {c.start_time.slice(0,5)} às {c.end_time.slice(0,5)} (Prof: {c.teacher_name})
+                          </option>
+                        )
+                      })}
+                    </select>
+                    {classesWithEmptySlots.length === 0 && (
+                      <p className="text-xs font-bold text-amber-600 mt-1">⚠️ Não há horários cadastrados com vagas livres para esta cor de touca.</p>
+                    )}
                   </div>
 
                   <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-slate-50/50 border border-slate-100 rounded-2xl space-y-4 md:space-y-6">
