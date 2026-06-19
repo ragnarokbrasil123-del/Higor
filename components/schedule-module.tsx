@@ -39,6 +39,7 @@ const DAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', '
 
 export function ScheduleModule() {
   const [classes, setClasses] = useState<ClassBlock[]>([]);
+  const [teachersList, setTeachersList] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,6 +53,7 @@ export function ScheduleModule() {
 
   useEffect(() => {
     loadClasses();
+    loadTeachers();
   }, []);
 
   const loadClasses = async () => {
@@ -67,6 +69,15 @@ export function ScheduleModule() {
     }
   };
 
+  const loadTeachers = async () => {
+    // Busca na tabela app_users todo mundo que é professor (ou admin que queira dar aula)
+    const { data } = await supabase.from('app_users').select('name').in('role', ['teacher', 'admin']);
+    if (data) {
+      const uniqueNames = Array.from(new Set(data.map(u => u.name))).sort();
+      setTeachersList(uniqueNames);
+    }
+  };
+
   const handleCreateClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.teacher_name.trim()) return alert("Digite o nome do professor");
@@ -78,10 +89,8 @@ export function ScheduleModule() {
     setIsSubmitting(true);
     try {
       
-      // Loop para criar a mesma turma em múltiplos dias
       for (const day of form.days_of_week) {
         
-        // 1. Cria a Gaveta da Turma
         const { data: newClass, error: classErr } = await supabase.from('classes').insert([{
           teacher_name: form.teacher_name.trim(),
           day_of_week: day,
@@ -93,7 +102,6 @@ export function ScheduleModule() {
           throw new Error("Erro na Tabela Classes: " + classErr.message);
         }
 
-        // 2. Prepara as vagas de acordo com as cores
         const slotsToInsert = [];
         for (const [color, amount] of Object.entries(form.slots)) {
           for (let i = 0; i < amount; i++) {
@@ -101,7 +109,6 @@ export function ScheduleModule() {
           }
         }
 
-        // 3. Insere as vagas
         if (slotsToInsert.length > 0) {
           const { error: slotsErr } = await supabase.from('class_slots').insert(slotsToInsert);
           if (slotsErr) {
@@ -113,7 +120,6 @@ export function ScheduleModule() {
       await loadClasses();
       setIsModalOpen(false);
       
-      // Reset
       setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: { 'Laranja': 0, 'Amarela': 0, 'Vermelha': 0, 'Verde': 0, 'Azul': 0 }});
     } catch (err: any) {
       console.error(err);
@@ -140,7 +146,6 @@ export function ScheduleModule() {
   return (
     <div className="flex flex-col h-full bg-slate-50">
       
-      {/* CABEÇALHO */}
       <div className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 md:mt-0">
           <div>
@@ -158,7 +163,6 @@ export function ScheduleModule() {
           </button>
         </div>
 
-        {/* LISTA DE HORÁRIOS */}
         <div className="space-y-6">
           {DAYS.map(day => {
             const classesOnDay = classes.filter(c => c.day_of_week === day);
@@ -218,7 +222,6 @@ export function ScheduleModule() {
         </div>
       </div>
 
-      {/* MODAL CRIAR TURMA */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -234,11 +237,23 @@ export function ScheduleModule() {
               <div className="p-6 overflow-y-auto custom-scrollbar">
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
                   
-                  {/* Info Basica */}
                   <div className="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <div>
                       <label className="block text-sm font-bold text-slate-700 mb-2">Nome do Professor</label>
-                      <input type="text" required value={form.teacher_name} onChange={e => setForm({...form, teacher_name: e.target.value})} placeholder="Ex: Letícia" className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium" />
+                      <input 
+                        type="text" 
+                        required 
+                        list="teachersList"
+                        value={form.teacher_name} 
+                        onChange={e => setForm({...form, teacher_name: e.target.value})} 
+                        placeholder="Pesquise ou digite um novo..." 
+                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium" 
+                      />
+                      <datalist id="teachersList">
+                        {teachersList.map((name, idx) => (
+                          <option key={idx} value={name} />
+                        ))}
+                      </datalist>
                     </div>
 
                     <div>
@@ -269,7 +284,6 @@ export function ScheduleModule() {
                     </div>
                   </div>
 
-                  {/* Gerador de Vagas */}
                   <div>
                     <div className="flex items-center gap-2 mb-4">
                       <h3 className="text-lg font-black text-slate-800">Quantas Vagas por Cor?</h3>
