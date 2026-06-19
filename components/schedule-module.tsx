@@ -94,7 +94,7 @@ export function ScheduleModule() {
     if (form.days_of_week.length === 0) return alert("Selecione pelo menos um dia da semana");
     
     const totalSlots = Object.values(form.slots).reduce((a, b) => a + b, 0);
-    if (totalSlots === 0) return alert("Você precisa criar pelo menos 1 vaga para essa turma.");
+    if (totalSlots === 0) return alert("Você precisa adicionar pelo menos 1 aluno para essa turma.");
 
     setIsSubmitting(true);
     try {
@@ -200,7 +200,7 @@ export function ScheduleModule() {
                       </div>
 
                       <div className="space-y-2">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vagas ({cls.class_slots?.length || 0}):</div>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Alunos ({cls.class_slots?.length || 0}):</div>
                         <div className="flex flex-wrap gap-2">
                           {cls.class_slots?.map((slot) => {
                             const colorObj = CAP_COLORS.find(c => c.id === slot.cap_color);
@@ -330,7 +330,7 @@ export function ScheduleModule() {
 
                   <div>
                     <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-lg font-black text-slate-800">Quantas Vagas por Cor?</h3>
+                      <h3 className="text-lg font-black text-slate-800">Quantos Alunos por Cor?</h3>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
