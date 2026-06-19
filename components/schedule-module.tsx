@@ -45,6 +45,7 @@ export function ScheduleModule() {
   
   // Controle do menu inteligente de professores
   const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
+  const [showFullList, setShowFullList] = useState(false);
 
   const [form, setForm] = useState({
     teacher_name: '',
@@ -81,7 +82,7 @@ export function ScheduleModule() {
     }
 
     if (data) {
-      // Pega o nome de usuário (já que leticia e rony estão gravados nessa coluna)
+      // Como não sabemos se a coluna no seu banco chama "name" ou "username", pegamos o que existir
       const uniqueNames = Array.from(new Set(data.map(u => u.name || u.username || u.full_name).filter(Boolean))).sort() as string[];
       setTeachersList(uniqueNames);
     }
@@ -145,8 +146,10 @@ export function ScheduleModule() {
     }
   };
 
-  // Filtra a lista baseada no que o usuário digitou
-  const filteredTeachers = teachersList.filter(t => t.toLowerCase().includes(form.teacher_name.toLowerCase()));
+  // Se o usuário clicar no campo, mostra todos. Se ele começar a digitar, filtra a lista.
+  const activeList = showFullList 
+    ? teachersList 
+    : teachersList.filter(t => t.toLowerCase().includes(form.teacher_name.toLowerCase()));
 
   return (
     <div className="flex flex-col h-full bg-slate-50">
@@ -255,25 +258,31 @@ export function ScheduleModule() {
                           onChange={e => {
                             setForm({...form, teacher_name: e.target.value});
                             setIsTeacherDropdownOpen(true);
+                            setShowFullList(false); // Quando digita, ele filtra
                           }}
-                          onFocus={() => setIsTeacherDropdownOpen(true)}
+                          onFocus={() => {
+                            setIsTeacherDropdownOpen(true);
+                            setShowFullList(true); // Quando clica, mostra todos
+                          }}
                           onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)} // Delay para o clique no menu funcionar
                           placeholder="Clique para ver a lista ou digite..." 
                           className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium pr-10" 
                         />
-                        <ChevronDown className="absolute right-3 top-3.5 w-5 h-5 text-slate-400 pointer-events-none" />
+                        <button type="button" tabIndex={-1} className="absolute right-3 top-3.5" onClick={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}>
+                          <ChevronDown className="w-5 h-5 text-slate-400 hover:text-indigo-500 transition-colors" />
+                        </button>
                       </div>
 
                       {/* Menu Suspenso Fantasma */}
                       <AnimatePresence>
-                        {isTeacherDropdownOpen && filteredTeachers.length > 0 && (
+                        {isTeacherDropdownOpen && activeList.length > 0 && (
                           <motion.div 
                             initial={{ opacity: 0, y: -10 }} 
                             animate={{ opacity: 1, y: 0 }} 
                             exit={{ opacity: 0, y: -10 }}
                             className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar"
                           >
-                            {filteredTeachers.map((name, idx) => (
+                            {activeList.map((name, idx) => (
                               <button
                                 key={idx}
                                 type="button"
