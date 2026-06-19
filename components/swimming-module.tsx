@@ -206,27 +206,140 @@ export function SwimmingModule() {
     setViewMode('profile');
   };
 
+  // ==========================================
+  // NOVO GERADOR DE PDF PREMIUM
+  // ==========================================
   const handleDownloadReport = (ev: Evaluation) => {
     if (!selectedStudentRaw) return;
     const doc = new jsPDF();
-    doc.setFontSize(20); doc.text('Ficha de Verificação', 20, 20);
-    doc.setFontSize(14); doc.text(`Aluno: ${selectedStudentRaw.name}`, 20, 40);
-    doc.text(`Nível: ${levels[selectedStudentRaw.level].name}`, 20, 50);
-    doc.text(`Data: ${new Date(ev.date).toLocaleDateString('pt-BR')}`, 20, 60);
-    doc.setFontSize(12); let yPos = 80;
+    
+    const primary = [15, 23, 42]; // slate-900
+    const accent = [245, 158, 11]; // amber-500
+    
+    // Cabeçalho Premium
+    doc.setFillColor(primary[0], primary[1], primary[2]);
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    // Linha Dourada
+    doc.setFillColor(accent[0], accent[1], accent[2]);
+    doc.rect(0, 40, 210, 2, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(26);
+    doc.setFont("helvetica", "bold");
+    doc.text("CLUBE OLIMPO", 20, 22);
+    
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(200, 200, 200);
+    doc.text("Relatório Oficial de Avaliação Técnica", 20, 30);
+
+    // Box de Informações do Aluno
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(20, 50, 170, 35, 3, 3, 'FD');
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Aluno(a): ${selectedStudentRaw.name}`, 25, 60);
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Idade: ${selectedStudentRaw.age} anos`, 25, 68);
+    
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text(`Nível Atual: ${levels[selectedStudentRaw.level].name}`, 25, 76);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Data: ${new Date(ev.date).toLocaleDateString('pt-BR')}`, 140, 76);
+
+    // Título da Seção
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("Critérios Avaliados", 20, 100);
+
+    let yPos = 110;
     const criteriaList = EVALUATION_CRITERIA[selectedStudentRaw.level] || [];
-    criteriaList.forEach(c => {
+    
+    criteriaList.forEach((c, index) => {
+      if (yPos > 260) { doc.addPage(); yPos = 20; }
+      
+      // Linhas Zebradas
+      if (index % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(20, yPos - 5, 170, 8, 'F');
+      }
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+      
+      const lines = doc.splitTextToSize(c.label, 130);
       const status = ev.results[c.id];
-      const statusText = status === 'yes' ? 'Sim' : status === 'no' ? 'Não' : 'N/A';
-      const lines = doc.splitTextToSize(`${c.label} - R: [${statusText}]`, 170);
-      doc.text(lines, 20, yPos); yPos += (lines.length * 8);
-      if (yPos > 280) { doc.addPage(); yPos = 20; }
+      let statusText = '';
+      let statusColor = [100, 100, 100];
+      
+      if (status === 'yes') {
+        statusText = 'ATINGIDO';
+        statusColor = [16, 185, 129];
+      } else if (status === 'no') {
+        statusText = 'EM DESENV.';
+        statusColor = [239, 68, 68];
+      } else {
+        statusText = 'N/A';
+      }
+
+      doc.text(lines, 22, yPos);
+      
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.text(statusText, 160, yPos);
+      
+      yPos += (lines.length * 5) + 3;
     });
-    yPos += 10; doc.setFontSize(14);
-    const genStatus = ev.general_status === 'approved' ? 'Aprovado' : ev.general_status === 'reproved' ? 'Reprovado' : 'Pendente';
-    doc.text(`Avaliação Geral: ${genStatus}`, 20, yPos);
-    if (ev.notes) { doc.setFontSize(12); doc.text(doc.splitTextToSize(`OBS: ${ev.notes}`, 170), 20, yPos + 10); }
-    doc.save(`Ficha_${selectedStudentRaw.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+
+    // Resultado Final
+    yPos += 10;
+    if (yPos > 240) { doc.addPage(); yPos = 20; }
+    
+    doc.setDrawColor(226, 232, 240);
+    doc.line(20, yPos, 190, yPos);
+    yPos += 10;
+    
+    const isApp = ev.general_status === 'approved';
+    const genStatus = isApp ? 'APROVADO PARA TROCA DE TOUCA' : ev.general_status === 'reproved' ? 'EM DESENVOLVIMENTO' : 'PENDENTE';
+    const finalColor = isApp ? [16, 185, 129] : [245, 158, 11];
+    
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("Resultado Geral:", 20, yPos);
+    
+    doc.setTextColor(finalColor[0], finalColor[1], finalColor[2]);
+    doc.text(genStatus, 70, yPos);
+    
+    if (ev.notes) { 
+      yPos += 15;
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Observações do Professor:", 20, yPos);
+      yPos += 7;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(doc.splitTextToSize(ev.notes, 170), 20, yPos); 
+    }
+
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Documento Oficial - Clube Olimpo", 105, 285, { align: "center" });
+
+    doc.save(`Olimpo_Ficha_${selectedStudentRaw.name.replace(/\s+/g, '_').toLowerCase()}.pdf`);
   };
 
   const EvaluationButton = ({ status, value, label, onClick, colorClass }: { status: EvalStatus | 'untested', value: EvalStatus, label: string, onClick: () => void, colorClass: string }) => (
