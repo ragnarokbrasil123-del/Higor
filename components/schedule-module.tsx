@@ -42,6 +42,7 @@ export function ScheduleModule() {
   const [teachersList, setTeachersList] = useState<string[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   // Controle do menu inteligente de professores
   const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
@@ -56,12 +57,29 @@ export function ScheduleModule() {
   });
 
   useEffect(() => {
+    const userStr = localStorage.getItem('olympus_user');
+    if (userStr) {
+      setCurrentUser(JSON.parse(userStr));
+    }
     loadClasses();
     loadTeachers();
   }, []);
 
   const loadClasses = async () => {
-    const { data: clsData } = await supabase.from('classes').select('*').order('start_time', { ascending: true });
+    const userStr = localStorage.getItem('olympus_user');
+    const u = userStr ? JSON.parse(userStr) : null;
+
+    let query = supabase.from('classes').select('*').order('start_time', { ascending: true });
+    
+    // Filtro Mágico de Segurança: Se não for Admin, mostra só as aulas dele(a) mesmo!
+    if (u && u.role !== 'admin') {
+      const tName = u.name || u.username;
+      if (tName) {
+        query = query.eq('teacher_name', tName);
+      }
+    }
+
+    const { data: clsData } = await query;
     const { data: slotData } = await supabase.from('class_slots').select('*');
 
     if (clsData) {
@@ -166,9 +184,12 @@ export function ScheduleModule() {
             <p className="text-slate-500 font-medium ml-16">Planejamento visual de Turmas e Vagas (Slots).</p>
           </div>
 
-          <button onClick={() => setIsModalOpen(true)} className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
-            <Plus className="w-5 h-5" /> Adicionar Horário
-          </button>
+          {/* Botão de criar só aparece para Admin */}
+          {currentUser?.role === 'admin' && (
+            <button onClick={() => setIsModalOpen(true)} className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
+              <Plus className="w-5 h-5" /> Adicionar Horário
+            </button>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -185,9 +206,13 @@ export function ScheduleModule() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {classesOnDay.map(cls => (
                     <div key={cls.id} className="relative bg-slate-50 rounded-2xl p-4 border border-slate-200 group hover:border-indigo-300 transition-colors">
-                      <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      
+                      {/* Lixeirinha só aparece para Admin */}
+                      {currentUser?.role === 'admin' && (
+                        <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
 
                       <div className="flex items-center gap-2 text-slate-700 font-black text-lg mb-1">
                         <Clock className="w-5 h-5 text-slate-400" />
