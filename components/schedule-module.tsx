@@ -69,21 +69,26 @@ export function ScheduleModule() {
     const userStr = localStorage.getItem('olympus_user');
     const u = userStr ? JSON.parse(userStr) : null;
 
-    let query = supabase.from('classes').select('*').order('start_time', { ascending: true });
-    
-    // Filtro Mágico de Segurança: Se não for Admin, mostra só as aulas dele(a) mesmo!
-    if (u && u.role !== 'admin') {
-      const tName = u.name || u.username;
-      if (tName) {
-        query = query.eq('teacher_name', tName);
-      }
-    }
-
-    const { data: clsData } = await query;
+    // Traz todas as aulas do banco de dados primeiro
+    const { data: clsData } = await supabase.from('classes').select('*').order('start_time', { ascending: true });
     const { data: slotData } = await supabase.from('class_slots').select('*');
 
     if (clsData) {
-      const formatted = clsData.map(c => ({
+      let finalClasses = clsData;
+
+      // Filtro Mágico BLINDADO: Ignora maiúsculas, minúsculas e espaços.
+      if (u && u.role !== 'admin') {
+        const myNames = [u.name, u.username, u.full_name]
+          .filter(Boolean)
+          .map(n => String(n).trim().toLowerCase());
+
+        finalClasses = clsData.filter(c => {
+          const classTeacherName = (c.teacher_name || '').trim().toLowerCase();
+          return myNames.includes(classTeacherName);
+        });
+      }
+
+      const formatted = finalClasses.map(c => ({
         ...c,
         class_slots: slotData?.filter(s => s.class_id === c.id) || []
       }));
@@ -100,7 +105,6 @@ export function ScheduleModule() {
     }
 
     if (data) {
-      // Como não sabemos se a coluna no seu banco chama "name" ou "username", pegamos o que existir
       const uniqueNames = Array.from(new Set(data.map(u => u.name || u.username || u.full_name).filter(Boolean))).sort() as string[];
       setTeachersList(uniqueNames);
     }
