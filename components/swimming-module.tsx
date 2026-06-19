@@ -14,7 +14,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 // === MODELOS DE AVALIAÇÃO OFICIAIS ===
-const EVALUATION_CRITERIA: Record<CapLevel, { id: string; label: string }[]> = {
+// CORREÇÃO AQUI: Mudamos "CapLevel" para "string" para o Vercel parar de travar a Touca Prata!
+const EVALUATION_CRITERIA: Record<string, { id: string; label: string }[]> = {
   yellow: [
     { id: 'y1', label: '1. Adaptação poli sensorial: Colocar o rosto na água, executa a respiração pela boca ou nariz ou os dois.' },
     { id: 'y2', label: '2. A criança deve ser capaz de flutuar com apoio de um adulto ou de um material de flutuação, mantendo o corpo na horizontal.' },
@@ -178,7 +179,7 @@ export function SwimmingModule() {
   const startEvaluation = (student: Student) => {
     setIsEvaluating(true);
     const initialScores: Record<string, EvalStatus> = {};
-    EVALUATION_CRITERIA[student.level as CapLevel]?.forEach(crit => {
+    EVALUATION_CRITERIA[student.level as string]?.forEach(crit => {
       initialScores[crit.id] = 'pending';
     });
     setEvalScores(initialScores);
@@ -208,7 +209,7 @@ export function SwimmingModule() {
       if (currentIndex < levelKeys.length - 1) {
         const nextLevel = levelKeys[currentIndex + 1];
         await supabase.from('students').update({ level: nextLevel }).eq('id', student.id);
-        alert(`🎉 AVALIAÇÃO CONCLUÍDA! O aluno passou para a Touca ${levels[nextLevel as CapLevel].name}!`);
+        alert(`🎉 AVALIAÇÃO CONCLUÍDA! O aluno passou para a Touca ${levels[nextLevel as CapLevel]?.name || 'Seguinte'}!`);
       } else {
         alert('🎉 AVALIAÇÃO CONCLUÍDA! Aluno aprovado (Nível Máximo atingido)!');
       }
@@ -253,7 +254,7 @@ export function SwimmingModule() {
     doc.text(`Aluno: ${student.name}`, 20, 55);
     doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text(`Nível Avaliado: Touca ${levels[evaluation.level as CapLevel]?.name}`, 20, 65);
+    doc.text(`Nível Avaliado: Touca ${levels[evaluation.level as CapLevel]?.name || 'Avaliada'}`, 20, 65);
     doc.text(`Data: ${new Date(evaluation.date).toLocaleDateString('pt-BR')}`, 20, 72);
 
     // Título das Notas
@@ -263,7 +264,7 @@ export function SwimmingModule() {
     
     // Desenhar Tabela Manual para ficar mais chique
     let y = 100;
-    const criteriaList = EVALUATION_CRITERIA[evaluation.level as CapLevel] || [];
+    const criteriaList = EVALUATION_CRITERIA[evaluation.level as string] || [];
     
     criteriaList.forEach((crit) => {
       const status = evaluation.scores[crit.id] || 'pending';
@@ -411,7 +412,7 @@ export function SwimmingModule() {
                 <h2 className="text-xl md:text-2xl font-black text-slate-800 truncate">{selectedStudent.name}</h2>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
                   <span className={cn("px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-sm text-white", levels[selectedStudent.level as CapLevel]?.bgClass || "bg-slate-500")}>
-                    Touca {levels[selectedStudent.level as CapLevel]?.name}
+                    Touca {levels[selectedStudent.level as CapLevel]?.name || 'N/A'}
                   </span>
                   <span className="text-slate-400 text-xs font-bold px-2 py-0.5 bg-slate-100 rounded-md">{selectedStudent.age} anos</span>
                 </div>
@@ -440,7 +441,7 @@ export function SwimmingModule() {
 
                     <div className="p-6">
                       <div className="space-y-3 mb-8">
-                        {EVALUATION_CRITERIA[selectedStudent.level as CapLevel]?.map((crit) => (
+                        {EVALUATION_CRITERIA[selectedStudent.level as string]?.map((crit) => (
                           <div key={crit.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl border border-slate-100 bg-slate-50 hover:border-amber-200 hover:bg-amber-50/30 transition-colors">
                             <span className="text-sm font-bold text-slate-700 leading-relaxed md:w-2/3">{crit.label}</span>
                             <div className="flex bg-white rounded-xl shadow-sm border border-slate-200 p-1 md:w-auto shrink-0">
@@ -514,7 +515,7 @@ export function SwimmingModule() {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                           {EVALUATION_CRITERIA[evaluation.level as CapLevel]?.map(crit => {
+                           {EVALUATION_CRITERIA[evaluation.level as string]?.map(crit => {
                              const status = evaluation.scores[crit.id] || 'pending';
                              return (
                                <div key={crit.id} className="flex items-center gap-3 p-2 text-sm">
