@@ -89,11 +89,9 @@ export function ScheduleModule() {
     const { data: stuData } = await supabase.from('students').select('id, name');
     if (stuData) {
       const map: Record<string, string> = {};
+      // CORREÇÃO: Agora puxamos o nome exatamente como foi cadastrado, sem cortar!
       stuData.forEach(s => {
-        // Pega apenas o primeiro nome e o primeiro sobrenome para não quebrar a tela
-        const nameParts = s.name.split(' ');
-        const shortName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[1]}` : nameParts[0];
-        map[s.id] = shortName;
+        map[s.id] = s.name; 
       });
       setStudentsMap(map);
     }
@@ -241,8 +239,9 @@ export function ScheduleModule() {
 
                             return (
                               <div key={slot.id} className={cn("px-3 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 border transition-all", colorObj?.colorCode || 'bg-slate-200 text-slate-700 border-transparent', studentName ? 'border-white/20' : 'opacity-70 border-dashed')}>
-                                <div className={cn("w-2 h-2 rounded-full", studentName ? "bg-white" : "bg-white/50 animate-pulse")}></div>
-                                <span className="flex-1">
+                                <div className={cn("w-2 h-2 rounded-full shrink-0", studentName ? "bg-white" : "bg-white/50 animate-pulse")}></div>
+                                {/* CORREÇÃO: Adicionada a quebra de linha inteligente para não vazar em nenhuma tela */}
+                                <span className="flex-1 break-words leading-tight">
                                   {studentName ? studentName : `${slot.cap_color} (Vazia)`}
                                 </span>
                               </div>
