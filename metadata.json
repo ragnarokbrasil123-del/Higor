@@ -1,0 +1,6 @@
+{
+  "name": "Nautilus & CleanList",
+  "description": "Premium platform for swim school evaluation and corporative cleaning checklists.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
