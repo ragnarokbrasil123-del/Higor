@@ -447,7 +447,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                 {alunoAtual.name.charAt(0)}
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="font-black text-slate-800 leading-tight truncate">{alunoAtual.name}</h2>
+                <h2 className="font-black text-ink leading-tight break-words line-clamp-2">{alunoAtual.name}</h2>
                 <p className="text-xs font-bold text-slate-500">Touca {info?.name}</p>
               </div>
               <div className="text-right shrink-0">
@@ -555,7 +555,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               {aluno.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-black text-slate-800 truncate">{aluno.name}</h1>
+              <h1 className="text-xl font-black text-ink leading-tight break-words">{aluno.name}</h1>
               <p className="text-sm font-bold text-slate-500">Touca {info?.name}</p>
               <div className="mt-1"><Selo sid={aluno.id} /></div>
             </div>
@@ -664,7 +664,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               <button key={s.id} onClick={() => { setAlunoId(s.id); setView('aluno'); }} className="w-full flex items-center gap-3 p-3.5 hover:bg-slate-50 transition-colors text-left">
                 <div className={cn('w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0', levels[s.level as CapLevel]?.bgClass)}>{s.name.charAt(0)}</div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-slate-800 text-sm truncate">{s.name}</p>
+                  <p className="font-bold text-ink text-sm leading-tight break-words">{s.name}</p>
                   <p className="text-xs text-slate-500">Touca {levels[s.level as CapLevel]?.label}</p>
                 </div>
                 <Selo sid={s.id} />

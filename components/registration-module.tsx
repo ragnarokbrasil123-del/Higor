@@ -6,7 +6,7 @@ import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCirc
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { DataTable, PageHeader, PageShell, Select, TD, TH, THead, TR } from '@/components/ui';
+import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR } from '@/components/ui';
 
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -429,44 +429,76 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                     </button>
                   </div>
                   <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
-                    <DataTable minWidth={560}>
-                      <THead>
-                        <TH>Aluno</TH>
-                        <TH>Touca</TH>
-                        <TH>Dia / Hora</TH>
-                        <TH>Observações</TH>
-                      </THead>
-                      <tbody>
-                        {bulkRows.map((r, i) => (
-                          <TR key={i} muted={r.skip}>
-                            <TD>
-                              <p className="font-bold text-slate-800">{r.name}</p>
-                              <p className="text-xs text-slate-500">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
-                            </TD>
-                            <TD>
-                              <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
-                            </TD>
-                            <TD className="text-xs font-medium text-ink-muted">
-                              {r.days.length ? r.days.map(d => d.split('-')[0]).join(' / ') : '—'}
-                              {r.time ? ` · ${r.time}` : ''}
-                            </TD>
-                            <TD>
-                              {r.issues.length === 0 ? (
-                                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
-                              ) : (
-                                <ul className="space-y-0.5">
-                                  {r.issues.map((iss, k) => (
-                                    <li key={k} className={cn('inline-flex items-center gap-1 text-[11px] font-medium', r.skip ? 'text-red-500' : 'text-amber-600')}>
-                                      <AlertTriangle className="w-3 h-3 shrink-0" /> {iss}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </TD>
-                          </TR>
-                        ))}
-                      </tbody>
-                    </DataTable>
+                    <ResponsiveTable
+                      table={                    <DataTable minWidth={560}>
+                          <THead>
+                            <TH>Aluno</TH>
+                            <TH>Touca</TH>
+                            <TH>Dia / Hora</TH>
+                            <TH>Observações</TH>
+                          </THead>
+                          <tbody>
+                            {bulkRows.map((r, i) => (
+                              <TR key={i} muted={r.skip}>
+                                <TD>
+                                  <p className="font-bold text-slate-800">{r.name}</p>
+                                  <p className="text-xs text-slate-500">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
+                                </TD>
+                                <TD>
+                                  <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
+                                </TD>
+                                <TD className="text-xs font-medium text-ink-muted">
+                                  {r.days.length ? r.days.map(d => d.split('-')[0]).join(' / ') : '—'}
+                                  {r.time ? ` · ${r.time}` : ''}
+                                </TD>
+                                <TD>
+                                  {r.issues.length === 0 ? (
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
+                                  ) : (
+                                    <ul className="space-y-0.5">
+                                      {r.issues.map((iss, k) => (
+                                        <li key={k} className={cn('inline-flex items-center gap-1 text-[11px] font-medium', r.skip ? 'text-red-500' : 'text-amber-600')}>
+                                          <AlertTriangle className="w-3 h-3 shrink-0" /> {iss}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </TD>
+                              </TR>
+                            ))}
+                          </tbody>
+                        </DataTable>}
+                      cards={bulkRows.map((r, i) => (
+                        <RowCard
+                          key={i}
+                          muted={r.skip}
+                          title={r.name}
+                          subtitle={`${r.age || '?'} anos${r.guardian ? ' · ' + r.guardian : ''}`}
+                          badges={
+                            <span className={cn('px-2 py-1 rounded-badge text-micro font-bold uppercase text-white', levels[r.level].bgClass)}>
+                              {levels[r.level].label}
+                            </span>
+                          }
+                          fields={[
+                            { label: 'Dia / Hora', value: `${r.days.length ? r.days.map(d => d.split('-')[0]).join(' / ') : '—'}${r.time ? ' · ' + r.time : ''}` },
+                          ]}
+                        >
+                          {r.issues.length === 0 ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-success">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> pronto para importar
+                            </span>
+                          ) : (
+                            <ul className="space-y-1">
+                              {r.issues.map((iss, k) => (
+                                <li key={k} className={cn('flex items-start gap-1.5 text-mini font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
+                                  <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" /> {iss}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </RowCard>
+                      ))}
+                    />
                   </div>
                 </div>
               )}

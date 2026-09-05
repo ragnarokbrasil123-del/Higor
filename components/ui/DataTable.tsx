@@ -63,6 +63,7 @@ export function RowCard({
   action,
   muted = false,
   onClick,
+  children,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -72,6 +73,8 @@ export function RowCard({
   action?: React.ReactNode;
   muted?: boolean;
   onClick?: () => void;
+  /** Conteúdo livre abaixo dos campos. */
+  children?: React.ReactNode;
 }) {
   return (
     <div
@@ -101,6 +104,8 @@ export function RowCard({
           ))}
         </dl>
       )}
+
+      {children}
     </div>
   );
 }

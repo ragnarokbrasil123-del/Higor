@@ -310,7 +310,7 @@ export function StudentsModule() {
               {editing.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
-              <h2 className="text-lg font-black text-ink truncate">{editing.name}</h2>
+              <h2 className="text-lg font-black text-ink leading-tight break-words line-clamp-2">{editing.name}</h2>
               <p className="text-xs font-bold text-ink-muted">Ficha do aluno</p>
             </div>
           </div>

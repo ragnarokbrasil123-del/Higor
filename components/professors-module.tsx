@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, TD, TH, THead, TR, Toggle } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle } from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -318,48 +318,87 @@ export function ProfessorsModule() {
           />
         ) : view === 'disponibilidade' ? (
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-            <DataTable minWidth={760}>
-                <THead>
-                  <TH className="sticky left-0 bg-surface-sunken z-10">Professor</TH>
-                  {DAYS.map(d => <TH key={d.key}>{d.full}</TH>)}
-                  <TH align="right">Carga/sem</TH>
-                </THead>
-                <tbody>
-                  {professors.map(p => {
-                    const wk = normalizeWeek(p.schedule);
-                    const isActive = p.active ?? true;
-                    const load = weeklyLoadHours(wk);
-                    return (
-                      <TR key={p.id} muted={!isActive}>
-                        <TD className="font-bold text-ink sticky left-0 bg-surface z-10 whitespace-nowrap">
-                          {p.name || p.username || '—'}
-                          {!isActive && <span className="ml-2 text-[9px] font-bold text-red-500 uppercase">inativo</span>}
-                        </TD>
-                        {DAYS.map(d => {
-                          const day = wk[d.key];
-                          const shifts = day?.enabled ? (day.shifts || []).filter(s => s.start && s.end) : [];
-                          return (
-                            <TD key={d.key} className={cn('align-top', shifts.length > 0 && 'bg-info-soft/60')}>
-                              {shifts.length ? (
-                                <div className="flex flex-col gap-1">
-                                  {shifts.map((s, i) => (
-                                    <span key={i} className="inline-block px-2 py-1 rounded-lg bg-white border border-indigo-100 text-[11px] font-bold text-indigo-700 whitespace-nowrap">
-                                      {s.start}–{s.end}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-slate-300 text-xs">·</span>
-                              )}
+            <ResponsiveTable
+              table={            <DataTable minWidth={760}>
+                    <THead>
+                      <TH className="sticky left-0 bg-surface-sunken z-10">Professor</TH>
+                      {DAYS.map(d => <TH key={d.key}>{d.full}</TH>)}
+                      <TH align="right">Carga/sem</TH>
+                    </THead>
+                    <tbody>
+                      {professors.map(p => {
+                        const wk = normalizeWeek(p.schedule);
+                        const isActive = p.active ?? true;
+                        const load = weeklyLoadHours(wk);
+                        return (
+                          <TR key={p.id} muted={!isActive}>
+                            <TD className="font-bold text-ink sticky left-0 bg-surface z-10 whitespace-nowrap">
+                              {p.name || p.username || '—'}
+                              {!isActive && <span className="ml-2 text-[9px] font-bold text-red-500 uppercase">inativo</span>}
                             </TD>
-                          );
-                        })}
-                        <TD align="right" className="font-black text-ink whitespace-nowrap">{load ? `${load}h` : '—'}</TD>
-                      </TR>
-                    );
-                  })}
-                </tbody>
-            </DataTable>
+                            {DAYS.map(d => {
+                              const day = wk[d.key];
+                              const shifts = day?.enabled ? (day.shifts || []).filter(s => s.start && s.end) : [];
+                              return (
+                                <TD key={d.key} className={cn('align-top', shifts.length > 0 && 'bg-info-soft/60')}>
+                                  {shifts.length ? (
+                                    <div className="flex flex-col gap-1">
+                                      {shifts.map((s, i) => (
+                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-white border border-indigo-100 text-[11px] font-bold text-indigo-700 whitespace-nowrap">
+                                          {s.start}–{s.end}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-slate-300 text-xs">·</span>
+                                  )}
+                                </TD>
+                              );
+                            })}
+                            <TD align="right" className="font-black text-ink whitespace-nowrap">{load ? `${load}h` : '—'}</TD>
+                          </TR>
+                        );
+                      })}
+                    </tbody>
+                </DataTable>}
+              cards={professors.map(p => {
+                const wk = normalizeWeek(p.schedule);
+                const isActive = p.active ?? true;
+                const load = weeklyLoadHours(wk);
+                const diasComAula = DAYS.filter(d => {
+                  const day = wk[d.key];
+                  return day?.enabled && (day.shifts || []).some(sh => sh.start && sh.end);
+                });
+                return (
+                  <RowCard
+                    key={p.id}
+                    muted={!isActive}
+                    title={p.name || p.username || '—'}
+                    subtitle={load ? `${load}h por semana` : 'sem horário definido'}
+                    badges={!isActive ? <Badge tone="danger" uppercase>inativo</Badge> : undefined}
+                  >
+                    {diasComAula.length === 0 ? (
+                      <p className="text-xs text-ink-subtle italic">Nenhum dia com horário cadastrado.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {diasComAula.map(d => (
+                          <div key={d.key} className="flex items-start gap-2">
+                            <span className="w-10 shrink-0 text-micro font-black text-ink-subtle uppercase tracking-wider pt-1">{d.label}</span>
+                            <div className="flex flex-wrap gap-1">
+                              {(wk[d.key].shifts || []).filter(sh => sh.start && sh.end).map((sh, i) => (
+                                <span key={i} className="px-2 py-1 rounded-badge bg-info-soft border border-info/20 text-mini font-bold text-info-ink whitespace-nowrap">
+                                  {sh.start}–{sh.end}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </RowCard>
+                );
+              })}
+            />
           </div>
         ) : (
           <div className="space-y-3">
