@@ -58,6 +58,7 @@ O `client` é array porque **irmãos compartilham telefone e senha** — 25 fam�
 
 | Aba | Arquivo | Quem vê | O que faz |
 |---|---|---|---|
+| Painel | `dashboard-module.tsx` | admin | visão geral: resumo → pendências (com atalho para a aba) → evolução → atividades recentes. **Aba inicial do admin.** Nenhum número é inventado: sem dado, mostra Empty State |
 | Cadastro Alunos | `registration-module.tsx` | staff | matrícula individual + **importação em massa** (colar planilha/CSV com prévia linha a linha) |
 | Alunos | `students-module.tsx` | admin | ficha completa editável: dados, responsável, endereço, observações e **troca de dia/horário** (mexe em `class_slots`) |
 | Avaliação Natação | `swimming-module.tsx` | staff | avaliação por **turma do dia** |

@@ -11,12 +11,13 @@ import { ClientPortal } from '@/components/client-portal';
 import { ProfessorsModule } from '@/components/professors-module';
 import { StudentsModule } from '@/components/students-module';
 import { ScheduleModule } from '@/components/schedule-module';
-import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock } from 'lucide-react';
+import { DashboardModule } from '@/components/dashboard-module';
+import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { MobileNav } from '@/components/ui';
 
-type Tab = 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
+type Tab = 'dashboard' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 
 // ==========================================
@@ -113,8 +114,13 @@ export default function Page() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('olimpo_session');
-    if (savedUser) setUser(JSON.parse(savedUser));
-    
+    if (savedUser) {
+      const sessao = JSON.parse(savedUser);
+      setUser(sessao);
+      // admin abre no Painel; professor continua caindo direto na Avaliação
+      if (sessao?.role === 'admin') setActiveTab('dashboard');
+    }
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('PWA Error', err));
     }
@@ -135,6 +141,7 @@ export default function Page() {
       const session = { role, data };
       localStorage.setItem('olimpo_session', JSON.stringify(session));
       setUser(session);
+      if (role === 'admin') setActiveTab('dashboard');
     }} />;
   }
 
@@ -225,6 +232,13 @@ export default function Page() {
         </div>
 
         <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 space-y-1">
+          {isAdmin && (
+            <button onClick={() => setActiveTab('dashboard')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'dashboard' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <LayoutDashboard className="w-5 h-5" />
+              <span className="font-bold text-sm">Painel</span>
+            </button>
+          )}
+
           <button onClick={() => setActiveTab('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
             <UserPlus className="w-5 h-5" />
             <span className="font-bold text-sm">Cadastro Alunos</span>
@@ -304,10 +318,12 @@ export default function Page() {
 
       <MobileNav
         items={[
+          // no celular cabem 4 atalhos fixos; o resto vai para o menu "Mais"
+          ...(isAdmin ? [{ key: 'dashboard', label: 'Painel', icon: LayoutDashboard, primary: true }] : []),
           { key: 'swimming', label: 'Avaliação', icon: Droplets, primary: true },
-          ...(isAdmin ? [{ key: 'avulsos', label: 'Avulsos', icon: Sparkles, primary: true }] : []),
           ...(isAdmin ? [{ key: 'sabado', label: 'Sábado', icon: CalendarClock, primary: true }] : []),
           { key: 'schedule', label: 'Grade', icon: CalendarDays, primary: true },
+          ...(isAdmin ? [{ key: 'avulsos', label: 'Avulsos', icon: Sparkles }] : []),
           { key: 'registration', label: 'Cadastro', icon: UserPlus },
           ...(isAdmin ? [{ key: 'students', label: 'Alunos', icon: Users }] : []),
           { key: 'cleaning', label: 'Limpeza', icon: ClipboardList },
@@ -319,6 +335,7 @@ export default function Page() {
       />
 
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
+        {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
         {activeTab === 'registration' && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
         {activeTab === 'students' && isAdmin && <StudentsModule />}
         {activeTab === 'swimming' && <SwimmingModule />}
