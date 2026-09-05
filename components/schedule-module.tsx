@@ -6,7 +6,7 @@ import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { cn } from '@/lib/utils';
-import { Button, Chip, EmptyState, Modal, Toggle } from '@/components/ui';
+import { Button, Chip, EmptyState, Modal, PageHeader, PageShell, Toggle } from '@/components/ui';
 
 interface ClassSlot {
   id: string;
@@ -265,25 +265,17 @@ export function ScheduleModule() {
   const totalOcupadas = visiveis.reduce((s, c) => s + (c.class_slots || []).filter(x => x.student_id).length, 0);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <div className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 md:mt-0">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-3 bg-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/20">
-                <LayoutGrid className="w-8 h-8 text-white" />
-              </div>
-              <h1 className="text-3xl font-black text-slate-800 tracking-tight">Grade de Horários</h1>
-            </div>
-            <p className="text-slate-500 font-medium ml-16">Turmas por professor, touca e horário.</p>
-          </div>
-
-          {isAdmin && (
-            <button onClick={() => setIsModalOpen(true)} className="px-6 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-3 active:scale-95 transition-all">
-              <Plus className="w-5 h-5" /> Adicionar Horário
-            </button>
-          )}
-        </div>
+    <PageShell width="wide">
+        <PageHeader
+          icon={LayoutGrid}
+          title="Grade de horários"
+          description="Turmas por professor, touca e horário."
+          action={isAdmin ? (
+            <Button onClick={() => setIsModalOpen(true)}>
+              <Plus className="w-5 h-5" /> Adicionar horário
+            </Button>
+          ) : undefined}
+        />
 
         {/* ===================== Filtros ===================== */}
         <div className="bg-surface rounded-panel border border-line shadow-raised p-4 md:p-5 mb-6 space-y-4 sticky top-0 z-20">
@@ -412,7 +404,6 @@ export function ScheduleModule() {
             </div>
           ) : null}
         </div>
-      </div>
 
       <Modal
         open={isModalOpen}
@@ -536,6 +527,6 @@ export function ScheduleModule() {
                   </div>
                 </form>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

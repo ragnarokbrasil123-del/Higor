@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, EmptyState, Input, Loading, Modal, Toggle } from '@/components/ui';
+import { Badge, Button, EmptyState, Input, Loading, Modal, PageHeader, PageShell, Toggle } from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -276,22 +276,17 @@ export function ProfessorsModule() {
   const activeCount = professors.filter(p => p.active ?? true).length;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto bg-slate-50">
-      <div className="max-w-4xl mx-auto p-4 md:p-8 w-full space-y-6">
-
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-              <GraduationCap className="w-6 h-6 md:w-8 md:h-8 text-amber-500" /> Professores
-            </h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Cadastro da equipe de professores, horário de trabalho e acesso ao sistema.
-            </p>
-          </div>
-          <Button onClick={openNew} className="w-full md:w-auto shrink-0">
-            <Plus className="w-4 h-4" /> Adicionar professor
-          </Button>
-        </header>
+    <PageShell width="focus">
+        <PageHeader
+          icon={GraduationCap}
+          title="Professores"
+          description="Cadastro da equipe, horário de trabalho e acesso ao sistema."
+          action={
+            <Button onClick={openNew}>
+              <Plus className="w-4 h-4" /> Adicionar professor
+            </Button>
+          }
+        />
 
         {!loading && professors.length > 0 && (
           <div className="flex flex-wrap items-center gap-3">
@@ -428,7 +423,6 @@ export function ProfessorsModule() {
             })}
           </div>
         )}
-      </div>
 
       <Modal
         open={modalOpen}
@@ -558,6 +552,6 @@ export function ProfessorsModule() {
                 </div>
         </div>
       </Modal>
-    </div>
+    </PageShell>
   );
 }

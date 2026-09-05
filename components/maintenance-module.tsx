@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Check, ChevronLeft, ChevronRight, Edit2, Trash2, X, Wrench, Camera, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { Button, Input, EmptyState } from '@/components/ui';
+import { Button, DateNav, EmptyState, Input, PageHeader, PageShell } from '@/components/ui';
 
 interface MaintenanceTask {
   id: string;
@@ -168,7 +168,7 @@ export function MaintenanceModule() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-slate-100 to-slate-200">
+    <PageShell width="focus">
       <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
       <AnimatePresence>
@@ -182,44 +182,12 @@ export function MaintenanceModule() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 w-full max-w-4xl mx-auto p-4 md:p-8">
-        
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 mt-4 md:mt-0">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Wrench className="w-8 h-8 text-blue-500" />
-              <h1 className="text-3xl font-black text-slate-800 tracking-tight">Manutenção</h1>
-            </div>
-            <p className="text-slate-500 font-medium ml-11">Checklist técnico da casa de máquinas.</p>
-          </div>
-
-          <div className="flex items-center gap-6 bg-white p-2 pr-6 rounded-2xl shadow-sm border border-slate-200">
-            <div className="flex items-center">
-              <button onClick={() => changeDate(-1)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"><ChevronLeft className="w-5 h-5" /></button>
-              <div className="w-40 text-center flex flex-col">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isToday ? 'Hoje' : 'Histórico'}</span>
-                <span className="font-bold text-slate-700">{new Date(selectedDate + 'T12:00:00').toLocaleDateString('pt-BR')}</span>
-              </div>
-              <button onClick={() => changeDate(1)} className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"><ChevronRight className="w-5 h-5" /></button>
-            </div>
-            
-            <div className="w-px h-10 bg-slate-200 mx-2"></div>
-            
-            <div className="flex items-center gap-3">
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <svg className="w-12 h-12 transform -rotate-90">
-                  <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-slate-100" />
-                  <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" strokeDasharray={125.6} strokeDashoffset={125.6 - (125.6 * progress) / 100} className={cn("transition-all duration-1000 ease-out", progress === 100 ? "text-green-500" : "text-blue-500")} />
-                </svg>
-                <span className="absolute text-[11px] font-bold text-slate-700">{progress}%</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-slate-700">{completedCount} de {tasks.length}</span>
-                <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Concluídas</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={Wrench}
+          title="Manutenção"
+          description="Checklist técnico da casa de máquinas, com foto de comprovação."
+          action={<DateNav date={selectedDate} onShift={changeDate} progress={progress} done={completedCount} total={tasks.length} />}
+        />
 
         <div className="bg-surface rounded-panel shadow-overlay border border-line overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
@@ -282,8 +250,6 @@ export function MaintenanceModule() {
             </AnimatePresence>
           </div>
         </div>
-
-      </div>
-    </div>
+    </PageShell>
   );
 }

@@ -109,43 +109,6 @@ export function Chip({ active = false, onClick, count, dotClass, children }: Chi
   );
 }
 
-/* ---------------- Cabeçalho de página ---------------- */
-
-interface PageHeaderProps {
-  icon?: React.ReactNode;
-  title: string;
-  subtitle?: React.ReactNode;
-  /** Métrica à direita: { valor, de, rotulo } */
-  metric?: { value: number; of?: number; label: string };
-  action?: React.ReactNode;
-}
-
-export function PageHeader({ icon, title, subtitle, metric, action }: PageHeaderProps) {
-  return (
-    <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="text-2xl font-black text-ink flex items-center gap-2 text-balance">
-          {icon}
-          {title}
-        </h1>
-        {subtitle && <p className="text-sm text-ink-muted font-medium mt-1">{subtitle}</p>}
-      </div>
-
-      {metric && (
-        <Card className="px-5 py-3 shrink-0">
-          <p className="text-2xl font-black text-ink leading-none tabular-nums">
-            {metric.value}
-            {metric.of !== undefined && <span className="text-ink-subtle"> / {metric.of}</span>}
-          </p>
-          <p className="text-mini font-bold text-ink-subtle uppercase tracking-wider mt-1">{metric.label}</p>
-        </Card>
-      )}
-
-      {action}
-    </header>
-  );
-}
-
 /* ---------------- Estados ---------------- */
 
 export function EmptyState({

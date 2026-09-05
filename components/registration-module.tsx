@@ -6,6 +6,7 @@ import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCirc
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { PageShell, PageHeader } from '@/components/ui';
 
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -293,18 +294,19 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-slate-50 md:bg-transparent">
-      
-      <header className="h-14 md:h-16 flex justify-between items-center px-4 md:px-8 bg-white/50 border-b border-slate-200 backdrop-blur-sm shrink-0">
-        <h1 className="text-base md:text-xl font-extrabold text-slate-800 tracking-tight">Gestão de Alunos</h1>
-        
-        <div className="flex p-1 bg-slate-200 rounded-lg overflow-x-auto custom-scrollbar">
-          <button onClick={() => setMode('single')} className={cn("px-3 md:px-4 py-1.5 text-xs md:text-sm font-bold rounded-md transition-all whitespace-nowrap", mode === 'single' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500")}>Matricular Novo</button>
-          <button onClick={() => setMode('bulk')} className={cn("px-3 md:px-4 py-1.5 text-xs md:text-sm font-bold rounded-md transition-all whitespace-nowrap", mode === 'bulk' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500")}>Em Lote</button>
-        </div>
-      </header>
-      
-      <div className="flex-1 p-3 md:p-8 overflow-y-auto custom-scrollbar">
+    <PageShell width="focus">
+        <PageHeader
+          icon={UserPlus}
+          title="Cadastro de alunos"
+          description="Matricule um aluno por vez ou importe uma planilha inteira."
+          action={
+            <div className="flex p-1 bg-surface-sunken border border-line rounded-control">
+              <button onClick={() => setMode('single')} className={cn('px-4 py-2 text-sm font-bold rounded-badge transition-all whitespace-nowrap', mode === 'single' ? 'bg-surface text-ink shadow-raised' : 'text-ink-muted')}>Matricular</button>
+              <button onClick={() => setMode('bulk')} className={cn('px-4 py-2 text-sm font-bold rounded-badge transition-all whitespace-nowrap', mode === 'bulk' ? 'bg-surface text-ink shadow-raised' : 'text-ink-muted')}>Em lote</button>
+            </div>
+          }
+        />
+
         <AnimatePresence mode="wait">
           
           {mode === 'single' ? (
@@ -474,8 +476,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
 
           )}
         </AnimatePresence>
-      </div>
-
-    </div>
+    </PageShell>
   );
 }

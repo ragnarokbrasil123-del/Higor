@@ -9,7 +9,7 @@ import {
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, EmptyState, Input, Loading, Modal, Select } from '@/components/ui';
+import { Badge, Button, EmptyState, Input, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -166,17 +166,13 @@ export function StudentsModule() {
   const semTurma = students.filter(s => !slots.some(x => x.student_id === s.id)).length;
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto bg-slate-50">
-      <div className="max-w-6xl mx-auto p-4 md:p-8 w-full space-y-5">
+    <PageShell width="wide">
 
-        <header>
-          <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 flex items-center gap-2">
-            <Users className="w-6 h-6 md:w-8 md:h-8 text-amber-500" /> Alunos
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Ficha completa de cada aluno — dados, responsável, endereço e as turmas dele.
-          </p>
-        </header>
+        <PageHeader
+          icon={Users}
+          title="Alunos"
+          description="Ficha completa de cada aluno — dados, responsável, endereço e turmas."
+        />
 
         {/* filtros */}
         <div className="bg-surface rounded-panel border border-line shadow-raised p-4 space-y-3">
@@ -269,7 +265,6 @@ export function StudentsModule() {
             </div>
           </div>
         )}
-      </div>
 
       {/* ===================== FICHA ===================== */}
       {editing && (
@@ -427,6 +422,6 @@ export function StudentsModule() {
                 </section>
       </Modal>
       )}
-    </div>
+    </PageShell>
   );
 }

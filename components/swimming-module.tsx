@@ -11,7 +11,7 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, Chip, EmptyState, Input, Loading, Select, Textarea, Toggle } from '@/components/ui';
+import { Badge, Button, Chip, EmptyState, Input, Loading, PageHeader, PageShell, Select, Textarea, Toggle } from '@/components/ui';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
 interface SlotRow { id: string; class_id: string; cap_color: string; student_id: string | null }
@@ -621,27 +621,17 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
   // ---------------------------------------------------- HOME (turmas do dia)
   return (
-    <div className="flex-1 h-full overflow-y-auto custom-scrollbar bg-slate-50">
-      <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-5">
-
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-              <Droplets className="w-7 h-7 text-amber-500" /> {semTurmaMode ? 'Avulsos & Wellhub' : sabadoMode ? 'Avaliação de Sábado' : 'Avaliação'}
-            </h1>
-            <p className="text-sm text-slate-500 font-medium mt-1">
-              {semTurmaMode
-                ? <>Alunos sem horário fixo na grade · trimestre {TRIMESTRE_ATUAL}</>
-                : <>{sabadoMode ? 'Agrupado por horário' : filterProf !== 'all' ? filterProf : isAdmin ? 'Todas as turmas' : `Turmas de ${meuNome || 'você'}`} · trimestre {TRIMESTRE_ATUAL}</>}
-            </p>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-sm">
-            <p className="text-2xl font-black text-slate-800 leading-none">
-              {totalAvaliados}<span className="text-slate-300"> / {alunosNoEscopo.length}</span>
-            </p>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">alunos avaliados</p>
-          </div>
-        </header>
+    <PageShell width="wide">
+        <PageHeader
+          icon={Droplets}
+          title={semTurmaMode ? 'Avulsos & Wellhub' : sabadoMode ? 'Avaliação de sábado' : 'Avaliação'}
+          description={
+            semTurmaMode
+              ? <>Alunos sem horário fixo na grade · trimestre {TRIMESTRE_ATUAL}</>
+              : <>{sabadoMode ? 'Agrupado por horário' : filterProf !== 'all' ? filterProf : isAdmin ? 'Todas as turmas' : `Turmas de ${meuNome || 'você'}`} · trimestre {TRIMESTRE_ATUAL}</>
+          }
+          metric={{ value: totalAvaliados, of: alunosNoEscopo.length, label: 'alunos avaliados' }}
+        />
 
         {/* busca + filtro de professor */}
         <div className="flex flex-col md:flex-row gap-3">
@@ -895,7 +885,6 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             )}
           </>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }
