@@ -11,8 +11,7 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Chip, EmptyState, Toggle } from '@/components/ui';
-import { Button, Input, Select, Textarea, Loading } from '@/components/ui';
+import { Badge, Button, Chip, EmptyState, Input, Loading, Select, Textarea, Toggle } from '@/components/ui';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
 interface SlotRow { id: string; class_id: string; cap_color: string; student_id: string | null }

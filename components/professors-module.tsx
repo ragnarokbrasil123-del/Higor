@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, EmptyState, Toggle } from '@/components/ui';
-import { Button, Input, Loading } from '@/components/ui';
+import { Badge, Button, EmptyState, Input, Loading, Modal, Toggle } from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -431,21 +430,22 @@ export function ProfessorsModule() {
         )}
       </div>
 
-      <AnimatePresence>
-        {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
-
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-
-              <div className="p-6 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-                <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-amber-500" /> {form.id ? 'Editar Professor' : 'Novo Professor'}
-                </h2>
-                <button onClick={() => setModalOpen(false)} className="p-2 bg-white hover:bg-slate-200 rounded-full transition-colors"><X className="w-5 h-5 text-slate-500" /></button>
-              </div>
-
-              <div className="p-6 overflow-y-auto custom-scrollbar space-y-6">
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        size="lg"
+        title={
+          <h2 className="text-lg font-black text-ink flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-brand" /> {form.id ? 'Editar professor' : 'Novo professor'}
+          </h2>
+        }
+        footer={
+          <Button form="professorForm" type="submit" disabled={saving} block size="lg">
+            <Save className="w-5 h-5" /> {saving ? 'Salvando...' : form.id ? 'Salvar alterações' : 'Cadastrar professor'}
+          </Button>
+        }
+      >
+        <div className="space-y-6">
                 <form id="professorForm" onSubmit={handleSave} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
@@ -556,18 +556,8 @@ export function ProfessorsModule() {
                     </button>
                   )}
                 </div>
-              </div>
-
-              <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
-                <button form="professorForm" type="submit" disabled={saving} className="w-full px-8 py-4 bg-indigo-600 text-white rounded-xl font-black active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md hover:bg-indigo-700 disabled:opacity-50">
-                  <Save className="w-5 h-5" /> {saving ? 'Salvando...' : form.id ? 'Salvar Alterações' : 'Cadastrar Professor'}
-                </button>
-              </div>
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </Modal>
     </div>
   );
 }

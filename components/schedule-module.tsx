@@ -6,7 +6,7 @@ import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { cn } from '@/lib/utils';
-import { Chip, EmptyState, Toggle } from '@/components/ui';
+import { Button, Chip, EmptyState, Modal, Toggle } from '@/components/ui';
 
 interface ClassSlot {
   id: string;
@@ -414,18 +414,17 @@ export function ScheduleModule() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="flex items-center justify-between p-6 bg-slate-50 border-b border-slate-100 shrink-0">
-                <h2 className="text-xl font-black text-slate-800">Nova Turma / Horário</h2>
-                <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 bg-white rounded-full shadow-sm"><X className="w-5 h-5" /></button>
-              </div>
-
-              <div className="p-6 overflow-y-auto custom-scrollbar">
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        size="md"
+        title="Nova turma / horário"
+        footer={
+          <Button form="classForm" type="submit" disabled={isSubmitting} block size="lg">
+            {isSubmitting ? 'Criando turmas...' : form.days_of_week.length > 1 ? `Criar ${form.days_of_week.length} turmas` : 'Criar turma'}
+          </Button>
+        }
+      >
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
                   <div className="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
                     <div className="relative">
@@ -536,17 +535,7 @@ export function ScheduleModule() {
                     </div>
                   </div>
                 </form>
-              </div>
-
-              <div className="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
-                <button form="classForm" type="submit" disabled={isSubmitting} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                  {isSubmitting ? 'Criando turmas...' : form.days_of_week.length > 1 ? `Criar ${form.days_of_week.length} turmas` : 'Criar turma'}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      </Modal>
     </div>
   );
 }

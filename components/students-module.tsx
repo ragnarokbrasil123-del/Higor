@@ -9,7 +9,7 @@ import {
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, EmptyState, Input, Loading, Select } from '@/components/ui';
+import { Badge, Button, EmptyState, Input, Loading, Modal, Select } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -272,33 +272,38 @@ export function StudentsModule() {
       </div>
 
       {/* ===================== FICHA ===================== */}
-      <AnimatePresence>
-        {editing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditing(null)} />
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
-
-              <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center text-white font-black shrink-0', levels[editing.level]?.bgClass || 'bg-slate-400')}>
-                    {editing.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-black text-slate-800 truncate">{editing.name}</h2>
-                    <p className="text-xs font-bold text-slate-500">Ficha do aluno</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {editing.phone && (
-                    <a href={`https://wa.me/55${editing.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="p-2.5 bg-green-50 text-green-600 hover:bg-green-500 hover:text-white rounded-xl transition-colors" title="WhatsApp">
-                      <MessageCircle className="w-4 h-4" />
-                    </a>
-                  )}
-                  <button onClick={() => setEditing(null)} className="p-2.5 bg-white hover:bg-slate-200 rounded-xl transition-colors"><X className="w-4 h-4 text-slate-500" /></button>
-                </div>
-              </div>
-
-              <div className="p-5 overflow-y-auto custom-scrollbar space-y-6">
+      {editing && (
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        size="xl"
+        title={
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={cn('w-11 h-11 rounded-card flex items-center justify-center text-white font-black shrink-0', levels[editing.level]?.bgClass || 'bg-ink-subtle')}>
+              {editing.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-black text-ink truncate">{editing.name}</h2>
+              <p className="text-xs font-bold text-ink-muted">Ficha do aluno</p>
+            </div>
+          </div>
+        }
+        headerAction={editing.phone ? (
+          <a href={`https://wa.me/55${editing.phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="p-2.5 bg-success-soft text-success hover:bg-success hover:text-white rounded-control transition-colors" title="WhatsApp">
+            <MessageCircle className="w-4 h-4" />
+          </a>
+        ) : undefined}
+        footer={
+          <>
+            <Button variant="danger" size="lg" onClick={() => excluir(editing)}>
+              <Trash2 className="w-4 h-4" /> Excluir
+            </Button>
+            <Button size="lg" className="flex-1" onClick={salvar} disabled={saving}>
+              <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar alterações'}
+            </Button>
+          </>
+        }
+      >
 
                 {/* dados do aluno */}
                 <section>
@@ -420,21 +425,8 @@ export function StudentsModule() {
                     </div>
                   </div>
                 </section>
-              </div>
-
-              <div className="p-4 bg-slate-50 border-t border-slate-100 shrink-0 flex items-center gap-3">
-                <button onClick={() => excluir(editing)} className="px-4 py-3 text-red-600 bg-white border border-red-200 hover:bg-red-50 rounded-xl font-bold text-sm transition-colors flex items-center gap-2">
-                  <Trash2 className="w-4 h-4" /> Excluir
-                </button>
-                <button onClick={salvar} disabled={saving} className="flex-1 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-50">
-                  <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar alterações'}
-                </button>
-              </div>
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      </Modal>
+      )}
     </div>
   );
 }
