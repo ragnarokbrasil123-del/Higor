@@ -437,7 +437,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     return (
       <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto custom-scrollbar" ref={topoRef}>
         {/* cabeçalho fixo */}
-        <div className="sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm">
+        <div className="sticky top-0 z-20 bg-surface border-b border-line shadow-raised">
           <div className="max-w-3xl mx-auto p-4">
             <div className="flex items-center gap-3">
               <button onClick={() => { if (confirm('Sair da avaliação? O que você marcou fica salvo como rascunho.')) { setView('home'); setFila([]); } }} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors shrink-0">
@@ -477,7 +477,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               <div key={crit.id} className={cn('bg-white rounded-2xl border p-4 transition-colors',
                 st === 'passed' ? 'border-emerald-300 bg-emerald-50/40' : st === 'failed' ? 'border-red-200 bg-red-50/30' : 'border-slate-200')}>
                 <p className="text-sm font-bold text-slate-700 leading-snug mb-3">{crit.label}</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button onClick={() => setScores({ ...scores, [crit.id]: 'passed' })} className={cn('py-3.5 rounded-xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2',
                     st === 'passed' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50')}>
                     <Check className="w-4 h-4" strokeWidth={3} /> Passou
@@ -517,7 +517,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         </div>
 
         {/* rodapé fixo */}
-        <div className="sticky bottom-0 bg-white border-t border-slate-200 p-3 shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
+        <div className="sticky bottom-0 bg-surface border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
           <div className="max-w-3xl mx-auto flex gap-2">
             <button onClick={() => salvarEAvancar(true)} className="px-5 py-4 bg-white border border-slate-200 text-slate-500 font-bold rounded-xl text-sm active:scale-95 transition-transform">
               Pular

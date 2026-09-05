@@ -93,9 +93,9 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
   const minhasAulas = aulas[student.id] || [];
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-slate-50 overflow-y-auto">
+    <div className="fixed inset-0 flex flex-col bg-canvas overflow-y-auto overflow-x-clip">
       {/* Cabeçalho */}
-      <div className="bg-black pt-12 pb-6 px-6 shadow-xl relative overflow-hidden shrink-0">
+      <div className="bg-black pt-[max(3rem,calc(env(safe-area-inset-top)+1.5rem))] pb-6 px-5 sm:px-6 shadow-xl relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="flex justify-between items-start relative z-10">
           <img src="/logo.png" alt="Clube Olimpo" className="h-10 w-auto object-contain" />
@@ -123,13 +123,13 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             {student.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight leading-tight">{student.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight break-words">{student.name}</h1>
             <p className="text-slate-400 text-sm mt-1">Dossiê do Aluno</p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 p-4 md:p-8 max-w-3xl mx-auto w-full -mt-4 relative z-20 space-y-6">
+      <div className="flex-1 px-4 py-5 sm:px-6 md:p-8 pb-[max(2rem,env(safe-area-inset-bottom))] max-w-3xl mx-auto w-full -mt-4 relative z-20 space-y-6">
 
         {/* Avisos no celular */}
         {suportaAvisos() && avisosOn === false && (
