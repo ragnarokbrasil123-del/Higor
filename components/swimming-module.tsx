@@ -11,6 +11,8 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { Toggle, EmptyState } from '@/components/ui';
+import { Button, Input, Select, Textarea, Loading } from '@/components/ui';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
 interface SlotRow { id: string; class_id: string; cap_color: string; student_id: string | null }
@@ -408,7 +410,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
   // ================================================================ RENDER
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center bg-slate-50"><p className="text-slate-400 font-bold animate-pulse">Carregando avaliações...</p></div>;
+    return <div className="flex-1 flex items-center justify-center bg-canvas"><Loading label="Carregando avaliações..." /></div>;
   }
 
   // ---------------------------------------------------- MODO AVALIANDO
@@ -508,7 +510,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                 <Sparkles className="w-3.5 h-3.5" /> {notes ? 'Gerar outra' : 'Gerar sugestão'}
               </button>
             </div>
-            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Escreva, ou toque em “Gerar sugestão” para criar a partir do resultado." className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 min-h-[110px] resize-y" />
+            <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Escreva, ou toque em “Gerar sugestão” para criar a partir do resultado." className="min-h-[110px]" />
             {marcados === 0 && (
               <p className="text-[11px] font-bold text-slate-400 mt-2">Marque os critérios acima para liberar a sugestão.</p>
             )}
@@ -646,16 +648,14 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar aluno pelo nome..."
-              className="w-full pl-9 pr-9 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20 shadow-sm" />
+            <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar aluno pelo nome..." className="pl-9 pr-9 bg-surface shadow-raised" />
             {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X className="w-4 h-4" /></button>}
           </div>
           {!semTurmaMode && !sabadoMode && profsDisponiveis.length > 1 && (
-            <select value={filterProf} onChange={e => setFilterProf(e.target.value)}
-              className="px-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 shadow-sm md:max-w-[300px]">
+            <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-auto bg-surface shadow-raised font-bold md:max-w-[300px]">
               <option value="all">Todos os professores ({profsDisponiveis.length})</option>
               {profsDisponiveis.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
+            </Select>
           )}
         </div>
 
@@ -725,12 +725,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setSoPendentes(v => !v)}>
-                  <button type="button" className={cn('w-9 h-5 rounded-full relative transition-colors shrink-0', soPendentes ? 'bg-amber-500' : 'bg-slate-300')}>
-                    <span className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all', soPendentes ? 'left-[18px]' : 'left-0.5')} />
-                  </button>
-                  <span className="text-xs font-bold text-slate-600">Só quem falta avaliar</span>
-                </div>
+                <Toggle checked={soPendentes} onChange={setSoPendentes} label="Só quem falta avaliar" />
                 <div className="flex items-center gap-3">
                   {(filtroGrupo !== 'all' || filtroTouca !== 'all' || soPendentes) && (
                     <button onClick={() => { setFiltroGrupo('all'); setFiltroTouca('all'); setSoPendentes(false); }}
@@ -744,19 +739,19 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             </div>
 
             {semTurmaFiltrado.length === 0 && semTurma.length > 0 && (
-              <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
-                <Search className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-                <h3 className="font-bold text-slate-700">Nada com esses filtros</h3>
-                <p className="text-slate-400 text-sm mt-1">Toque em "Limpar filtros" para ver todos.</p>
-              </div>
+              <EmptyState
+                icon={<Search className="w-10 h-10" />}
+                title="Nada com esses filtros"
+                description={'Toque em "Limpar filtros" para ver todos.'}
+              />
             )}
 
             {semTurma.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
-                <CheckCircle2 className="w-12 h-12 text-emerald-200 mx-auto mb-3" />
-                <h3 className="font-bold text-slate-700">Todo mundo está alocado numa turma</h3>
-                <p className="text-slate-400 text-sm mt-1">Nenhum aluno sem horário definido no momento.</p>
-              </div>
+              <EmptyState
+                icon={<CheckCircle2 className="w-12 h-12 text-success/40" />}
+                title="Todo mundo está alocado numa turma"
+                description="Nenhum aluno sem horário definido no momento."
+              />
             ) : GRUPOS_SEM_TURMA.map(g => {
               const doGrupo = semTurmaFiltrado.filter(s => (s.modalidade || 'fixo') === g.key);
               if (doGrupo.length === 0) return null;
@@ -781,9 +776,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                     <div className="flex items-center gap-2 shrink-0">
                       <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Users className="w-3.5 h-3.5" />{doGrupo.length}</span>
                       {pend.length > 0 ? (
-                        <button onClick={() => abrirFila(pend.map(a => a.id))} className="px-4 py-2.5 bg-amber-500 text-black font-black rounded-xl text-xs active:scale-95 transition-transform flex items-center gap-1.5">
+                        <Button size="sm" onClick={() => abrirFila(pend.map(a => a.id))}>
                           <ListChecks className="w-4 h-4" /> Avaliar {pend.length}
-                        </button>
+                        </Button>
                       ) : (
                         <span className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4" /> completo
@@ -839,12 +834,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
             {/* só quem falta avaliar */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setSoPendentes(v => !v)}>
-                <button type="button" className={cn('w-9 h-5 rounded-full relative transition-colors shrink-0', soPendentes ? 'bg-amber-500' : 'bg-slate-300')}>
-                  <span className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all', soPendentes ? 'left-[18px]' : 'left-0.5')} />
-                </button>
-                <span className="text-xs font-bold text-slate-600">Só quem falta avaliar</span>
-              </div>
+              <Toggle checked={soPendentes} onChange={setSoPendentes} label="Só quem falta avaliar" />
               <p className="text-xs font-bold text-slate-400">
                 {blocosDoDia.length} {sabadoMode ? 'horário(s)' : 'turma(s)'}
               </p>
@@ -888,9 +878,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                         <div className="flex items-center gap-2 shrink-0">
                           <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Users className="w-3.5 h-3.5" />{alunos.length}</span>
                           {pend.length > 0 && (
-                            <button onClick={() => abrirFila(pend.map(a => a.id))} className="px-4 py-2.5 bg-amber-500 text-black font-black rounded-xl text-xs active:scale-95 transition-transform flex items-center gap-1.5">
+                            <Button size="sm" onClick={() => abrirFila(pend.map(a => a.id))}>
                               <ListChecks className="w-4 h-4" /> Avaliar {pend.length}
-                            </button>
+                            </Button>
                           )}
                           {alunos.length > 0 && pend.length === 0 && (
                             <span className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black flex items-center gap-1.5">

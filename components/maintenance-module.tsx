@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Check, ChevronLeft, ChevronRight, Edit2, Trash2, X, Wrench, Camera, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { Button, Input, EmptyState } from '@/components/ui';
 
 interface MaintenanceTask {
   id: string;
@@ -223,17 +224,20 @@ export function MaintenanceModule() {
         <div className="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50">
             <form onSubmit={handleAddTask} className="flex gap-3">
-              <input type="text" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="+ Adicionar nova tarefa técnica..." className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-slate-700 placeholder:text-slate-400" />
-              <button type="submit" disabled={!newTaskTitle.trim()} className="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm disabled:opacity-50 active:scale-95 transition-all">Adicionar</button>
+              <Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="+ Adicionar nova tarefa técnica..." className="flex-1 bg-surface" />
+              <Button type="submit" disabled={!newTaskTitle.trim()} size="lg" className="shrink-0">Adicionar</Button>
             </form>
           </div>
 
           <div className="p-2 md:p-6 space-y-1 md:space-y-2">
             <AnimatePresence mode="popLayout">
               {tasks.length === 0 ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 px-4">
-                  <Wrench className="w-12 h-12 mx-auto mb-3 text-slate-200" />
-                  <p className="text-lg font-bold text-slate-700 mb-1">Manutenção em branco</p>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <EmptyState
+                    icon={<Wrench className="w-12 h-12" />}
+                    title="Nenhum chamado hoje"
+                    description="Cadastre acima a primeira tarefa técnica do dia."
+                  />
                 </motion.div>
               ) : (
                 tasks.map((task) => (

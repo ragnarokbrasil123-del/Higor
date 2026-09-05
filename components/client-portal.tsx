@@ -9,6 +9,7 @@ import { ativarAvisos, jaInscrito, suportaAvisos } from '@/lib/push';
 import { InstallPrompt } from '@/components/install-prompt';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/ui';
 
 interface ClientPortalProps {
   students: Student[];
@@ -199,11 +200,11 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           </h2>
 
           {avaliacoes.length === 0 ? (
-            <div className="bg-white rounded-3xl p-10 text-center border border-slate-200 border-dashed">
-              <Droplets className="w-12 h-12 mx-auto text-slate-200 mb-3" />
-              <p className="text-slate-500 font-medium">Nenhuma avaliação registrada ainda.</p>
-              <p className="text-slate-400 text-sm mt-1">Assim que o professor avaliar, aparece aqui.</p>
-            </div>
+            <EmptyState
+              icon={<Droplets className="w-12 h-12" />}
+              title="Nenhuma avaliação registrada ainda"
+              description="Assim que o professor avaliar, aparece aqui."
+            />
           ) : (
             <div className="space-y-4">
               {avaliacoes.map(ev => {

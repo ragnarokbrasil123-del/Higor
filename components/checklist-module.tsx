@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Check, ChevronLeft, ChevronRight, Edit2, Trash2, X, ClipboardList, Camera, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { Button, Input, EmptyState } from '@/components/ui';
 
 interface CleaningTask {
   id: string;
@@ -223,20 +224,25 @@ export function ChecklistModule() {
         <div className="bg-white rounded-3xl shadow-xl border border-amber-100/50 overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 bg-amber-50/30">
             <form onSubmit={handleAddTask} className="flex gap-3">
-              <input type="text" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="+ Adicionar nova tarefa..." className="flex-1 bg-white border border-amber-200/60 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all text-slate-700 placeholder:text-slate-400" />
-              <button type="submit" disabled={!newTaskTitle.trim()} className="px-6 py-3 bg-amber-400 hover:bg-amber-500 text-black rounded-xl font-bold text-sm disabled:opacity-50 active:scale-95 transition-all shadow-lg shadow-amber-500/20">Adicionar</button>
+              <Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="+ Adicionar nova tarefa..." className="flex-1 bg-surface" />
+              <Button type="submit" disabled={!newTaskTitle.trim()} size="lg" className="shrink-0">Adicionar</Button>
             </form>
           </div>
 
           <div className="p-2 md:p-6 space-y-1 md:space-y-2">
             <AnimatePresence mode="popLayout">
               {tasks.length === 0 ? (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10 px-4">
-                  <Check className="w-12 h-12 mx-auto mb-3 text-slate-200" />
-                  <p className="text-lg font-bold text-slate-700 mb-1">Checklist em branco</p>
-                  <button onClick={loadDefaultChecklist} className="w-full md:w-auto mx-auto px-6 py-4 mt-6 bg-slate-900 text-white font-bold rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2 text-sm shadow-lg">
-                    <ClipboardList className="w-5 h-5 text-amber-500" /> Gerar Checklist Padrão
-                  </button>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <EmptyState
+                    icon={<Check className="w-12 h-12" />}
+                    title="Checklist em branco"
+                    description="Gere a lista padrão de tarefas e ajuste o que precisar."
+                    action={
+                      <Button variant="dark" size="lg" onClick={loadDefaultChecklist}>
+                        <ClipboardList className="w-5 h-5 text-brand" /> Gerar checklist padrão
+                      </Button>
+                    }
+                  />
                 </motion.div>
               ) : (
                 tasks.map((task) => (

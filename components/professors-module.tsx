@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { Toggle, EmptyState } from '@/components/ui';
+import { Button, Input, Loading } from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -287,9 +289,9 @@ export function ProfessorsModule() {
               Cadastro da equipe de professores, horário de trabalho e acesso ao sistema.
             </p>
           </div>
-          <button onClick={openNew} className="w-full md:w-auto px-6 py-3 bg-amber-500 text-black font-bold rounded-xl flex items-center justify-center gap-2 shadow-md active:scale-95 transition-transform shrink-0">
-            <Plus className="w-4 h-4" /> Adicionar Professor
-          </button>
+          <Button onClick={openNew} className="w-full md:w-auto shrink-0">
+            <Plus className="w-4 h-4" /> Adicionar professor
+          </Button>
         </header>
 
         {!loading && professors.length > 0 && (
@@ -308,16 +310,18 @@ export function ProfessorsModule() {
         )}
 
         {loading ? (
-          <p className="text-center text-slate-400 text-sm py-16 font-bold animate-pulse">Carregando professores...</p>
+          <Loading label="Carregando professores..." />
         ) : professors.length === 0 ? (
-          <div className="bg-white border border-dashed border-slate-300 rounded-3xl p-10 text-center">
-            <GraduationCap className="w-14 h-14 text-slate-200 mx-auto mb-4" />
-            <h3 className="text-lg font-bold text-slate-700">Nenhum professor cadastrado</h3>
-            <p className="text-slate-500 text-sm mt-1 mb-6">Adicione um por um, ou importe a lista inicial de uma vez.</p>
-            <button onClick={seedInitial} disabled={seeding} className="px-6 py-4 bg-slate-900 text-white font-bold rounded-xl active:scale-95 transition-transform inline-flex items-center justify-center gap-2 text-sm shadow-lg disabled:opacity-50">
-              <Copy className="w-5 h-5 text-amber-500" /> {seeding ? 'Importando...' : 'Importar lista inicial (12 professores)'}
-            </button>
-          </div>
+          <EmptyState
+            icon={<GraduationCap className="w-14 h-14" />}
+            title="Nenhum professor cadastrado"
+            description="Adicione um por um, ou importe a lista inicial de uma vez."
+            action={
+              <Button variant="dark" size="lg" onClick={seedInitial} disabled={seeding}>
+                <Copy className="w-5 h-5 text-brand" /> {seeding ? 'Importando...' : 'Importar lista inicial (12 professores)'}
+              </Button>
+            }
+          />
         ) : view === 'disponibilidade' ? (
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
             <div className="overflow-x-auto custom-scrollbar">
@@ -476,9 +480,7 @@ export function ProfessorsModule() {
                           <div key={key} className={cn("rounded-2xl border p-3 transition-colors", day.enabled ? "bg-white border-slate-200" : "bg-slate-50 border-slate-100")}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <button type="button" onClick={() => setDay(key, { enabled: !day.enabled })} className={cn("w-10 h-6 rounded-full transition-colors relative shrink-0", day.enabled ? "bg-indigo-500" : "bg-slate-300")}>
-                                  <span className={cn("absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all", day.enabled ? "left-[18px]" : "left-0.5")} />
-                                </button>
+                                <Toggle checked={day.enabled} onChange={(v) => setDay(key, { enabled: v })} />
                                 <span className={cn("font-bold text-sm w-16", day.enabled ? "text-slate-700" : "text-slate-400")}>{full}</span>
                               </div>
                               {day.enabled ? (

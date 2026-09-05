@@ -6,6 +6,7 @@ import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { cn } from '@/lib/utils';
+import { Toggle, EmptyState } from '@/components/ui';
 
 interface ClassSlot {
   id: string;
@@ -332,12 +333,7 @@ export function ScheduleModule() {
               {visiveis.length} turma(s) · {totalOcupadas} aluno(s) · {totalVagas - totalOcupadas} vaga(s) livre(s)
               {buscando && <span className="text-indigo-600"> · buscando em todos os dias</span>}
             </p>
-            <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setOnlyWithStudents(v => !v)}>
-              <button type="button" className={cn('w-9 h-5 rounded-full relative transition-colors shrink-0', onlyWithStudents ? 'bg-indigo-500' : 'bg-slate-300')}>
-                <span className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all', onlyWithStudents ? 'left-[18px]' : 'left-0.5')} />
-              </button>
-              <span className="text-xs font-bold text-slate-600">Só turmas com aluno</span>
-            </div>
+            <Toggle checked={onlyWithStudents} onChange={setOnlyWithStudents} label="Só turmas com aluno" />
           </div>
         </div>
 

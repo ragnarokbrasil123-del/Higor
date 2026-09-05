@@ -9,6 +9,7 @@ import {
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { Button, Input, Select, EmptyState, Loading } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -182,20 +183,19 @@ export function StudentsModule() {
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por aluno, responsável ou telefone..."
-                className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-amber-500/20" />
+              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por aluno, responsável ou telefone..." className="pl-9 pr-9 py-2.5" />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
               )}
             </div>
-            <select value={fTouca} onChange={e => setFTouca(e.target.value)} className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none">
+            <Select value={fTouca} onChange={e => setFTouca(e.target.value)} className="w-auto py-2.5">
               <option value="all">Todas as toucas</option>
               {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].label}</option>)}
-            </select>
-            <select value={fModal} onChange={e => setFModal(e.target.value)} className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none">
+            </Select>
+            <Select value={fModal} onChange={e => setFModal(e.target.value)} className="w-auto py-2.5">
               <option value="all">Todas as modalidades</option>
               {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+            </Select>
           </div>
           <p className="text-xs font-bold text-slate-500">
             {lista.length} de {students.length} aluno(s){semTurma > 0 && <span className="text-amber-600"> · {semTurma} sem turma</span>}
@@ -204,7 +204,7 @@ export function StudentsModule() {
 
         {/* lista */}
         {loading ? (
-          <p className="text-center text-slate-400 text-sm py-16 font-bold animate-pulse">Carregando alunos...</p>
+          <Loading label="Carregando alunos..." />
         ) : (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="overflow-x-auto custom-scrollbar">
@@ -314,15 +314,15 @@ export function StudentsModule() {
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-slate-500">Modalidade</label>
-                      <select value={editing.modalidade || 'fixo'} onChange={e => setEditing({ ...editing, modalidade: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none">
+                      <Select value={editing.modalidade || 'fixo'} onChange={e => setEditing({ ...editing, modalidade: e.target.value })} className="mt-1 py-2.5">
                         {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
+                      </Select>
                     </div>
                     <div className="md:col-span-4">
                       <label className="text-[11px] font-bold text-slate-500">Touca</label>
-                      <select value={editing.level} onChange={e => setEditing({ ...editing, level: e.target.value as CapLevel })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none">
+                      <Select value={editing.level} onChange={e => setEditing({ ...editing, level: e.target.value as CapLevel })} className="mt-1 py-2.5">
                         {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].name}</option>)}
-                      </select>
+                      </Select>
                     </div>
                   </div>
                 </section>
