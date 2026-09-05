@@ -9,7 +9,7 @@ import {
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -205,27 +205,24 @@ export function StudentsModule() {
           <Loading label="Carregando alunos..." />
         ) : (
           <div className="bg-surface rounded-panel border border-line shadow-raised overflow-hidden">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left border-collapse min-w-[860px]">
-                <thead className="bg-slate-50 sticky top-0 z-10">
-                  <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="p-3">Aluno</th>
-                    <th className="p-3">Touca</th>
-                    <th className="p-3">Responsável</th>
-                    <th className="p-3">WhatsApp</th>
-                    <th className="p-3">Turmas</th>
-                    <th className="p-3 text-right">Ações</th>
-                  </tr>
-                </thead>
+            <DataTable minWidth={860}>
+                <THead>
+                  <TH>Aluno</TH>
+                  <TH>Touca</TH>
+                  <TH>Responsável</TH>
+                  <TH>WhatsApp</TH>
+                  <TH>Turmas</TH>
+                  <TH align="right">Ações</TH>
+                </THead>
                 <tbody>
                   {lista.length === 0 ? (
-                    <tr><td colSpan={6} className="p-10 text-center text-slate-400 font-medium">Nenhum aluno encontrado.</td></tr>
+                    <TEmpty colSpan={6}>Nenhum aluno encontrado.</TEmpty>
                   ) : lista.map(s => {
                     const aulas = aulasDe(s.id);
                     const info = levels[s.level];
                     return (
-                      <tr key={s.id} className="border-t border-slate-50 hover:bg-slate-50/70 transition-colors">
-                        <td className="p-3">
+                      <TR key={s.id}>
+                        <TD>
                           <p className="font-bold text-slate-800 leading-tight">{s.name}</p>
                           <p className="text-xs text-slate-500">
                             {s.age ? `${s.age} anos` : 'idade —'}
@@ -233,15 +230,15 @@ export function StudentsModule() {
                               <span className="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold uppercase">{s.modalidade}</span>
                             )}
                           </p>
-                        </td>
-                        <td className="p-3">
+                        </TD>
+                        <TD>
                           <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', info?.bgClass || 'bg-slate-400')}>
                             {info?.label || s.level}
                           </span>
-                        </td>
-                        <td className="p-3 text-sm font-medium text-slate-600">{s.guardian_name || '—'}</td>
-                        <td className="p-3 text-sm font-medium text-slate-500">{s.phone || '—'}</td>
-                        <td className="p-3">
+                        </TD>
+                        <TD className="text-sm font-medium text-ink-muted">{s.guardian_name || '—'}</TD>
+                        <TD className="text-sm font-medium text-ink-subtle">{s.phone || '—'}</TD>
+                        <TD>
                           {aulas.length === 0 ? (
                             <Badge tone="warning">sem turma</Badge>
                           ) : (
@@ -253,18 +250,17 @@ export function StudentsModule() {
                               ))}
                             </div>
                           )}
-                        </td>
-                        <td className="p-3 text-right">
+                        </TD>
+                        <TD align="right">
                           <button onClick={() => { setEditing({ ...s }); setShowAdd(false); }} className="px-3 py-2 bg-slate-100 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center gap-2 text-xs font-bold">
                             <Edit2 className="w-3.5 h-3.5" /> Abrir ficha
                           </button>
-                        </td>
-                      </tr>
+                        </TD>
+                      </TR>
                     );
                   })}
                 </tbody>
-              </table>
-            </div>
+            </DataTable>
           </div>
         )}
 

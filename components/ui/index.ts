@@ -4,3 +4,4 @@ export { Card, Badge, Chip, EmptyState, Loading, ErrorState } from './Surface';
 export { PageShell, PageHeader, FilterBar, ChipRow, FilterFooter } from './Page';
 export { Modal } from './Modal';
 export { DateNav } from './DateNav';
+export { DataTable, THead, TH, TR, TD, TEmpty } from './DataTable';

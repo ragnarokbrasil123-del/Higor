@@ -6,7 +6,7 @@ import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCirc
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { PageHeader, PageShell, Select } from '@/components/ui';
+import { DataTable, PageHeader, PageShell, Select, TD, TH, THead, TR } from '@/components/ui';
 
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -429,30 +429,28 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                     </button>
                   </div>
                   <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse text-sm">
-                      <thead className="bg-white sticky top-0 shadow-sm">
-                        <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          <th className="p-3">Aluno</th>
-                          <th className="p-3">Touca</th>
-                          <th className="p-3">Dia / Hora</th>
-                          <th className="p-3">Observações</th>
-                        </tr>
-                      </thead>
+                    <DataTable minWidth={560}>
+                      <THead>
+                        <TH>Aluno</TH>
+                        <TH>Touca</TH>
+                        <TH>Dia / Hora</TH>
+                        <TH>Observações</TH>
+                      </THead>
                       <tbody>
                         {bulkRows.map((r, i) => (
-                          <tr key={i} className={cn('border-b border-slate-50', r.skip && 'opacity-40')}>
-                            <td className="p-3">
+                          <TR key={i} muted={r.skip}>
+                            <TD>
                               <p className="font-bold text-slate-800">{r.name}</p>
                               <p className="text-xs text-slate-500">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
-                            </td>
-                            <td className="p-3">
+                            </TD>
+                            <TD>
                               <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
-                            </td>
-                            <td className="p-3 text-xs font-medium text-slate-600">
+                            </TD>
+                            <TD className="text-xs font-medium text-ink-muted">
                               {r.days.length ? r.days.map(d => d.split('-')[0]).join(' / ') : '—'}
                               {r.time ? ` · ${r.time}` : ''}
-                            </td>
-                            <td className="p-3">
+                            </TD>
+                            <TD>
                               {r.issues.length === 0 ? (
                                 <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
                               ) : (
@@ -464,11 +462,11 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                   ))}
                                 </ul>
                               )}
-                            </td>
-                          </tr>
+                            </TD>
+                          </TR>
                         ))}
                       </tbody>
-                    </table>
+                    </DataTable>
                   </div>
                 </div>
               )}

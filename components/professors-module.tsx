@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, EmptyState, Input, Loading, Modal, PageHeader, PageShell, Toggle } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, TD, TH, THead, TR, Toggle } from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -318,31 +318,28 @@ export function ProfessorsModule() {
           />
         ) : view === 'disponibilidade' ? (
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full border-collapse text-sm min-w-[760px]">
-                <thead>
-                  <tr className="bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="p-3 text-left sticky left-0 bg-slate-50 z-10">Professor</th>
-                    {DAYS.map(d => <th key={d.key} className="p-3 text-left">{d.full}</th>)}
-                    <th className="p-3 text-right whitespace-nowrap">Carga/sem</th>
-                  </tr>
-                </thead>
+            <DataTable minWidth={760}>
+                <THead>
+                  <TH className="sticky left-0 bg-surface-sunken z-10">Professor</TH>
+                  {DAYS.map(d => <TH key={d.key}>{d.full}</TH>)}
+                  <TH align="right">Carga/sem</TH>
+                </THead>
                 <tbody>
                   {professors.map(p => {
                     const wk = normalizeWeek(p.schedule);
                     const isActive = p.active ?? true;
                     const load = weeklyLoadHours(wk);
                     return (
-                      <tr key={p.id} className={cn('border-t border-slate-100', !isActive && 'opacity-45')}>
-                        <td className="p-3 font-bold text-slate-800 sticky left-0 bg-white z-10 whitespace-nowrap">
+                      <TR key={p.id} muted={!isActive}>
+                        <TD className="font-bold text-ink sticky left-0 bg-surface z-10 whitespace-nowrap">
                           {p.name || p.username || '—'}
                           {!isActive && <span className="ml-2 text-[9px] font-bold text-red-500 uppercase">inativo</span>}
-                        </td>
+                        </TD>
                         {DAYS.map(d => {
                           const day = wk[d.key];
                           const shifts = day?.enabled ? (day.shifts || []).filter(s => s.start && s.end) : [];
                           return (
-                            <td key={d.key} className={cn('p-2 align-top', shifts.length > 0 && 'bg-indigo-50/40')}>
+                            <TD key={d.key} className={cn('align-top', shifts.length > 0 && 'bg-info-soft/60')}>
                               {shifts.length ? (
                                 <div className="flex flex-col gap-1">
                                   {shifts.map((s, i) => (
@@ -354,16 +351,15 @@ export function ProfessorsModule() {
                               ) : (
                                 <span className="text-slate-300 text-xs">·</span>
                               )}
-                            </td>
+                            </TD>
                           );
                         })}
-                        <td className="p-3 text-right font-black text-slate-700 whitespace-nowrap">{load ? `${load}h` : '—'}</td>
-                      </tr>
+                        <TD align="right" className="font-black text-ink whitespace-nowrap">{load ? `${load}h` : '—'}</TD>
+                      </TR>
                     );
                   })}
                 </tbody>
-              </table>
-            </div>
+            </DataTable>
           </div>
         ) : (
           <div className="space-y-3">
