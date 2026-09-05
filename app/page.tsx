@@ -9,8 +9,9 @@ import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
 import { ClientPortal } from '@/components/client-portal';
 import { ProfessorsModule } from '@/components/professors-module';
+import { StudentsModule } from '@/components/students-module';
 import { ScheduleModule } from '@/components/schedule-module';
-import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays } from 'lucide-react';
+import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock } from 'lucide-react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,7 +20,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(classNames(inputs));
 }
 
-type Tab = 'swimming' | 'cleaning' | 'maintenance' | 'registration' | 'professors' | 'schedule';
+type Tab = 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 
 // ==========================================
@@ -142,8 +143,8 @@ export default function Page() {
   }
 
   if (user.role === 'client') {
-    return <ClientPortal 
-      student={user.data} 
+    return <ClientPortal
+      students={Array.isArray(user.data) ? user.data : [user.data]}
       onLogout={() => {
         localStorage.removeItem('olimpo_session');
         setUser(null);
@@ -232,11 +233,32 @@ export default function Page() {
             <UserPlus className="w-5 h-5" />
             <span className="font-bold text-sm">Cadastro Alunos</span>
           </button>
-          
+
+          {isAdmin && (
+            <button onClick={() => setActiveTab('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <Users className="w-5 h-5" />
+              <span className="font-bold text-sm">Alunos</span>
+            </button>
+          )}
+
           <button onClick={() => setActiveTab('swimming')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
             <Droplets className="w-5 h-5" />
             <span className="font-bold text-sm">Avaliação Natação</span>
           </button>
+
+          {isAdmin && (
+            <button onClick={() => setActiveTab('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <Sparkles className="w-5 h-5" />
+              <span className="font-bold text-sm">Avulsos & Wellhub</span>
+            </button>
+          )}
+
+          {isAdmin && (
+            <button onClick={() => setActiveTab('sabado')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'sabado' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <CalendarClock className="w-5 h-5" />
+              <span className="font-bold text-sm">Avaliação Sábado</span>
+            </button>
+          )}
 
           {isStaff && (
             <button onClick={() => setActiveTab('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
@@ -287,12 +309,30 @@ export default function Page() {
       <div className="md:hidden flex items-center justify-between px-2 py-3 bg-slate-950 border-t border-slate-900 z-50 shrink-0 overflow-x-auto custom-scrollbar">
         <button onClick={() => setActiveTab('registration')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
           <UserPlus className="w-4 h-4" />
-          <span className="text-[9px] font-bold tracking-wide mt-1">Alunos</span>
+          <span className="text-[9px] font-bold tracking-wide mt-1">Cadastro</span>
         </button>
+        {isAdmin && (
+          <button onClick={() => setActiveTab('students')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'students' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <Users className="w-4 h-4" />
+            <span className="text-[9px] font-bold tracking-wide mt-1">Alunos</span>
+          </button>
+        )}
         <button onClick={() => setActiveTab('swimming')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
           <Droplets className="w-4 h-4" />
           <span className="text-[9px] font-bold tracking-wide mt-1">Natação</span>
         </button>
+        {isAdmin && (
+          <button onClick={() => setActiveTab('avulsos')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'avulsos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <Sparkles className="w-4 h-4" />
+            <span className="text-[9px] font-bold tracking-wide mt-1">Avulsos</span>
+          </button>
+        )}
+        {isAdmin && (
+          <button onClick={() => setActiveTab('sabado')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'sabado' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
+            <CalendarClock className="w-4 h-4" />
+            <span className="text-[9px] font-bold tracking-wide mt-1">Sábado</span>
+          </button>
+        )}
         {isStaff && (
           <button onClick={() => setActiveTab('cleaning')} className={cn("flex flex-col items-center p-2 rounded-xl border min-w-[64px] mx-0.5", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "bg-slate-900 text-slate-400 border-slate-800")}>
             <ClipboardList className="w-4 h-4" />
@@ -321,7 +361,10 @@ export default function Page() {
 
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'registration' && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
+        {activeTab === 'students' && isAdmin && <StudentsModule />}
         {activeTab === 'swimming' && <SwimmingModule />}
+        {activeTab === 'avulsos' && isAdmin && <SwimmingModule escopo="sem-turma" />}
+        {activeTab === 'sabado' && isAdmin && <SwimmingModule escopo="sabado" />}
         {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
         {activeTab === 'professors' && isAdmin && <ProfessorsModule />}

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { default as classNames } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -79,6 +79,16 @@ export function ScheduleModule() {
   const [studentsMap, setStudentsMap] = useState<Record<string, string>>({});
   const [isTeacherDropdownOpen, setIsTeacherDropdownOpen] = useState(false);
   const [showFullList, setShowFullList] = useState(false);
+
+  // --- filtros da grade ---
+  const [selectedDay, setSelectedDay] = useState<string>(() => {
+    const d = new Date().getDay(); // 0=dom
+    return DAYS[d === 0 ? 0 : d - 1] || DAYS[0];
+  });
+  const [search, setSearch] = useState('');
+  const [filterProf, setFilterProf] = useState<string>('all');
+  const [filterTouca, setFilterTouca] = useState<string>('all');
+  const [onlyWithStudents, setOnlyWithStudents] = useState(false);
 
   const [form, setForm] = useState({
     teacher_name: '',
@@ -215,6 +225,49 @@ export function ScheduleModule() {
   const conflicts = availability.filter(a => !a.ok);
   const isAdmin = currentUser?.role === 'admin';
 
+  // ================= filtros / agrupamento da grade =================
+  const busca = search.trim().toLowerCase();
+  const buscando = busca.length > 0;
+
+  const alunosDaTurma = (c: ClassBlock) =>
+    (c.class_slots || []).map(s => (s.student_id ? studentsMap[s.student_id] : null)).filter(Boolean) as string[];
+
+  const passaFiltros = (c: ClassBlock) => {
+    if (filterProf !== 'all' && c.teacher_name !== filterProf) return false;
+    if (filterTouca !== 'all' && !(c.class_slots || []).some(s => s.cap_color === filterTouca)) return false;
+    if (onlyWithStudents && !(c.class_slots || []).some(s => s.student_id)) return false;
+    if (buscando) {
+      const noProf = c.teacher_name.toLowerCase().includes(busca);
+      const noAluno = alunosDaTurma(c).some(n => n.toLowerCase().includes(busca));
+      if (!noProf && !noAluno) return false;
+    } else if (c.day_of_week !== selectedDay) {
+      return false;
+    }
+    return true;
+  };
+
+  const visiveis = classes.filter(passaFiltros);
+  const contagemPorDia = DAYS.reduce((acc, d) => {
+    acc[d] = classes.filter(c => c.day_of_week === d).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // agrupa: (dia quando buscando) -> horario -> turmas
+  const grupos: { titulo: string; blocos: { hora: string; turmas: ClassBlock[] }[] }[] = [];
+  const diasParaMostrar = buscando ? DAYS.filter(d => visiveis.some(c => c.day_of_week === d)) : [selectedDay];
+  for (const dia of diasParaMostrar) {
+    const doDia = visiveis.filter(c => c.day_of_week === dia);
+    if (!doDia.length) continue;
+    const horas = [...new Set(doDia.map(c => c.start_time.slice(0, 5)))].sort();
+    grupos.push({
+      titulo: dia,
+      blocos: horas.map(h => ({ hora: h, turmas: doDia.filter(c => c.start_time.slice(0, 5) === h) })),
+    });
+  }
+
+  const totalVagas = visiveis.reduce((s, c) => s + (c.class_slots?.length || 0), 0);
+  const totalOcupadas = visiveis.reduce((s, c) => s + (c.class_slots || []).filter(x => x.student_id).length, 0);
+
   return (
     <div className="flex flex-col h-full bg-slate-50">
       <div className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8">
@@ -236,70 +289,131 @@ export function ScheduleModule() {
           )}
         </div>
 
-        <div className="space-y-6">
-          {DAYS.map(day => {
-            const classesOnDay = classes.filter(c => c.day_of_week === day);
-            if (classesOnDay.length === 0) return null;
+        {/* ===================== Filtros ===================== */}
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 md:p-5 mb-6 space-y-4 sticky top-0 z-20">
+          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+            {DAYS.map(d => (
+              <button key={d} onClick={() => { setSelectedDay(d); setSearch(''); }} className={cn(
+                'px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap border transition-all flex items-center gap-2',
+                !buscando && selectedDay === d
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
+                  : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+              )}>
+                {d.split('-')[0]}
+                <span className={cn('text-[10px] font-black px-1.5 py-0.5 rounded', !buscando && selectedDay === d ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>
+                  {contagemPorDia[d]}
+                </span>
+              </button>
+            ))}
+          </div>
 
-            return (
-              <div key={day} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
-                <h2 className="text-xl font-black text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-indigo-500" /> {day}
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar aluno ou professor (em todos os dias)..."
+                className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 md:max-w-[230px]">
+              <option value="all">Todos os professores</option>
+              {professors.map(p => <option key={p.id} value={p.name || ''}>{p.name}</option>)}
+            </select>
+            <select value={filterTouca} onChange={e => setFilterTouca(e.target.value)} className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20">
+              <option value="all">Todas as toucas</option>
+              {CAP_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-bold text-slate-500">
+              {visiveis.length} turma(s) · {totalOcupadas} aluno(s) · {totalVagas - totalOcupadas} vaga(s) livre(s)
+              {buscando && <span className="text-indigo-600"> · buscando em todos os dias</span>}
+            </p>
+            <div className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setOnlyWithStudents(v => !v)}>
+              <button type="button" className={cn('w-9 h-5 rounded-full relative transition-colors shrink-0', onlyWithStudents ? 'bg-indigo-500' : 'bg-slate-300')}>
+                <span className={cn('absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all', onlyWithStudents ? 'left-[18px]' : 'left-0.5')} />
+              </button>
+              <span className="text-xs font-bold text-slate-600">Só turmas com aluno</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ===================== Turmas ===================== */}
+        <div className="space-y-8">
+          {grupos.map(g => (
+            <div key={g.titulo}>
+              {buscando && (
+                <h2 className="text-lg font-black text-slate-800 mb-3 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-500" /> {g.titulo}
                 </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {classesOnDay.map(cls => (
-                    <div key={cls.id} className="relative bg-slate-50 rounded-2xl p-4 border border-slate-200 group hover:border-indigo-300 transition-colors shadow-sm hover:shadow-md">
-                      {isAdmin && (
-                        <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-
-                      <div className="flex items-center gap-2 text-slate-700 font-black text-lg mb-1">
-                        <Clock className="w-5 h-5 text-indigo-400" />
-                        {cls.start_time.slice(0, 5)} às {cls.end_time.slice(0, 5)}
+              )}
+              <div className="space-y-5">
+                {g.blocos.map(b => (
+                  <div key={b.hora}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 text-white rounded-lg text-sm font-black shrink-0">
+                        <Clock className="w-3.5 h-3.5" /> {b.hora}
                       </div>
-
-                      <div className="flex items-center gap-2 text-slate-500 font-bold mb-4">
-                        <User className="w-4 h-4" />
-                        Prof. {cls.teacher_name}
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Alunos na Turma:</div>
-                        <div className="flex flex-col gap-2">
-                          {cls.class_slots?.map(slot => {
-                            const info = levels[slot.cap_color as CapLevel];
-                            const studentName = slot.student_id ? studentsMap[slot.student_id] : null;
-
-                            return (
-                              <div
-                                key={slot.id}
-                                onClick={() => handleStudentClick(slot.student_id)}
-                                className={cn(
-                                  'px-3 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 border transition-all text-white',
-                                  info?.bgClass || 'bg-slate-300 text-slate-700',
-                                  studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95 hover:shadow-md' : 'opacity-70 border-dashed cursor-default'
-                                )}
-                              >
-                                <div className={cn('w-2 h-2 rounded-full shrink-0', studentName ? 'bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]' : 'bg-white/50 animate-pulse')} />
-                                <span className="flex-1 break-words leading-tight">
-                                  {studentName ? studentName : `${info?.label || slot.cap_color} (vaga livre)`}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <div className="h-px flex-1 bg-slate-200" />
+                      <span className="text-[11px] font-bold text-slate-400 shrink-0">{b.turmas.length} turma(s)</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
 
-          {classes.length === 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {b.turmas.map(cls => (
+                        <div key={cls.id} className="relative bg-white rounded-2xl p-3.5 border border-slate-200 group hover:border-indigo-300 transition-colors shadow-sm">
+                          {isAdmin && (
+                            <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-3 right-3 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors md:opacity-0 md:group-hover:opacity-100">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          <div className="flex items-start gap-2 mb-3 pr-6">
+                            <User className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                            <span className="text-xs font-black text-slate-600 leading-tight">{cls.teacher_name}</span>
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            {cls.class_slots?.map(slot => {
+                              const info = levels[slot.cap_color as CapLevel];
+                              const studentName = slot.student_id ? studentsMap[slot.student_id] : null;
+                              const destaque = buscando && !!studentName && studentName.toLowerCase().includes(busca);
+                              return (
+                                <div
+                                  key={slot.id}
+                                  onClick={() => handleStudentClick(slot.student_id)}
+                                  className={cn(
+                                    'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border text-white transition-all',
+                                    info?.bgClass || 'bg-slate-300 text-slate-700',
+                                    studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95' : 'opacity-50 border-dashed cursor-default',
+                                    destaque && 'ring-2 ring-offset-1 ring-amber-400'
+                                  )}
+                                >
+                                  <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', studentName ? 'bg-white' : 'bg-white/50')} />
+                                  <span className="flex-1 break-words leading-tight">
+                                    {studentName ? studentName : `${info?.label || slot.cap_color} (livre)`}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {classes.length === 0 ? (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
               <LayoutGrid className="w-16 h-16 text-slate-200 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-slate-700">Nenhum horário criado</h3>
@@ -307,7 +421,13 @@ export function ScheduleModule() {
                 {isAdmin ? 'Clique em "Adicionar Horário" para montar a primeira turma.' : 'Nenhuma turma vinculada a você ainda.'}
               </p>
             </div>
-          )}
+          ) : grupos.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
+              <Search className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-slate-700">Nada encontrado</h3>
+              <p className="text-slate-500 text-sm mt-1">Ajuste a busca ou os filtros.</p>
+            </div>
+          ) : null}
         </div>
       </div>
 

@@ -10,7 +10,8 @@ export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   
   // 'modal' (bloqueia tela), 'banner' (rodapé sutil), 'hidden' (fechado)
-  const [displayMode, setDisplayMode] = useState<'modal' | 'banner' | 'hidden'>('modal');
+  // Começa como banner para não atrapalhar quem só quer ver a avaliação.
+  const [displayMode, setDisplayMode] = useState<'modal' | 'banner' | 'hidden'>('banner');
 
   useEffect(() => {
     // Verifica se já está instalado (rodando como App nativo)

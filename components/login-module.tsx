@@ -56,18 +56,17 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
       return;
     }
     
-    // Busca o aluno pelo telefone e valida a senha
+    // Busca TODOS os filhos daquele telefone (irmãos usam o mesmo login)
     const { data, error: dbError } = await supabase
       .from('students')
       .select('*, evaluations(*)')
       .ilike('phone', `%${cleanPhone}%`)
       .eq('password', clientPassword)
-      .limit(1)
-      .single();
+      .order('name');
 
     setLoading(false);
 
-    if (dbError || !data) {
+    if (dbError || !data || data.length === 0) {
       setError('Telefone ou Senha incorretos. Tente novamente.');
     } else {
       onLogin('client', data);
