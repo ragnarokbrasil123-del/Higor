@@ -140,6 +140,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   /** Banner rápido logo após salvar: quem foi salvo e se trocou de touca. */
   const [ultimoSalvo, setUltimoSalvo] = useState<{ nome: string; novaTouca?: string } | null>(null);
   const [sairAberto, setSairAberto] = useState(false);
+  /** Ids ja salvos nesta fila — alimenta as bolinhas de progresso. */
+  const [salvosNaFila, setSalvosNaFila] = useState<Set<string>>(new Set());
+  const [puladosNaFila, setPuladosNaFila] = useState<Set<string>>(new Set());
   const topoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchData(); }, []);
@@ -297,6 +300,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     if (!ids.length) return;
     setFila(ids);
     setFilaIdx(comeco);
+    setSalvosNaFila(new Set());
+    setPuladosNaFila(new Set());
     carregarAluno(ids[comeco]);
     setFeito(null);
     setView('avaliando');
@@ -321,6 +326,12 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   };
 
   const alunoAtual = fila[filaIdx] ? alunoPorId.get(fila[filaIdx]) : null;
+  /** true quando ha marcacao guardada e ainda nao salva no banco. */
+  const temRascunho =
+    !!alunoAtual &&
+    !salvosNaFila.has(alunoAtual.id) &&
+    typeof window !== 'undefined' &&
+    !!localStorage.getItem(draftKey(alunoAtual.id));
   const criterios = alunoAtual ? EVALUATION_CRITERIA[alunoAtual.level as CapLevel] || [] : [];
   const marcados = criterios.filter(c => scores[c.id] && scores[c.id] !== 'pending').length;
   const passou = criterios.filter(c => scores[c.id] === 'passed').length;
@@ -342,6 +353,23 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     const novo: Record<string, string> = {};
     criterios.forEach(c => { novo[c.id] = valor; });
     setScores(novo);
+  };
+
+  /** Vai direto para um aluno da fila (pelas bolinhas). */
+  const irParaAluno = (i: number) => {
+    if (i === filaIdx || !fila[i]) return;
+    setFilaIdx(i);
+    carregarAluno(fila[i]);
+    topoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  /** Volta um aluno na fila. O que estava marcado ja foi para o rascunho. */
+  const voltarAluno = () => {
+    if (filaIdx === 0) return;
+    const ant = filaIdx - 1;
+    setFilaIdx(ant);
+    carregarAluno(fila[ant]);
+    topoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const salvarEAvancar = async (pular = false) => {
@@ -372,6 +400,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         }
       }
       setUltimoSalvo({ nome: alunoAtual.name.split(' ')[0], novaTouca });
+      setSalvosNaFila(prev => new Set(prev).add(alunoAtual.id));
+      setPuladosNaFila(prev => { const n = new Set(prev); n.delete(alunoAtual.id); return n; });
       // avisa o responsável pelo app (o telefone é resolvido no servidor)
       fetch('/api/push', {
         method: 'POST',
@@ -382,6 +412,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
       localStorage.removeItem(draftKey(alunoAtual.id));
       setSalvando(false);
     }
+
+    if (pular) setPuladosNaFila(prev => new Set(prev).add(alunoAtual.id));
 
     const prox = filaIdx + 1;
     if (prox < fila.length) {
@@ -466,13 +498,49 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                 <p className="text-xs font-bold text-slate-500">Touca {info?.name}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-xs font-black text-slate-800">Aluno {filaIdx + 1} de {fila.length}</p>
-                <p className="text-[11px] font-bold text-slate-400">{marcados} de {criterios.length} marcados</p>
+                <p className="text-xs font-black text-ink tabular-nums">{filaIdx + 1} de {fila.length}</p>
+                <p className="text-mini font-bold text-ink-subtle tabular-nums">{marcados} de {criterios.length} marcados</p>
+                {temRascunho && (
+                  <span className="inline-block mt-1 text-micro font-bold text-warning-ink bg-warning-soft px-1.5 py-0.5 rounded-badge">
+                    rascunho
+                  </span>
+                )}
               </div>
             </div>
-            <div className="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-              <div className="h-full bg-indigo-500 transition-all" style={{ width: `${criterios.length ? (marcados / criterios.length) * 100 : 0}%` }} />
+
+            <div className="mt-3 h-1.5 bg-surface-sunken rounded-full overflow-hidden">
+              <div className="h-full bg-brand transition-all" style={{ width: `${criterios.length ? (marcados / criterios.length) * 100 : 0}%` }} />
             </div>
+
+            {fila.length > 1 && (
+              <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Alunos da fila">
+                {fila.map((id, i) => {
+                  const salvo = salvosNaFila.has(id);
+                  const pulado = puladosNaFila.has(id);
+                  const atual = i === filaIdx;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => irParaAluno(i)}
+                      role="tab"
+                      aria-selected={atual}
+                      aria-label={`${alunoPorId.get(id)?.name || 'Aluno'}${salvo ? ' — avaliado' : pulado ? ' — pulado' : ''}`}
+                      className={cn(
+                        'w-6 h-6 rounded-full flex items-center justify-center transition-all shrink-0',
+                        atual && 'ring-2 ring-offset-1 ring-brand',
+                        salvo ? 'bg-success text-white'
+                          : pulado ? 'bg-warning-soft border border-warning/40'
+                          : 'bg-surface-sunken border border-line'
+                      )}
+                    >
+                      {salvo
+                        ? <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                        : <span className="text-micro font-black text-ink-subtle tabular-nums">{i + 1}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -499,8 +567,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
           )}
         </AnimatePresence>
 
-        <div className="max-w-3xl mx-auto w-full p-4 space-y-4 pb-32">
-          <div className="flex gap-2">
+        <div className="max-w-3xl mx-auto w-full p-4 space-y-2 pb-32">
+          <div className="flex gap-2 mb-3">
             <button onClick={() => marcarTodos('passed')} className="flex-1 py-3 bg-emerald-600 text-white font-black rounded-xl text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
               <Check className="w-4 h-4" strokeWidth={3} /> Marcar todos como Passou
             </button>
@@ -512,24 +580,38 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
           {criterios.map(crit => {
             const st = scores[crit.id] || 'pending';
             return (
-              <div key={crit.id} className={cn('bg-white rounded-2xl border p-4 transition-colors',
-                st === 'passed' ? 'border-emerald-300 bg-emerald-50/40' : st === 'failed' ? 'border-red-200 bg-red-50/30' : 'border-slate-200')}>
-                <p className="text-sm font-bold text-slate-700 leading-snug mb-3">{crit.label}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setScores({ ...scores, [crit.id]: 'passed' })} className={cn('py-3.5 rounded-xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2',
-                    st === 'passed' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50')}>
-                    <Check className="w-4 h-4" strokeWidth={3} /> Passou
+              <div key={crit.id} className={cn(
+                'flex items-center gap-3 rounded-card border px-3 py-2.5 transition-colors',
+                st === 'passed' ? 'border-success/40 bg-success-soft'
+                  : st === 'failed' ? 'border-danger/30 bg-danger-soft'
+                  : 'border-line bg-surface'
+              )}>
+                <p className="flex-1 min-w-0 text-sm font-bold text-ink leading-snug">{crit.label}</p>
+                <div className="flex gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setScores({ ...scores, [crit.id]: 'passed' })}
+                    aria-label={`Passou: ${crit.label}`}
+                    aria-pressed={st === 'passed'}
+                    className={cn('w-12 h-12 rounded-control flex items-center justify-center transition-all active:scale-90',
+                      st === 'passed' ? 'bg-success text-white shadow-raised' : 'bg-surface-sunken text-ink-subtle')}
+                  >
+                    <Check className="w-5 h-5" strokeWidth={3} />
                   </button>
-                  <button onClick={() => setScores({ ...scores, [crit.id]: 'failed' })} className={cn('py-3.5 rounded-xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2',
-                    st === 'failed' ? 'bg-red-500 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-red-50')}>
-                    <X className="w-4 h-4" strokeWidth={3} /> Treinar
+                  <button
+                    onClick={() => setScores({ ...scores, [crit.id]: 'failed' })}
+                    aria-label={`Treinar: ${crit.label}`}
+                    aria-pressed={st === 'failed'}
+                    className={cn('w-12 h-12 rounded-control flex items-center justify-center transition-all active:scale-90',
+                      st === 'failed' ? 'bg-danger text-white shadow-raised' : 'bg-surface-sunken text-ink-subtle')}
+                  >
+                    <X className="w-5 h-5" strokeWidth={3} />
                   </button>
                 </div>
               </div>
             );
           })}
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-4">
+          <div className="bg-surface rounded-card border border-line p-4 mt-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" /> Observações para os pais
@@ -557,10 +639,18 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         {/* rodapé fixo */}
         <div className="sticky bottom-0 bg-surface border-t border-line p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
           <div className="max-w-3xl mx-auto flex gap-2">
-            <button onClick={() => salvarEAvancar(true)} className="px-5 py-4 bg-white border border-slate-200 text-slate-500 font-bold rounded-xl text-sm active:scale-95 transition-transform">
+            <button
+              onClick={voltarAluno}
+              disabled={filaIdx === 0}
+              aria-label="Aluno anterior"
+              className="w-14 h-14 shrink-0 bg-surface border border-line text-ink-muted rounded-control flex items-center justify-center active:scale-95 transition-transform disabled:opacity-30 disabled:pointer-events-none"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <button onClick={() => salvarEAvancar(true)} className="px-4 h-14 shrink-0 bg-surface border border-line text-ink-subtle font-bold rounded-control text-sm active:scale-95 transition-transform">
               Pular
             </button>
-            <button onClick={() => salvarEAvancar(false)} disabled={salvando} className="flex-1 py-4 bg-slate-900 text-white font-black rounded-xl active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2">
+            <button onClick={() => salvarEAvancar(false)} disabled={salvando} className="flex-1 h-14 bg-surface-raised text-white font-black rounded-control active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2">
               {salvando ? 'Salvando...' : filaIdx + 1 < fila.length ? <>Salvar e próximo <ChevronRight className="w-5 h-5" /></> : <>Salvar e finalizar <CheckCircle2 className="w-5 h-5" /></>}
             </button>
           </div>
