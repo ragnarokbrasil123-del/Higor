@@ -184,11 +184,11 @@ export function StudentsModule() {
                 <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
               )}
             </div>
-            <Select value={fTouca} onChange={e => setFTouca(e.target.value)} className="w-auto py-2.5">
+            <Select value={fTouca} onChange={e => setFTouca(e.target.value)} className="w-full md:w-auto py-2.5">
               <option value="all">Todas as toucas</option>
               {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].label}</option>)}
             </Select>
-            <Select value={fModal} onChange={e => setFModal(e.target.value)} className="w-auto py-2.5">
+            <Select value={fModal} onChange={e => setFModal(e.target.value)} className="w-full md:w-auto py-2.5">
               <option value="all">Todas as modalidades</option>
               {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
             </Select>

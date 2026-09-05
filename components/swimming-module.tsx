@@ -642,7 +642,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X className="w-4 h-4" /></button>}
           </div>
           {!semTurmaMode && !sabadoMode && profsDisponiveis.length > 1 && (
-            <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-auto bg-surface shadow-raised font-bold md:max-w-[300px]">
+            <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-full md:w-auto bg-surface shadow-raised font-bold md:max-w-[300px]">
               <option value="all">Todos os professores ({profsDisponiveis.length})</option>
               {profsDisponiveis.map(p => <option key={p} value={p}>{p}</option>)}
             </Select>

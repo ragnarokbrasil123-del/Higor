@@ -302,11 +302,11 @@ export function ScheduleModule() {
                 </button>
               )}
             </div>
-            <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-auto py-2.5 md:max-w-[230px]">
+            <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-full md:w-auto py-2.5 md:max-w-[230px]">
               <option value="all">Todos os professores</option>
               {professors.map(p => <option key={p.id} value={p.name || ''}>{p.name}</option>)}
             </Select>
-            <Select value={filterTouca} onChange={e => setFilterTouca(e.target.value)} className="w-auto py-2.5">
+            <Select value={filterTouca} onChange={e => setFilterTouca(e.target.value)} className="w-full md:w-auto py-2.5">
               <option value="all">Todas as toucas</option>
               {CAP_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
             </Select>
