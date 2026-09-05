@@ -11,7 +11,7 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Loading, PageHeader, PageShell, Select, Textarea, Toggle } from '@/components/ui';
+import { Badge, Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, IconButton, Input, Loading, Modal, PageHeader, PageShell, Select, Textarea, Toggle } from '@/components/ui';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
 interface SlotRow { id: string; class_id: string; cap_color: string; student_id: string | null }
@@ -137,6 +137,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   const [salvando, setSalvando] = useState(false);
   const [variacaoFrase, setVariacaoFrase] = useState(0);
   const [feito, setFeito] = useState<{ total: number; aprovados: number } | null>(null);
+  /** Banner rápido logo após salvar: quem foi salvo e se trocou de touca. */
+  const [ultimoSalvo, setUltimoSalvo] = useState<{ nome: string; novaTouca?: string } | null>(null);
+  const [sairAberto, setSairAberto] = useState(false);
   const topoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetchData(); }, []);
@@ -322,6 +325,13 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   const marcados = criterios.filter(c => scores[c.id] && scores[c.id] !== 'pending').length;
   const passou = criterios.filter(c => scores[c.id] === 'passed').length;
 
+  // o aviso de "salvo" some sozinho
+  useEffect(() => {
+    if (!ultimoSalvo) return;
+    const t = setTimeout(() => setUltimoSalvo(null), 3500);
+    return () => clearTimeout(t);
+  }, [ultimoSalvo]);
+
   // rascunho automático
   useEffect(() => {
     if (view !== 'avaliando' || !alunoAtual) return;
@@ -351,12 +361,17 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
       }]);
       if (error) { setSalvando(false); return alert('Erro ao salvar: ' + error.message); }
 
+      // A regra de promoção não muda: passou em todos -> sobe uma touca.
+      let novaTouca: string | undefined;
       if (aprovado) {
         const i = capLevelOrder.indexOf(alunoAtual.level);
         if (i >= 0 && i < capLevelOrder.length - 1) {
-          await supabase.from('students').update({ level: capLevelOrder[i + 1] }).eq('id', alunoAtual.id);
+          const proxima = capLevelOrder[i + 1];
+          await supabase.from('students').update({ level: proxima }).eq('id', alunoAtual.id);
+          novaTouca = levels[proxima].label;
         }
       }
+      setUltimoSalvo({ nome: alunoAtual.name.split(' ')[0], novaTouca });
       // avisa o responsável pelo app (o telefone é resolvido no servidor)
       fetch('/api/push', {
         method: 'POST',
@@ -440,9 +455,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         <div className="sticky top-0 z-20 bg-surface border-b border-line shadow-raised">
           <div className="max-w-3xl mx-auto p-4">
             <div className="flex items-center gap-3">
-              <button onClick={() => { if (confirm('Sair da avaliação? O que você marcou fica salvo como rascunho.')) { setView('home'); setFila([]); } }} className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors shrink-0">
-                <ArrowLeft className="w-5 h-5 text-slate-600" />
-              </button>
+              <IconButton onClick={() => setSairAberto(true)} aria-label="Sair da avaliação" className="bg-surface-sunken shrink-0">
+                <ArrowLeft className="w-5 h-5 text-ink-muted" />
+              </IconButton>
               <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center text-white font-black shrink-0', info?.bgClass)}>
                 {alunoAtual.name.charAt(0)}
               </div>
@@ -460,6 +475,29 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             </div>
           </div>
         </div>
+
+        <AnimatePresence>
+          {ultimoSalvo && (
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              className="sticky top-[92px] z-30 mx-4 mt-3"
+            >
+              <div className={cn(
+                'rounded-card px-4 py-3 shadow-overlay flex items-center gap-3',
+                ultimoSalvo.novaTouca ? 'bg-success text-white' : 'bg-surface-raised text-white'
+              )}>
+                <CheckCircle2 className="w-5 h-5 shrink-0" />
+                <p className="text-sm font-bold leading-tight">
+                  {ultimoSalvo.novaTouca
+                    ? <>{ultimoSalvo.nome} passou para a touca <b>{ultimoSalvo.novaTouca}</b>! 🏅</>
+                    : <>Avaliação de {ultimoSalvo.nome} salva.</>}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="max-w-3xl mx-auto w-full p-4 space-y-4 pb-32">
           <div className="flex gap-2">
@@ -527,11 +565,38 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             </button>
           </div>
           {passou === criterios.length && criterios.length > 0 && (
-            <p className="max-w-3xl mx-auto text-center text-[11px] font-bold text-emerald-600 mt-2">
+            <p className="max-w-3xl mx-auto text-center text-mini font-bold text-success mt-2">
               🏅 Passou em tudo — ao salvar, o aluno troca de touca automaticamente.
             </p>
           )}
         </div>
+
+        <Modal
+          open={sairAberto}
+          onClose={() => setSairAberto(false)}
+          size="md"
+          title="Sair da avaliação?"
+          footer={
+            <>
+              <Button variant="secondary" size="lg" className="flex-1" onClick={() => setSairAberto(false)}>
+                Continuar avaliando
+              </Button>
+              <Button variant="dark" size="lg" className="flex-1" onClick={() => { setSairAberto(false); setView('home'); setFila([]); }}>
+                Sair
+              </Button>
+            </>
+          }
+        >
+          <p className="text-sm text-ink-muted leading-relaxed">
+            O que você já marcou fica <b className="text-ink">salvo como rascunho</b>. Quando voltar
+            neste aluno, as marcações estarão como você deixou.
+          </p>
+          {fila.length - filaIdx - 1 > 0 && (
+            <p className="text-sm text-ink-muted mt-3">
+              Ainda faltam <b className="text-ink">{fila.length - filaIdx - 1} aluno(s)</b> nesta fila.
+            </p>
+          )}
+        </Modal>
       </div>
     );
   }
