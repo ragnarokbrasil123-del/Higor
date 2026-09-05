@@ -8,12 +8,7 @@ import {
 } from 'lucide-react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface StudentRow {
   id: string;

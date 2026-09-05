@@ -1,7 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import classNames, { type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-// Chaves fixas direto no código conforme você pediu
-const supabaseUrl = 'https://jefmyjeuxkajycjexgly.supabase.co';
-const supabaseAnonKey = 'sb_publishable_2yVknLEKpom35ZgE6BYY1A_liY-cr5b';
+export type { ClassValue };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+/**
+ * Junta classes do Tailwind resolvendo conflitos (a última vence).
+ * Fonte única — antes esta função estava copiada em 9 componentes.
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(classNames(inputs));
+}

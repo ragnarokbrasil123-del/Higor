@@ -8,12 +8,7 @@ import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { ativarAvisos, jaInscrito, suportaAvisos } from '@/lib/push';
 import { InstallPrompt } from '@/components/install-prompt';
 import { supabase } from '@/lib/supabase';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface ClientPortalProps {
   students: Student[];

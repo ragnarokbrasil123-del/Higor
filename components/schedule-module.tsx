@@ -4,13 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { CapLevel, levels, capLevelOrder } from '@/types';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface ClassSlot {
   id: string;

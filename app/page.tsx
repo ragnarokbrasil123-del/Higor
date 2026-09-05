@@ -12,13 +12,8 @@ import { ProfessorsModule } from '@/components/professors-module';
 import { StudentsModule } from '@/components/students-module';
 import { ScheduleModule } from '@/components/schedule-module';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock } from 'lucide-react';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'motion/react';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 type Tab = 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;

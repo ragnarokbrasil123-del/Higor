@@ -4,12 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };

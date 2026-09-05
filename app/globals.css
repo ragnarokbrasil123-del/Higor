@@ -1,14 +1,77 @@
 @import "tailwindcss";
 
-body {
-  background-color: #F0F4F8;
+/* ============================================================
+   DESIGN SYSTEM — Clube Olimpo
+   Tokens centralizados. Tudo aqui vira classe utilitária do
+   Tailwind v4 automaticamente (bg-brand, rounded-card, ...).
+
+   Regra: se um valor visual aparece em mais de um lugar,
+   ele mora aqui — não no JSX.
+   ============================================================ */
+@theme {
+  /* ---------- Cores por PAPEL, não por tom ---------- */
+
+  /* Marca / ação principal */
+  --color-brand: #f59e0b;         /* âmbar — única cor de ação */
+  --color-brand-hover: #d97706;
+  --color-brand-ink: #000000;     /* texto sobre a marca */
+  --color-brand-soft: #fffbeb;    /* fundo de destaque suave */
+  --color-brand-line: #fde68a;
+
+  /* Superfícies */
+  --color-canvas: #f0f4f8;        /* fundo da página */
+  --color-surface: #ffffff;       /* card, modal */
+  --color-surface-sunken: #f8fafc;/* input, linha alternada */
+  --color-surface-raised: #0f172a;/* barra escura, chip de horário */
+
+  /* Texto — três níveis, só */
+  --color-ink: #1e293b;           /* título e corpo */
+  --color-ink-muted: #64748b;     /* apoio */
+  --color-ink-subtle: #94a3b8;    /* legenda, placeholder */
+  --color-ink-inverse: #ffffff;
+
+  /* Bordas */
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+
+  /* Estado — semântico, nunca decorativo */
+  --color-success: #059669;
+  --color-success-soft: #ecfdf5;
+  --color-success-ink: #047857;
+
+  --color-warning: #d97706;
+  --color-warning-soft: #fffbeb;
+  --color-warning-ink: #b45309;
+
+  --color-danger: #ef4444;
+  --color-danger-soft: #fef2f2;
+  --color-danger-ink: #b91c1c;
+
+  --color-info: #4f46e5;
+  --color-info-soft: #eef2ff;
+  --color-info-ink: #4338ca;
+
+  /* ---------- Raio — um papel por valor ---------- */
+  --radius-badge: 0.375rem;   /* pílula de status */
+  --radius-control: 0.75rem;  /* botão, input, chip */
+  --radius-card: 1rem;        /* card */
+  --radius-panel: 1.5rem;     /* container grande, modal */
+
+  /* ---------- Sombra — só duas ---------- */
+  --shadow-raised: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 3px 0 rgb(15 23 42 / 0.08);
+  --shadow-overlay: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.10);
+
+  /* ---------- Tipografia ---------- */
+  /* micro/mini substituem os 66 usos de text-[9px]/[10px]/[11px] */
+  --text-micro: 0.625rem;     /* 10px — contador dentro de chip */
+  --text-micro--line-height: 0.875rem;
+  --text-mini: 0.6875rem;     /* 11px — legenda densa */
+  --text-mini--line-height: 1rem;
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -18,6 +81,6 @@ body {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: var(--color-line-strong);
   border-radius: 10px;
 }

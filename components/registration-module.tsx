@@ -5,12 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -154,7 +149,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     fetchAllStudents();
     alert('Aluno matriculado com sucesso!\n\nPara definir o dia e o horário dele, abra a aba "Alunos" e clique em "Abrir ficha".');
   };
-
 
   // ---- Importação em massa ----
   const downloadTemplate = () => {
@@ -335,7 +329,6 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                       {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
                     </select>
                   </div>
-
 
                   <div className="md:col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <p className="text-xs font-medium text-slate-500">

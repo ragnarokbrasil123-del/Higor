@@ -4,12 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Check, ChevronLeft, ChevronRight, Edit2, Trash2, X, ClipboardList, Camera, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface CleaningTask {
   id: string;

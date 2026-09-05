@@ -6,16 +6,11 @@ import {
   Droplets, Search, Check, Award, Trash2, MessageCircle, ArrowLeft, History,
   CheckCircle2, X, Clock, Users, ChevronRight, FileText, ListChecks, CalendarDays, Sparkles,
 } from 'lucide-react';
-import { default as classNames } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { Student, CapLevel, levels, capLevelOrder } from '@/types';
 import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
-
-function cn(...inputs: (string | undefined | null | false)[]) {
-  return twMerge(classNames(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
 interface SlotRow { id: string; class_id: string; cap_color: string; student_id: string | null }
@@ -266,7 +261,6 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   const toucasPresentes = capLevelOrder.filter(k =>
     semTurma.some(s => s.level === k && passaGrupo(s) && passaPendente(s))
   );
-
 
   // o contador do topo respeita o escopo da aba e o filtro de professor
   const alunosDeClasses = (ids: Set<string>) =>
