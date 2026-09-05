@@ -289,7 +289,7 @@ export function ScheduleModule() {
 
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
@@ -297,7 +297,7 @@ export function ScheduleModule() {
                 className="pl-9 pr-9 py-2.5"
               />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-subtle hover:text-ink-muted">
                   <X className="w-4 h-4" />
                 </button>
               )}
@@ -326,7 +326,7 @@ export function ScheduleModule() {
           {grupos.map(g => (
             <div key={g.titulo}>
               {buscando && (
-                <h2 className="text-lg font-black text-slate-800 mb-3 flex items-center gap-2">
+                <h2 className="text-lg font-black text-ink mb-3 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-indigo-500" /> {g.titulo}
                 </h2>
               )}
@@ -338,21 +338,21 @@ export function ScheduleModule() {
                         <Clock className="w-3.5 h-3.5" /> {b.hora}
                       </div>
                       <div className="h-px flex-1 bg-slate-200" />
-                      <span className="text-[11px] font-bold text-slate-400 shrink-0">{b.turmas.length} turma(s)</span>
+                      <span className="text-[11px] font-bold text-ink-subtle shrink-0">{b.turmas.length} turma(s)</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {b.turmas.map(cls => (
-                        <div key={cls.id} className="relative bg-white rounded-2xl p-3.5 border border-slate-200 group hover:border-indigo-300 transition-colors shadow-sm">
+                        <div key={cls.id} className="relative bg-surface rounded-2xl p-3.5 border border-line group hover:border-indigo-300 transition-colors shadow-sm">
                           {isAdmin && (
-                            <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-3 right-3 p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors md:opacity-0 md:group-hover:opacity-100">
+                            <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-3 right-3 p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors md:opacity-0 md:group-hover:opacity-100">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
 
                           <div className="flex items-start gap-2 mb-3 pr-6">
-                            <User className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                            <span className="text-xs font-black text-slate-600 leading-tight">{cls.teacher_name}</span>
+                            <User className="w-3.5 h-3.5 text-ink-subtle mt-0.5 shrink-0" />
+                            <span className="text-xs font-black text-ink-muted leading-tight">{cls.teacher_name}</span>
                           </div>
 
                           <div className="flex flex-col gap-1.5">
@@ -366,12 +366,12 @@ export function ScheduleModule() {
                                   onClick={() => handleStudentClick(slot.student_id)}
                                   className={cn(
                                     'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border text-white transition-all',
-                                    info?.bgClass || 'bg-slate-300 text-slate-700',
+                                    info?.bgClass || 'bg-slate-300 text-ink',
                                     studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95' : 'opacity-50 border-dashed cursor-default',
                                     destaque && 'ring-2 ring-offset-1 ring-amber-400'
                                   )}
                                 >
-                                  <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', studentName ? 'bg-white' : 'bg-white/50')} />
+                                  <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', studentName ? 'bg-surface' : 'bg-white/50')} />
                                   <span className="flex-1 break-words leading-tight">
                                     {studentName ? studentName : `${info?.label || slot.cap_color} (livre)`}
                                   </span>
@@ -389,18 +389,18 @@ export function ScheduleModule() {
           ))}
 
           {classes.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+            <div className="text-center py-20 bg-surface rounded-3xl border border-dashed border-line-strong">
               <LayoutGrid className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-700">Nenhum horário criado</h3>
-              <p className="text-slate-500 mt-2">
+              <h3 className="text-xl font-bold text-ink">Nenhum horário criado</h3>
+              <p className="text-ink-muted mt-2">
                 {isAdmin ? 'Clique em "Adicionar Horário" para montar a primeira turma.' : 'Nenhuma turma vinculada a você ainda.'}
               </p>
             </div>
           ) : grupos.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
+            <div className="text-center py-16 bg-surface rounded-3xl border border-dashed border-line-strong">
               <Search className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-              <h3 className="text-lg font-bold text-slate-700">Nada encontrado</h3>
-              <p className="text-slate-500 text-sm mt-1">Ajuste a busca ou os filtros.</p>
+              <h3 className="text-lg font-bold text-ink">Nada encontrado</h3>
+              <p className="text-ink-muted text-sm mt-1">Ajuste a busca ou os filtros.</p>
             </div>
           ) : null}
         </div>
@@ -417,9 +417,9 @@ export function ScheduleModule() {
         }
       >
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
-                  <div className="space-y-5 bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                  <div className="space-y-5 bg-surface-sunken p-5 rounded-2xl border border-line">
                     <div className="relative">
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Professor</label>
+                      <label className="block text-sm font-bold text-ink mb-2">Professor</label>
                       <div className="relative">
                         <input
                           type="text"
@@ -429,20 +429,20 @@ export function ScheduleModule() {
                           onFocus={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}
                           onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)}
                           placeholder="Clique para escolher da lista..."
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-700 font-medium pr-10"
+                          className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-ink font-medium pr-10"
                         />
                         <button type="button" tabIndex={-1} className="absolute right-3 top-3.5" onClick={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}>
-                          <ChevronDown className="w-5 h-5 text-slate-400 hover:text-indigo-500 transition-colors" />
+                          <ChevronDown className="w-5 h-5 text-ink-subtle hover:text-indigo-500 transition-colors" />
                         </button>
                       </div>
 
                       <AnimatePresence>
                         {isTeacherDropdownOpen && activeList.length > 0 && (
-                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
+                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
                             {activeList.map(p => (
-                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-indigo-50 transition-colors border-b border-slate-50 last:border-0">
-                                <span className="block text-slate-700 font-bold">{p.name || p.username}</span>
-                                <span className="block text-[11px] text-slate-400 font-medium truncate">{summarizeProf(p.schedule)}</span>
+                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-slate-50 last:border-0">
+                                <span className="block text-ink font-bold">{p.name || p.username}</span>
+                                <span className="block text-[11px] text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
                               </button>
                             ))}
                           </motion.div>
@@ -450,22 +450,22 @@ export function ScheduleModule() {
                       </AnimatePresence>
 
                       {professors.length === 0 && (
-                        <p className="mt-2 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-amber-200 rounded-lg p-2">
                           Nenhum professor ativo cadastrado. Cadastre na aba Professores.
                         </p>
                       )}
                       {selectedProf && (
-                        <p className="mt-2 text-[11px] text-slate-500 font-medium">
-                          <span className="font-bold text-slate-600">Trabalha:</span> {summarizeProf(selectedProf.schedule)}
+                        <p className="mt-2 text-[11px] text-ink-muted font-medium">
+                          <span className="font-bold text-ink-muted">Trabalha:</span> {summarizeProf(selectedProf.schedule)}
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-2">Quais dias dessa aula?</label>
+                      <label className="block text-sm font-bold text-ink mb-2">Quais dias dessa aula?</label>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
-                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20' : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300')}>
+                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20' : 'bg-surface text-ink-muted border-line hover:border-indigo-300')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -474,52 +474,52 @@ export function ScheduleModule() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Horário Início</label>
-                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" />
+                        <label className="block text-sm font-bold text-ink mb-2">Horário Início</label>
+                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-ink" />
                       </div>
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-2">Horário Fim</label>
-                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-slate-700" />
+                        <label className="block text-sm font-bold text-ink mb-2">Horário Fim</label>
+                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-ink" />
                       </div>
                     </div>
 
                     {/* Cruzamento com o horário do professor */}
                     {selectedProf && form.days_of_week.length > 0 && (
                       conflicts.length === 0 ? (
-                        <div className="flex items-center gap-2 text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-emerald-200 rounded-xl p-3">
                           <CheckCircle2 className="w-4 h-4 shrink-0" /> Dentro do horário de trabalho do professor.
                         </div>
                       ) : (
-                        <div className="text-sm bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1">
+                        <div className="text-sm bg-warning-soft border border-amber-200 rounded-xl p-3 space-y-1">
                           <div className="flex items-center gap-2 font-black text-amber-800">
                             <AlertTriangle className="w-4 h-4 shrink-0" /> Fora do horário do professor:
                           </div>
                           {conflicts.map(c => (
-                            <p key={c.day} className="text-amber-700 font-medium ml-6">
+                            <p key={c.day} className="text-warning-ink font-medium ml-6">
                               {c.day.split('-')[0]}: {c.hours === 'folga' ? 'é folga dele(a)' : `só trabalha ${c.hours}`}
                             </p>
                           ))}
-                          <p className="text-[11px] text-amber-600 ml-6 pt-1">Você ainda pode salvar (ex.: substituição).</p>
+                          <p className="text-[11px] text-warning-ink ml-6 pt-1">Você ainda pode salvar (ex.: substituição).</p>
                         </div>
                       )
                     )}
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-black text-slate-800 mb-1">Vagas por touca</h3>
-                    <p className="text-xs text-slate-500 mb-4">
+                    <h3 className="text-lg font-black text-ink mb-1">Vagas por touca</h3>
+                    <p className="text-xs text-ink-muted mb-4">
                       Amarela / Laranja / Vermelha: turma de um nível só. Verde em diante: pode misturar níveis na mesma turma.
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {CAP_OPTIONS.map(opt => (
-                        <div key={opt.key} className={cn('flex flex-col p-3 rounded-xl border transition-colors', form.slots[opt.key] > 0 ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200')}>
-                          <label className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                        <div key={opt.key} className={cn('flex flex-col p-3 rounded-xl border transition-colors', form.slots[opt.key] > 0 ? 'bg-info-soft border-indigo-200' : 'bg-surface border-line')}>
+                          <label className="text-sm font-bold text-ink mb-2 flex items-center gap-2">
                             <div className={cn('w-3 h-3 rounded-full shadow-sm', opt.bg)} /> {opt.label}
                           </label>
-                          <div className="flex items-center bg-slate-100 rounded-lg p-1">
-                            <button type="button" onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: Math.max(0, form.slots[opt.key] - 1) } })} className="w-8 h-8 flex items-center justify-center bg-white rounded-md text-slate-600 font-bold shadow-sm hover:text-red-500">-</button>
-                            <span className="flex-1 text-center font-black text-slate-700">{form.slots[opt.key]}</span>
-                            <button type="button" onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: form.slots[opt.key] + 1 } })} className="w-8 h-8 flex items-center justify-center bg-white rounded-md text-slate-600 font-bold shadow-sm hover:text-green-500">+</button>
+                          <div className="flex items-center bg-surface-sunken rounded-lg p-1">
+                            <button type="button" onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: Math.max(0, form.slots[opt.key] - 1) } })} className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-danger">-</button>
+                            <span className="flex-1 text-center font-black text-ink">{form.slots[opt.key]}</span>
+                            <button type="button" onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: form.slots[opt.key] + 1 } })} className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-green-500">+</button>
                           </div>
                         </div>
                       ))}

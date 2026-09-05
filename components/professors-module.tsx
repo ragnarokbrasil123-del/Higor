@@ -291,13 +291,13 @@ export function ProfessorsModule() {
         {!loading && professors.length > 0 && (
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex p-1 bg-slate-200 rounded-lg">
-              <button onClick={() => setView('lista')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'lista' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500')}>Lista</button>
-              <button onClick={() => setView('disponibilidade')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'disponibilidade' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500')}>Disponibilidade</button>
+              <button onClick={() => setView('lista')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'lista' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted')}>Lista</button>
+              <button onClick={() => setView('disponibilidade')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'disponibilidade' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted')}>Disponibilidade</button>
             </div>
-            <div className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 shadow-sm flex items-center gap-2">
-              <Users className="w-4 h-4 text-slate-400" /> {professors.length} no total
+            <div className="px-4 py-2 bg-surface border border-line rounded-xl text-sm font-bold text-ink shadow-sm flex items-center gap-2">
+              <Users className="w-4 h-4 text-ink-subtle" /> {professors.length} no total
             </div>
-            <div className="px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-bold text-emerald-700 shadow-sm flex items-center gap-2">
+            <div className="px-4 py-2 bg-success-soft border border-emerald-200 rounded-xl text-sm font-bold text-success-ink shadow-sm flex items-center gap-2">
               <UserCheck className="w-4 h-4" /> {activeCount} ativos
             </div>
           </div>
@@ -317,7 +317,7 @@ export function ProfessorsModule() {
             }
           />
         ) : view === 'disponibilidade' ? (
-          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+          <div className="bg-surface border border-line rounded-3xl overflow-hidden shadow-sm">
             <ResponsiveTable
               table={            <DataTable minWidth={760}>
                     <THead>
@@ -334,7 +334,7 @@ export function ProfessorsModule() {
                           <TR key={p.id} muted={!isActive}>
                             <TD className="font-bold text-ink sticky left-0 bg-surface z-10 whitespace-nowrap">
                               {p.name || p.username || '—'}
-                              {!isActive && <span className="ml-2 text-[9px] font-bold text-red-500 uppercase">inativo</span>}
+                              {!isActive && <span className="ml-2 text-[9px] font-bold text-danger uppercase">inativo</span>}
                             </TD>
                             {DAYS.map(d => {
                               const day = wk[d.key];
@@ -344,13 +344,13 @@ export function ProfessorsModule() {
                                   {shifts.length ? (
                                     <div className="flex flex-col gap-1">
                                       {shifts.map((s, i) => (
-                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-white border border-indigo-100 text-[11px] font-bold text-indigo-700 whitespace-nowrap">
+                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-indigo-100 text-[11px] font-bold text-info-ink whitespace-nowrap">
                                           {s.start}–{s.end}
                                         </span>
                                       ))}
                                     </div>
                                   ) : (
-                                    <span className="text-slate-300 text-xs">·</span>
+                                    <span className="text-ink-subtle text-xs">·</span>
                                   )}
                                 </TD>
                               );
@@ -407,18 +407,18 @@ export function ProfessorsModule() {
               const isActive = p.active ?? true;
               return (
                 <div key={p.id} className={cn(
-                  "bg-white border rounded-2xl p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4 shadow-sm transition-opacity",
-                  isActive ? "border-slate-200" : "border-slate-200 opacity-60"
+                  "bg-surface border rounded-2xl p-4 md:p-5 flex flex-col md:flex-row md:items-center gap-4 shadow-sm transition-opacity",
+                  isActive ? "border-line" : "border-line opacity-60"
                 )}>
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     <div className={cn(
                       "w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0",
-                      isActive ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-400"
+                      isActive ? "bg-amber-100 text-warning-ink" : "bg-surface-sunken text-ink-subtle"
                     )}>
                       {(p.name || p.username || '?').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-bold text-slate-800 leading-tight">{p.name || <span className="text-slate-400 italic">Sem nome</span>}</p>
+                      <p className="font-bold text-ink leading-tight">{p.name || <span className="text-ink-subtle italic">Sem nome</span>}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
                         {p.username ? (
                           <Badge tone="success" uppercase>Login: {p.username}</Badge>
@@ -429,11 +429,11 @@ export function ProfessorsModule() {
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {lines.length > 0 ? lines.map(line => (
-                          <span key={line} className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                          <span key={line} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted bg-surface-sunken border border-line rounded-lg px-2 py-1">
                             <Clock className="w-3 h-3 text-indigo-400 shrink-0" /> {line}
                           </span>
                         )) : (
-                          <span className="text-xs text-slate-400 italic">Sem horário definido</span>
+                          <span className="text-xs text-ink-subtle italic">Sem horário definido</span>
                         )}
                       </div>
                     </div>
@@ -442,14 +442,14 @@ export function ProfessorsModule() {
                   <div className="flex items-center gap-2 self-end md:self-center shrink-0">
                     <button onClick={() => toggleActive(p)} title={isActive ? 'Marcar como inativo' : 'Reativar'} className={cn(
                       "p-2 rounded-lg transition-colors",
-                      isActive ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100" : "text-slate-400 bg-slate-100 hover:bg-slate-200"
+                      isActive ? "text-success bg-success-soft hover:bg-success-soft" : "text-ink-subtle bg-surface-sunken hover:bg-slate-200"
                     )}>
                       {isActive ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => openEdit(p)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                    <button onClick={() => openEdit(p)} className="p-2 text-ink-subtle hover:text-info hover:bg-info-soft rounded-lg transition-colors">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(p)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <button onClick={() => handleDelete(p)} className="p-2 text-ink-subtle hover:text-danger-ink hover:bg-danger-soft rounded-lg transition-colors">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -478,14 +478,14 @@ export function ProfessorsModule() {
                 <form id="professorForm" onSubmit={handleSave} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nome completo *</label>
-                      <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" placeholder="Ex: Ana Paula da Silva" />
+                      <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Nome completo *</label>
+                      <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" placeholder="Ex: Ana Paula da Silva" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Situação</label>
+                      <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Situação</label>
                       <button type="button" onClick={() => setForm({ ...form, active: !form.active })} className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors",
-                        form.active ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-100 border-slate-200 text-slate-500"
+                        form.active ? "bg-success-soft border-emerald-200 text-success-ink" : "bg-surface-sunken border-line text-ink-muted"
                       )}>
                         {form.active ? <><UserCheck className="w-4 h-4" /> Ativo</> : <><UserX className="w-4 h-4" /> Inativo</>}
                       </button>
@@ -494,10 +494,10 @@ export function ProfessorsModule() {
 
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <label className="text-sm font-black text-slate-700 flex items-center gap-2">
+                      <label className="text-sm font-black text-ink flex items-center gap-2">
                         <Clock className="w-4 h-4 text-indigo-500" /> Horário de trabalho
                       </label>
-                      <button type="button" onClick={replicateMonday} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                      <button type="button" onClick={replicateMonday} className="text-xs font-bold text-info hover:text-info-ink flex items-center gap-1">
                         <Copy className="w-3.5 h-3.5" /> Replicar Segunda p/ dias úteis
                       </button>
                     </div>
@@ -506,20 +506,20 @@ export function ProfessorsModule() {
                       {DAYS.map(({ key, full }) => {
                         const day = form.schedule[key];
                         return (
-                          <div key={key} className={cn("rounded-2xl border p-3 transition-colors", day.enabled ? "bg-white border-slate-200" : "bg-slate-50 border-slate-100")}>
+                          <div key={key} className={cn("rounded-2xl border p-3 transition-colors", day.enabled ? "bg-surface border-line" : "bg-surface-sunken border-line")}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <Toggle checked={day.enabled} onChange={(v) => setDay(key, { enabled: v })} />
-                                <span className={cn("font-bold text-sm w-16", day.enabled ? "text-slate-700" : "text-slate-400")}>{full}</span>
+                                <span className={cn("font-bold text-sm w-16", day.enabled ? "text-ink" : "text-ink-subtle")}>{full}</span>
                               </div>
                               {day.enabled ? (
                                 day.shifts.length < 2 && (
-                                  <button type="button" onClick={() => addShift(key)} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                                  <button type="button" onClick={() => addShift(key)} className="text-xs font-bold text-info hover:text-info-ink flex items-center gap-1">
                                     <Plus className="w-3 h-3" /> 2º turno
                                   </button>
                                 )
                               ) : (
-                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Folga</span>
+                                <span className="text-xs font-bold text-ink-subtle uppercase tracking-wider">Folga</span>
                               )}
                             </div>
 
@@ -527,11 +527,11 @@ export function ProfessorsModule() {
                               <div className="mt-3 space-y-2 pl-[52px]">
                                 {day.shifts.map((s, i) => (
                                   <div key={i} className="flex items-center gap-2">
-                                    <input type="time" value={s.start} onChange={e => setShift(key, i, { start: e.target.value })} className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                                    <span className="text-slate-400 text-sm">às</span>
-                                    <input type="time" value={s.end} onChange={e => setShift(key, i, { end: e.target.value })} className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="time" value={s.start} onChange={e => setShift(key, i, { start: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <span className="text-ink-subtle text-sm">às</span>
+                                    <input type="time" value={s.end} onChange={e => setShift(key, i, { end: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500/20" />
                                     {day.shifts.length > 1 && (
-                                      <button type="button" onClick={() => removeShift(key, i)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                      <button type="button" onClick={() => removeShift(key, i)} className="p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors">
                                         <X className="w-4 h-4" />
                                       </button>
                                     )}
@@ -546,41 +546,41 @@ export function ProfessorsModule() {
                   </div>
                 </form>
 
-                <div className="pt-6 border-t border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-3">
-                    <Key className="w-4 h-4 text-slate-400" /> Acesso ao sistema
+                <div className="pt-6 border-t border-line">
+                  <h3 className="text-sm font-bold text-ink flex items-center gap-2 mb-3">
+                    <Key className="w-4 h-4 text-ink-subtle" /> Acesso ao sistema
                   </h3>
 
                   {!form.id ? (
-                    <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                    <p className="text-xs text-ink-muted bg-surface-sunken border border-line rounded-xl p-3">
                       Salve o professor primeiro para poder criar um login de acesso.
                     </p>
                   ) : currentProfessor?.username && !showAccessForm ? (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-success-soft border border-emerald-200 rounded-xl p-3">
                       <div>
-                        <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Login ativo</p>
-                        <p className="font-bold text-slate-800">{currentProfessor.username}</p>
+                        <p className="text-[10px] font-bold text-success-ink uppercase tracking-wider">Login ativo</p>
+                        <p className="font-bold text-ink">{currentProfessor.username}</p>
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => { setShowAccessForm(true); setAccessUser(currentProfessor.username || ''); setAccessPass(currentProfessor.password || ''); }} className="px-3 py-2 text-xs font-bold bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Alterar</button>
-                        <button type="button" onClick={removeAccess} className="px-3 py-2 text-xs font-bold text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors">Remover</button>
+                        <button type="button" onClick={() => { setShowAccessForm(true); setAccessUser(currentProfessor.username || ''); setAccessPass(currentProfessor.password || ''); }} className="px-3 py-2 text-xs font-bold bg-surface border border-line rounded-lg hover:bg-surface-sunken transition-colors">Alterar</button>
+                        <button type="button" onClick={removeAccess} className="px-3 py-2 text-xs font-bold text-danger-ink bg-surface border border-red-200 rounded-lg hover:bg-danger-soft transition-colors">Remover</button>
                       </div>
                     </div>
                   ) : showAccessForm ? (
-                    <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                    <div className="space-y-3 bg-surface-sunken border border-line rounded-xl p-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" placeholder="Usuário (ex: anderson)" value={accessUser} onChange={e => setAccessUser(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <input type="text" placeholder="Usuário (ex: anderson)" value={accessUser} onChange={e => setAccessUser(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
                       </div>
                       <div className="flex gap-2">
                         <button type="button" disabled={accessBusy} onClick={saveAccess} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg disabled:opacity-50 active:scale-95 transition-transform">
                           {accessBusy ? 'Salvando...' : 'Salvar acesso'}
                         </button>
-                        <button type="button" onClick={() => setShowAccessForm(false)} className="px-4 py-2 text-xs font-bold text-slate-600">Cancelar</button>
+                        <button type="button" onClick={() => setShowAccessForm(false)} className="px-4 py-2 text-xs font-bold text-ink-muted">Cancelar</button>
                       </div>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setShowAccessForm(true)} className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:border-indigo-300 hover:text-indigo-600 flex items-center gap-2 transition-colors">
+                    <button type="button" onClick={() => setShowAccessForm(true)} className="px-4 py-2.5 bg-surface border border-line rounded-xl text-sm font-bold text-ink hover:border-indigo-300 hover:text-info flex items-center gap-2 transition-colors">
                       <Key className="w-4 h-4" /> Criar login de acesso
                     </button>
                   )}

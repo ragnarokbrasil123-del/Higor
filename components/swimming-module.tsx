@@ -463,13 +463,13 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   if (view === 'avaliando') {
     if (feito) {
       return (
-        <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5">
-            <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+        <div className="flex-1 flex flex-col items-center justify-center bg-surface-sunken p-6 text-center">
+          <div className="w-20 h-20 bg-success-soft rounded-full flex items-center justify-center mb-5">
+            <CheckCircle2 className="w-10 h-10 text-success" />
           </div>
-          <h2 className="text-2xl font-black text-slate-800">Turma avaliada!</h2>
-          <p className="text-slate-500 font-medium mt-2">
-            {feito.total} aluno(s) concluído(s){feito.aprovados > 0 && <> · <b className="text-emerald-600">{feito.aprovados} trocaram de touca 🏅</b></>}
+          <h2 className="text-2xl font-black text-ink">Turma avaliada!</h2>
+          <p className="text-ink-muted font-medium mt-2">
+            {feito.total} aluno(s) concluído(s){feito.aprovados > 0 && <> · <b className="text-success">{feito.aprovados} trocaram de touca 🏅</b></>}
           </p>
           <button onClick={() => { setView('home'); setFila([]); setFeito(null); }} className="mt-8 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl active:scale-95 transition-transform">
             Voltar para as turmas
@@ -482,7 +482,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     const info = levels[alunoAtual.level as CapLevel];
 
     return (
-      <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-y-auto custom-scrollbar" ref={topoRef}>
+      <div className="flex-1 flex flex-col h-full bg-surface-sunken overflow-y-auto custom-scrollbar" ref={topoRef}>
         {/* cabeçalho fixo */}
         <div className="sticky top-0 z-20 bg-surface border-b border-line shadow-raised">
           <div className="max-w-3xl mx-auto p-4">
@@ -495,7 +495,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-black text-ink leading-tight break-words line-clamp-2">{alunoAtual.name}</h2>
-                <p className="text-xs font-bold text-slate-500">Touca {info?.name}</p>
+                <p className="text-xs font-bold text-ink-muted">Touca {info?.name}</p>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs font-black text-ink tabular-nums">{filaIdx + 1} de {fila.length}</p>
@@ -572,7 +572,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             <button onClick={() => marcarTodos('passed')} className="flex-1 py-3 bg-emerald-600 text-white font-black rounded-xl text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
               <Check className="w-4 h-4" strokeWidth={3} /> Marcar todos como Passou
             </button>
-            <button onClick={() => marcarTodos('pending')} className="px-5 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-sm active:scale-95 transition-transform">
+            <button onClick={() => marcarTodos('pending')} className="px-5 py-3 bg-surface border border-line text-ink-muted font-bold rounded-xl text-sm active:scale-95 transition-transform">
               Limpar
             </button>
           </div>
@@ -613,7 +613,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
           <div className="bg-surface rounded-card border border-line p-4 mt-4">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <label className="text-xs font-black text-slate-500 uppercase tracking-wider flex items-center gap-2">
+              <label className="text-xs font-black text-ink-muted uppercase tracking-wider flex items-center gap-2">
                 <MessageCircle className="w-4 h-4" /> Observações para os pais
               </label>
               <button
@@ -624,14 +624,14 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                   setNotes(gerarObservacao(alunoAtual.name, info?.label || '', passou, criterios.length, aTreinar, variacaoFrase));
                   setVariacaoFrase(v => v + 1);
                 }}
-                className="px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-3 py-1.5 bg-info-soft border border-indigo-200 text-info-ink rounded-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Sparkles className="w-3.5 h-3.5" /> {notes ? 'Gerar outra' : 'Gerar sugestão'}
               </button>
             </div>
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Escreva, ou toque em “Gerar sugestão” para criar a partir do resultado." className="min-h-[110px]" />
             {marcados === 0 && (
-              <p className="text-[11px] font-bold text-slate-400 mt-2">Marque os critérios acima para liberar a sugestão.</p>
+              <p className="text-[11px] font-bold text-ink-subtle mt-2">Marque os critérios acima para liberar a sugestão.</p>
             )}
           </div>
         </div>
@@ -699,9 +699,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     const hist = evaluations.filter(e => e.student_id === aluno.id);
 
     return (
-      <div className="flex-1 h-full overflow-y-auto custom-scrollbar bg-slate-50">
+      <div className="flex-1 h-full overflow-y-auto custom-scrollbar bg-surface-sunken">
         <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-5">
-          <button onClick={() => setView('home')} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-800">
+          <button onClick={() => setView('home')} className="flex items-center gap-2 text-sm font-bold text-ink-muted hover:text-ink">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
 
@@ -711,7 +711,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-black text-ink leading-tight break-words">{aluno.name}</h1>
-              <p className="text-sm font-bold text-slate-500">Touca {info?.name}</p>
+              <p className="text-sm font-bold text-ink-muted">Touca {info?.name}</p>
               <div className="mt-1"><Selo sid={aluno.id} /></div>
             </div>
           </div>
@@ -721,45 +721,45 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
           </button>
 
           <div className="bg-surface rounded-panel border border-line shadow-raised p-5">
-            <h3 className="font-black text-slate-800 flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+            <h3 className="font-black text-ink flex items-center gap-2 mb-4 pb-3 border-b border-line">
               <History className="w-5 h-5 text-indigo-500" /> Histórico
             </h3>
             {hist.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-6">Nenhuma avaliação registrada.</p>
+              <p className="text-sm text-ink-subtle text-center py-6">Nenhuma avaliação registrada.</p>
             ) : (
               <div className="space-y-4">
                 {hist.map(ev => (
-                  <div key={ev.id} className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                  <div key={ev.id} className="bg-surface-sunken border border-line rounded-2xl p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                       <div>
-                        <p className="font-black text-slate-800">{new Date(ev.date).toLocaleDateString('pt-BR')}</p>
+                        <p className="font-black text-ink">{new Date(ev.date).toLocaleDateString('pt-BR')}</p>
                         <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded text-white', levels[ev.level as CapLevel]?.bgClass)}>
                           Touca {levels[ev.level as CapLevel]?.name}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-3 py-1.5 rounded-lg text-xs font-black', ev.approved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>
+                        <span className={cn('px-3 py-1.5 rounded-lg text-xs font-black', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-amber-100 text-warning-ink')}>
                           {ev.approved ? 'APROVADO' : 'EM TREINAMENTO'}
                         </span>
                         <button onClick={() => gerarBoletimPDF(ev, aluno.name)} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
                           <FileText className="w-3.5 h-3.5" /> PDF
                         </button>
                         {isAdmin && (
-                          <button onClick={() => apagarAvaliacao(ev.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => apagarAvaliacao(ev.id)} className="p-2 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg"><Trash2 className="w-4 h-4" /></button>
                         )}
                       </div>
                     </div>
-                    {ev.notes && <p className="text-sm italic text-slate-600 bg-white border border-slate-100 rounded-xl p-3 mb-3">"{ev.notes}"</p>}
+                    {ev.notes && <p className="text-sm italic text-ink-muted bg-surface border border-line rounded-xl p-3 mb-3">"{ev.notes}"</p>}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                       {(EVALUATION_CRITERIA[ev.level as CapLevel] || []).map(c => {
                         const st = ev.scores?.[c.id] || 'pending';
                         return (
                           <div key={c.id} className="flex items-start gap-2 text-xs">
                             <div className={cn('w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[9px] font-black',
-                              st === 'passed' ? 'bg-emerald-100 text-emerald-600' : st === 'failed' ? 'bg-red-100 text-red-500' : 'bg-slate-100 text-slate-400')}>
+                              st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
                               {st === 'passed' ? '✔' : st === 'failed' ? '✖' : '–'}
                             </div>
-                            <span className={st === 'passed' ? 'text-slate-700' : 'text-slate-500'}>{c.label}</span>
+                            <span className={st === 'passed' ? 'text-ink' : 'text-ink-muted'}>{c.label}</span>
                           </div>
                         );
                       })}
@@ -792,9 +792,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         <FilterBar>
           <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
             <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar aluno pelo nome..." className="pl-9 pr-9 bg-surface shadow-raised" />
-            {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><X className="w-4 h-4" /></button>}
+            {search && <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-subtle"><X className="w-4 h-4" /></button>}
           </div>
           {!semTurmaMode && !sabadoMode && profsDisponiveis.length > 1 && (
             <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-full md:w-auto bg-surface shadow-raised font-bold md:max-w-[300px]">
@@ -806,7 +806,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         </FilterBar>
 
         {!semTurmaMode && filterProf !== 'all' && (
-          <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-1.5">
+          <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-info bg-info-soft border border-indigo-200 rounded-lg px-3 py-1.5">
             Filtrando por {filterProf.split(' ')[0]} <X className="w-3.5 h-3.5" />
           </button>
         )}
@@ -814,16 +814,16 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         {buscando ? (
           <div className="bg-surface rounded-panel border border-line shadow-raised divide-y divide-slate-50">
             {resultadoBusca.length === 0 ? (
-              <p className="p-8 text-center text-slate-400 font-medium text-sm">Nenhum aluno encontrado.</p>
+              <p className="p-8 text-center text-ink-subtle font-medium text-sm">Nenhum aluno encontrado.</p>
             ) : resultadoBusca.map(s => (
-              <button key={s.id} onClick={() => { setAlunoId(s.id); setView('aluno'); }} className="w-full flex items-center gap-3 p-3.5 hover:bg-slate-50 transition-colors text-left">
+              <button key={s.id} onClick={() => { setAlunoId(s.id); setView('aluno'); }} className="w-full flex items-center gap-3 p-3.5 hover:bg-surface-sunken transition-colors text-left">
                 <div className={cn('w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0', levels[s.level as CapLevel]?.bgClass)}>{s.name.charAt(0)}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-ink text-sm leading-tight break-words">{s.name}</p>
-                  <p className="text-xs text-slate-500">Touca {levels[s.level as CapLevel]?.label}</p>
+                  <p className="text-xs text-ink-muted">Touca {levels[s.level as CapLevel]?.label}</p>
                 </div>
                 <Selo sid={s.id} />
-                <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                <ChevronRight className="w-4 h-4 text-ink-subtle shrink-0" />
               </button>
             ))}
           </div>
@@ -864,7 +864,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                 <div className="flex items-center gap-3">
                   {(filtroGrupo !== 'all' || filtroTouca !== 'all' || soPendentes) && (
                     <button onClick={() => { setFiltroGrupo('all'); setFiltroTouca('all'); setSoPendentes(false); }}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-1.5">
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-info bg-info-soft border border-indigo-200 rounded-lg px-3 py-1.5">
                       Limpar filtros <X className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -899,7 +899,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                       {g.titulo}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={cn('text-[11px] font-bold truncate', g.aviso ? 'text-amber-700' : 'text-slate-500')}>{g.desc}</p>
+                      <p className={cn('text-[11px] font-bold truncate', g.aviso ? 'text-warning-ink' : 'text-ink-muted')}>{g.desc}</p>
                       <div className="flex flex-wrap gap-1 mt-0.5">
                         {capLevelOrder.filter(k => doGrupo.some(a => a.level === k)).map(t => (
                           <span key={t} className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[t].bgClass)}>
@@ -909,13 +909,13 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Users className="w-3.5 h-3.5" />{doGrupo.length}</span>
+                      <span className="text-xs font-bold text-ink-muted flex items-center gap-1"><Users className="w-3.5 h-3.5" />{doGrupo.length}</span>
                       {pend.length > 0 ? (
                         <Button size="sm" onClick={() => abrirFila(pend.map(a => a.id))}>
                           <ListChecks className="w-4 h-4" /> Avaliar {pend.length}
                         </Button>
                       ) : (
-                        <span className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black flex items-center gap-1.5">
+                        <span className="px-3 py-2 bg-success-soft text-success-ink rounded-xl text-xs font-black flex items-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4" /> completo
                         </span>
                       )}
@@ -923,8 +923,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                   </div>
 
                   {g.aviso && (
-                    <div className="px-4 py-2.5 bg-amber-50 border-b border-amber-100 flex items-start gap-2">
-                      <CalendarDays className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="px-4 py-2.5 bg-warning-soft border-b border-amber-100 flex items-start gap-2">
+                      <CalendarDays className="w-4 h-4 text-warning-ink shrink-0 mt-0.5" />
                       <p className="text-[11px] font-medium text-amber-800">
                         Estes alunos são de turma fixa mas ficaram sem horário — o dia/hora da planilha não bateu com nenhum professor.
                         Dá pra alocar cada um na aba <b>Alunos</b> → <b>Abrir ficha</b>.
@@ -934,14 +934,14 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
                   <div className="divide-y divide-slate-50">
                     {doGrupo.map(a => (
-                      <button key={a.id} onClick={() => { setAlunoId(a.id); setView('aluno'); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors text-left">
+                      <button key={a.id} onClick={() => { setAlunoId(a.id); setView('aluno'); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-sunken transition-colors text-left">
                         <div className={cn('w-2 h-2 rounded-full shrink-0', levels[a.level as CapLevel]?.bgClass)} />
-                        <span className="flex-1 text-sm font-medium text-slate-700 truncate">{a.name}</span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 hidden sm:inline">
+                        <span className="flex-1 text-sm font-medium text-ink truncate">{a.name}</span>
+                        <span className="text-[10px] font-bold text-ink-subtle uppercase tracking-wider shrink-0 hidden sm:inline">
                           {levels[a.level as CapLevel]?.label}
                         </span>
                         <Selo sid={a.id} />
-                        <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-ink-subtle shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -968,19 +968,19 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             {/* só quem falta avaliar */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Toggle checked={soPendentes} onChange={setSoPendentes} label="Só quem falta avaliar" />
-              <p className="text-xs font-bold text-slate-400">
+              <p className="text-xs font-bold text-ink-subtle">
                 {blocosDoDia.length} {sabadoMode ? 'horário(s)' : 'turma(s)'}
               </p>
             </div>
 
             {blocosDoDia.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-300">
+              <div className="text-center py-16 bg-surface rounded-3xl border border-dashed border-line-strong">
                 <CalendarDays className="w-12 h-12 text-slate-200 mx-auto mb-3" />
-                <h3 className="font-bold text-slate-700">
+                <h3 className="font-bold text-ink">
                   {soPendentes ? 'Nada pendente' : 'Ninguém com aula'} em {diaAtivo.split('-')[0]}
                   {!sabadoMode && filterProf !== 'all' && <> para {filterProf.split(' ')[0]}</>}
                 </h3>
-                <p className="text-slate-400 text-sm mt-1">
+                <p className="text-ink-subtle text-sm mt-1">
                   {soPendentes
                     ? 'Todo mundo já foi avaliado neste trimestre. Desligue o filtro para ver todos.'
                     : sabadoMode ? 'Busque o aluno pelo nome.' : 'Escolha outro dia, troque o professor ou busque o aluno pelo nome.'}
@@ -999,7 +999,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                           <Clock className="w-3.5 h-3.5" /> {bloco.hora}
                         </div>
                         <div className="flex-1 min-w-0">
-                          {bloco.professor && isAdmin && <p className="text-[11px] font-bold text-slate-500 truncate">{bloco.professor}</p>}
+                          {bloco.professor && isAdmin && <p className="text-[11px] font-bold text-ink-muted truncate">{bloco.professor}</p>}
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {toucas.map(t => (
                               <span key={t} className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[t].bgClass)}>
@@ -1009,14 +1009,14 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Users className="w-3.5 h-3.5" />{alunos.length}</span>
+                          <span className="text-xs font-bold text-ink-muted flex items-center gap-1"><Users className="w-3.5 h-3.5" />{alunos.length}</span>
                           {pend.length > 0 && (
                             <Button size="sm" onClick={() => abrirFila(pend.map(a => a.id))}>
                               <ListChecks className="w-4 h-4" /> Avaliar {pend.length}
                             </Button>
                           )}
                           {alunos.length > 0 && pend.length === 0 && (
-                            <span className="px-3 py-2 bg-emerald-100 text-emerald-700 rounded-xl text-xs font-black flex items-center gap-1.5">
+                            <span className="px-3 py-2 bg-success-soft text-success-ink rounded-xl text-xs font-black flex items-center gap-1.5">
                               <CheckCircle2 className="w-4 h-4" /> completa
                             </span>
                           )}
@@ -1026,11 +1026,11 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                       {alunos.length > 0 && (
                         <div className="divide-y divide-slate-50">
                           {alunos.map(a => (
-                            <button key={a.id} onClick={() => { setAlunoId(a.id); setView('aluno'); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition-colors text-left">
+                            <button key={a.id} onClick={() => { setAlunoId(a.id); setView('aluno'); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-surface-sunken transition-colors text-left">
                               <div className={cn('w-2 h-2 rounded-full shrink-0', levels[a.level as CapLevel]?.bgClass)} />
-                              <span className="flex-1 text-sm font-medium text-slate-700 truncate">{a.name}</span>
+                              <span className="flex-1 text-sm font-medium text-ink truncate">{a.name}</span>
                               <Selo sid={a.id} />
-                              <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                              <ChevronRight className="w-4 h-4 text-ink-subtle shrink-0" />
                             </button>
                           ))}
                         </div>

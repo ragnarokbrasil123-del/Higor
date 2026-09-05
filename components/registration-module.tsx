@@ -316,44 +316,44 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   
                   <div className="space-y-1 md:space-y-2 md:col-span-2">
-                    <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Nome do Aluno *</label>
-                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                    <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Aluno *</label>
+                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
                   </div>
                   
                   <div className="space-y-1 md:space-y-2">
-                    <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Idade</label>
-                    <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} placeholder="opcional" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                    <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Idade</label>
+                    <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} placeholder="opcional" className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
                   </div>
                   
                   <div className="space-y-1 md:space-y-2">
-                    <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Nível Inicial (Touca) *</label>
+                    <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nível Inicial (Touca) *</label>
                     <Select value={level} onChange={(e) => setLevel(e.target.value as CapLevel)}>
                       {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
                     </Select>
                   </div>
 
-                  <div className="md:col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                    <p className="text-xs font-medium text-slate-500">
-                      O dia e o horário da aula são definidos depois, na aba <b className="text-slate-700">Alunos</b> → <b className="text-slate-700">Abrir ficha</b>.
+                  <div className="md:col-span-2 p-3 bg-surface-sunken border border-line rounded-xl">
+                    <p className="text-xs font-medium text-ink-muted">
+                      O dia e o horário da aula são definidos depois, na aba <b className="text-ink">Alunos</b> → <b className="text-ink">Abrir ficha</b>.
                     </p>
                   </div>
 
-                  <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-slate-50/50 border border-slate-100 rounded-2xl space-y-4 md:space-y-6">
-                    <h3 className="font-bold text-slate-800 text-sm md:text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-amber-500" /> Dados do Responsável (Acesso ao Portal)</h3>
+                  <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-slate-50/50 border border-line rounded-2xl space-y-4 md:space-y-6">
+                    <h3 className="font-bold text-ink text-sm md:text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-amber-500" /> Dados do Responsável (Acesso ao Portal)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-1 md:space-y-2">
-                        <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Nome do Responsável</label>
-                        <input type="text" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                        <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Responsável</label>
+                        <input type="text" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
                       </div>
                       <div className="space-y-1 md:space-y-2">
-                        <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">WhatsApp (Login)</label>
-                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(DDD) 99999-9999" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                        <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">WhatsApp (Login)</label>
+                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(DDD) 99999-9999" className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
                       </div>
                       <div className="space-y-1 md:space-y-2 md:col-span-2">
-                        <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Senha de Acesso do Pai *</label>
+                        <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Senha de Acesso do Pai *</label>
                         <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-white border border-amber-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-medium text-amber-900" />
+                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
+                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-amber-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-medium text-amber-900" />
                         </div>
                       </div>
                     </div>
@@ -361,7 +361,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
 
                 </div>
                 
-                <div className="pt-4 md:pt-6 border-t border-slate-100 flex justify-end">
+                <div className="pt-4 md:pt-6 border-t border-line flex justify-end">
                   <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-amber-500 md:text-black rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
                     <Save className="w-4 h-4" /> {loading ? "Salvando..." : "Matricular Aluno"}
                   </button>
@@ -372,7 +372,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
           ) : (
 
             <motion.div key="bulk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto space-y-5">
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 md:p-6">
+              <div className="bg-warning-soft border border-amber-200 rounded-2xl p-5 md:p-6">
                 <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
                 <p className="text-sm text-amber-800">
                   Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
@@ -380,10 +380,10 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   Vários dias na mesma célula: separe por <code className="bg-white/60 px-1 rounded">/</code>.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <button onClick={downloadTemplate} className="px-4 py-2 bg-white border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
+                  <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
                     <Download className="w-4 h-4" /> Baixar modelo CSV
                   </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-white border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
+                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
                     <UploadCloud className="w-4 h-4" /> Selecionar arquivo
                   </button>
                   <input type="file" accept=".csv,.tsv,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { const f = e.target.files?.[0]; if (f) readFileToText(f); e.target.value = ''; }} />
@@ -391,39 +391,39 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
               </div>
 
               {bulkResult && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="bg-success-soft border border-emerald-200 rounded-2xl p-5 flex items-start gap-3">
+                  <CheckCircle2 className="w-6 h-6 text-success shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-black text-emerald-800">Importação concluída!</p>
-                    <p className="text-emerald-700 font-medium mt-1">
+                    <p className="text-success-ink font-medium mt-1">
                       {bulkResult.created} aluno(s) cadastrado(s) · {bulkResult.allocated} alocado(s) em vagas da grade
-                      {bulkResult.failed > 0 && <span className="text-red-600"> · {bulkResult.failed} falha(s)</span>}
+                      {bulkResult.failed > 0 && <span className="text-danger-ink"> · {bulkResult.failed} falha(s)</span>}
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="bg-white border border-slate-200 rounded-3xl p-4 md:p-6 space-y-4">
+              <div className="bg-surface border border-line rounded-3xl p-4 md:p-6 space-y-4">
                 <textarea
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
                   spellCheck={false}
                   placeholder={'nome;idade;touca;dia;horario;responsavel;telefone;senha\nAna Clara Souza;7;Laranja;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;1234'}
-                  className="w-full h-44 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs md:text-sm font-mono text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 resize-y"
+                  className="w-full h-44 p-4 bg-surface-sunken border border-line rounded-2xl text-xs md:text-sm font-mono text-ink outline-none focus:ring-2 focus:ring-amber-500/20 resize-y"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs font-bold text-slate-500">{bulkStatus}</p>
+                  <p className="text-xs font-bold text-ink-muted">{bulkStatus}</p>
                   <div className="flex gap-2">
-                    <button onClick={() => { setBulkText(''); setBulkRows([]); setBulkStatus(''); setBulkResult(null); }} className="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700">Limpar</button>
+                    <button onClick={() => { setBulkText(''); setBulkRows([]); setBulkStatus(''); setBulkResult(null); }} className="px-4 py-2.5 text-sm font-bold text-ink-muted hover:text-ink">Limpar</button>
                     <button onClick={analyzeBulk} disabled={!bulkText.trim()} className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40 active:scale-95 transition-transform">Analisar</button>
                   </div>
                 </div>
               </div>
 
               {bulkRows.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
-                    <h3 className="font-black text-slate-800 text-sm">Prévia ({bulkRows.length} linha{bulkRows.length > 1 ? 's' : ''})</h3>
+                <div className="bg-surface border border-line rounded-3xl overflow-hidden">
+                  <div className="p-4 border-b border-line bg-surface-sunken flex items-center justify-between gap-3">
+                    <h3 className="font-black text-ink text-sm">Prévia ({bulkRows.length} linha{bulkRows.length > 1 ? 's' : ''})</h3>
                     <button onClick={runBulkImport} disabled={bulkImporting || bulkRows.filter(r => !r.skip).length === 0} className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-black disabled:opacity-40 active:scale-95 transition-transform flex items-center gap-2">
                       <Save className="w-4 h-4" /> {bulkImporting ? 'Importando...' : `Importar ${bulkRows.filter(r => !r.skip).length} aluno(s)`}
                     </button>
@@ -441,8 +441,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                             {bulkRows.map((r, i) => (
                               <TR key={i} muted={r.skip}>
                                 <TD>
-                                  <p className="font-bold text-slate-800">{r.name}</p>
-                                  <p className="text-xs text-slate-500">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
+                                  <p className="font-bold text-ink">{r.name}</p>
+                                  <p className="text-xs text-ink-muted">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
                                 </TD>
                                 <TD>
                                   <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
@@ -453,11 +453,11 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                 </TD>
                                 <TD>
                                   {r.issues.length === 0 ? (
-                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
+                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-success"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
                                   ) : (
                                     <ul className="space-y-0.5">
                                       {r.issues.map((iss, k) => (
-                                        <li key={k} className={cn('inline-flex items-center gap-1 text-[11px] font-medium', r.skip ? 'text-red-500' : 'text-amber-600')}>
+                                        <li key={k} className={cn('inline-flex items-center gap-1 text-[11px] font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
                                           <AlertTriangle className="w-3 h-3 shrink-0" /> {iss}
                                         </li>
                                       ))}

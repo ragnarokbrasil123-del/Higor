@@ -178,10 +178,10 @@ export function StudentsModule() {
         <FilterBar>
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
               <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por aluno, responsável ou telefone..." className="pl-9 pr-9 py-2.5" />
               {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-subtle hover:text-ink-muted"><X className="w-4 h-4" /></button>
               )}
             </div>
             <Select value={fTouca} onChange={e => setFTouca(e.target.value)} className="w-full md:w-auto py-2.5">
@@ -334,24 +334,24 @@ export function StudentsModule() {
 
                 {/* dados do aluno */}
                 <section>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Dados do aluno</h3>
+                  <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider mb-3">Dados do aluno</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="md:col-span-2">
-                      <label className="text-[11px] font-bold text-slate-500">Nome *</label>
-                      <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-[11px] font-bold text-ink-muted">Nome *</label>
+                      <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500">Idade</label>
-                      <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-[11px] font-bold text-ink-muted">Idade</label>
+                      <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500">Modalidade</label>
+                      <label className="text-[11px] font-bold text-ink-muted">Modalidade</label>
                       <Select value={editing.modalidade || 'fixo'} onChange={e => setEditing({ ...editing, modalidade: e.target.value })} className="mt-1 py-2.5">
                         {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
                       </Select>
                     </div>
                     <div className="md:col-span-4">
-                      <label className="text-[11px] font-bold text-slate-500">Touca</label>
+                      <label className="text-[11px] font-bold text-ink-muted">Touca</label>
                       <Select value={editing.level} onChange={e => setEditing({ ...editing, level: e.target.value as CapLevel })} className="mt-1 py-2.5">
                         {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].name}</option>)}
                       </Select>
@@ -362,33 +362,33 @@ export function StudentsModule() {
                 {/* turmas */}
                 <section>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Turmas (dia e horário)</h3>
-                    <button onClick={() => setShowAdd(v => !v)} className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                    <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider">Turmas (dia e horário)</h3>
+                    <button onClick={() => setShowAdd(v => !v)} className="text-xs font-bold text-info hover:text-info-ink flex items-center gap-1">
                       <Plus className="w-3.5 h-3.5" /> Adicionar aula
                     </button>
                   </div>
 
                   <div className="space-y-2">
                     {aulasDe(editing.id).length === 0 && (
-                      <p className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3">Este aluno não está em nenhuma turma.</p>
+                      <p className="text-xs font-bold text-warning-ink bg-warning-soft border border-amber-200 rounded-xl p-3">Este aluno não está em nenhuma turma.</p>
                     )}
                     {aulasDe(editing.id).map(a => {
                       const divergente = a.slot.cap_color !== editing.level;
                       return (
-                        <div key={a.slot.id} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                        <div key={a.slot.id} className="flex items-center gap-3 bg-surface-sunken border border-line rounded-xl p-3">
                           <CalendarDays className="w-4 h-4 text-indigo-500 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-800">
+                            <p className="text-sm font-bold text-ink">
                               {a.cls!.day_of_week} · {hhmm(a.cls!.start_time)} às {hhmm(a.cls!.end_time)}
                             </p>
-                            <p className="text-xs font-medium text-slate-500 truncate">Prof. {a.cls!.teacher_name}</p>
+                            <p className="text-xs font-medium text-ink-muted truncate">Prof. {a.cls!.teacher_name}</p>
                             {divergente && (
-                              <p className="text-[11px] font-bold text-amber-600 flex items-center gap-1 mt-1">
+                              <p className="text-[11px] font-bold text-warning-ink flex items-center gap-1 mt-1">
                                 <AlertTriangle className="w-3 h-3" /> vaga de {levels[a.slot.cap_color as CapLevel]?.label || a.slot.cap_color} — touca do aluno mudou
                               </p>
                             )}
                           </div>
-                          <button onClick={() => sairDaTurma(a.slot.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0" title="Tirar desta turma">
+                          <button onClick={() => sairDaTurma(a.slot.id)} className="p-2 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors shrink-0" title="Tirar desta turma">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -400,24 +400,24 @@ export function StudentsModule() {
                     <div className="mt-3 border border-indigo-200 bg-indigo-50/40 rounded-2xl p-3 space-y-3">
                       <div className="flex flex-wrap gap-1.5">
                         {DAYS.map(d => (
-                          <button key={d} onClick={() => setAddDay(d)} className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all', addDay === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200')}>
+                          <button key={d} onClick={() => setAddDay(d)} className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all', addDay === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-surface text-ink-muted border-line')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
                       </div>
-                      <p className="text-[11px] font-bold text-slate-500">
+                      <p className="text-[11px] font-bold text-ink-muted">
                         Vagas livres de <b>{levels[editing.level]?.label}</b> em {addDay.split('-')[0]}:
                       </p>
                       {vagasPorTurma.length === 0 ? (
-                        <p className="text-xs text-slate-500 italic">Nenhuma vaga livre dessa touca nesse dia.</p>
+                        <p className="text-xs text-ink-muted italic">Nenhuma vaga livre dessa touca nesse dia.</p>
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-52 overflow-y-auto custom-scrollbar">
                           {vagasPorTurma.map(v => (
-                            <button key={v.slot.id} onClick={() => entrarNaTurma(v.slot.id)} className="text-left bg-white border border-slate-200 hover:border-indigo-400 rounded-xl p-2.5 transition-colors">
-                              <p className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                            <button key={v.slot.id} onClick={() => entrarNaTurma(v.slot.id)} className="text-left bg-surface border border-line hover:border-indigo-400 rounded-xl p-2.5 transition-colors">
+                              <p className="text-sm font-black text-ink flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-indigo-500" /> {hhmm(v.cls!.start_time)}
                               </p>
-                              <p className="text-[11px] font-medium text-slate-500 truncate">Prof. {v.cls!.teacher_name}</p>
+                              <p className="text-[11px] font-medium text-ink-muted truncate">Prof. {v.cls!.teacher_name}</p>
                             </button>
                           ))}
                         </div>
@@ -428,27 +428,27 @@ export function StudentsModule() {
 
                 {/* responsável */}
                 <section>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Responsável e acesso</h3>
+                  <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider mb-3">Responsável e acesso</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
-                      <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
+                      <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
-                      <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
+                      <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
-                      <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
+                      <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
-                      <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
+                      <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-[11px] font-bold text-slate-500 flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
-                      <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 min-h-[80px] resize-y" />
+                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
+                      <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 min-h-[80px] resize-y" />
                     </div>
                   </div>
                 </section>

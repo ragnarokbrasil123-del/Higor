@@ -79,8 +79,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
   if (!student) {
     return (
-      <div className="fixed inset-0 flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
-        <p className="text-slate-500 font-bold">Nenhum aluno encontrado nesta conta.</p>
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-surface-sunken p-6 text-center">
+        <p className="text-ink-muted font-bold">Nenhum aluno encontrado nesta conta.</p>
         <button onClick={onLogout} className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold">Sair</button>
       </div>
     );
@@ -110,7 +110,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             {filhos.map((f, i) => (
               <button key={f.id} onClick={() => setIdx(i)} className={cn(
                 'px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap border transition-all',
-                i === idx ? 'bg-white text-slate-900 border-white' : 'bg-white/10 text-white border-white/20'
+                i === idx ? 'bg-surface text-slate-900 border-white' : 'bg-white/10 text-white border-white/20'
               )}>
                 {f.name.split(' ')[0]}
               </button>
@@ -124,7 +124,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           </div>
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight break-words">{student.name}</h1>
-            <p className="text-slate-400 text-sm mt-1">Dossiê do Aluno</p>
+            <p className="text-ink-subtle text-sm mt-1">Dossiê do Aluno</p>
           </div>
         </div>
       </div>
@@ -133,7 +133,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
         {/* Avisos no celular */}
         {suportaAvisos() && avisosOn === false && (
-          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="bg-warning-soft border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="w-11 h-11 bg-amber-400 rounded-2xl flex items-center justify-center shrink-0">
               <BellRing className="w-6 h-6 text-black" />
             </div>
@@ -149,7 +149,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           </div>
         )}
         {avisosOn === true && (
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 w-fit">
+          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-emerald-200 rounded-xl px-3 py-2 w-fit">
             <BellRing className="w-3.5 h-3.5" /> Avisos ativados neste aparelho
           </div>
         )}
@@ -157,16 +157,16 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         {/* Nível */}
         <div className="bg-surface rounded-panel p-6 shadow-overlay border border-line flex justify-between items-center">
           <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nível Atual</p>
+            <p className="text-xs font-bold text-ink-subtle uppercase tracking-wider mb-1">Nível Atual</p>
             <div className="flex items-center gap-2">
               <Award className={cn('w-6 h-6', nivel.colorClass)} />
-              <p className="text-xl font-extrabold text-slate-800">Touca {nivel.name}</p>
+              <p className="text-xl font-extrabold text-ink">Touca {nivel.name}</p>
             </div>
           </div>
           {student.age ? (
             <div className="text-right">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Idade</p>
-              <p className="text-xl font-extrabold text-slate-800">{student.age} anos</p>
+              <p className="text-xs font-bold text-ink-subtle uppercase tracking-wider mb-1">Idade</p>
+              <p className="text-xl font-extrabold text-ink">{student.age} anos</p>
             </div>
           ) : null}
         </div>
@@ -174,17 +174,17 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         {/* Aulas */}
         {minhasAulas.length > 0 && (
           <div className="bg-surface rounded-panel p-6 shadow-raised border border-line">
-            <h2 className="text-sm font-black text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <h2 className="text-sm font-black text-ink-subtle uppercase tracking-wider mb-4 flex items-center gap-2">
               <Clock className="w-4 h-4" /> Aulas da semana
             </h2>
             <div className="space-y-2">
               {minhasAulas.map((a, i) => (
-                <div key={i} className="flex flex-wrap items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl p-3">
+                <div key={i} className="flex flex-wrap items-center gap-3 bg-surface-sunken border border-line rounded-2xl p-3">
                   <span className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-sm font-black shrink-0">
                     {a.inicio} às {a.fim}
                   </span>
-                  <span className="font-bold text-slate-700 text-sm">{a.dia}</span>
-                  <span className="text-xs font-medium text-slate-500 flex items-center gap-1 ml-auto">
+                  <span className="font-bold text-ink text-sm">{a.dia}</span>
+                  <span className="text-xs font-medium text-ink-muted flex items-center gap-1 ml-auto">
                     <User className="w-3 h-3" /> {a.professor}
                   </span>
                 </div>
@@ -195,7 +195,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
         {/* Avaliações */}
         <div>
-          <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-500" /> Histórico de Avaliações
           </h2>
 
@@ -217,7 +217,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                   <div key={ev.id} className="bg-surface rounded-card p-5 shadow-raised border border-line">
                     <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
                       <div>
-                        <p className="font-extrabold text-slate-800 text-lg leading-tight">
+                        <p className="font-extrabold text-ink text-lg leading-tight">
                           {new Date(ev.date).toLocaleDateString('pt-BR')}
                         </p>
                         {evLevel && (
@@ -227,7 +227,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-3 py-1 text-xs font-bold rounded-lg uppercase', ev.approved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700')}>
+                        <span className={cn('px-3 py-1 text-xs font-bold rounded-lg uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-amber-100 text-warning-ink')}>
                           {ev.approved ? 'Aprovado' : 'Em treinamento'}
                         </span>
                         <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
@@ -240,16 +240,16 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                     {ev.notes && (
                       <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
                         <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Recado do Professor</p>
-                        <p className="text-sm text-slate-700 leading-relaxed">{ev.notes}</p>
+                        <p className="text-sm text-ink leading-relaxed">{ev.notes}</p>
                       </div>
                     )}
 
                     {criterios.length > 0 && (
                       <>
-                        <p className="text-xs font-bold text-slate-500 mb-2">
+                        <p className="text-xs font-bold text-ink-muted mb-2">
                           {passou} de {criterios.length} fundamentos concluídos
                         </p>
-                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+                        <div className="h-2 bg-surface-sunken rounded-full overflow-hidden mb-3">
                           <div className="h-full bg-emerald-500 transition-all" style={{ width: `${criterios.length ? (passou / criterios.length) * 100 : 0}%` }} />
                         </div>
                         <div className="space-y-1.5">
@@ -258,10 +258,10 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                             return (
                               <div key={crit.id} className="flex items-start gap-2 text-sm">
                                 <div className={cn('w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-                                  st === 'passed' ? 'bg-emerald-100 text-emerald-600' : st === 'failed' ? 'bg-red-100 text-red-500' : 'bg-slate-100 text-slate-400')}>
+                                  st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
                                   {st === 'passed' ? <Check className="w-3 h-3" strokeWidth={3} /> : st === 'failed' ? <XIcon className="w-3 h-3" strokeWidth={3} /> : <span className="text-[10px] font-bold">–</span>}
                                 </div>
-                                <span className={cn('leading-snug', st === 'passed' ? 'text-slate-700' : 'text-slate-500')}>{crit.label}</span>
+                                <span className={cn('leading-snug', st === 'passed' ? 'text-ink' : 'text-ink-muted')}>{crit.label}</span>
                               </div>
                             );
                           })}
