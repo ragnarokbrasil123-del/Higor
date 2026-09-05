@@ -6,7 +6,7 @@ import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCirc
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { PageShell, PageHeader } from '@/components/ui';
+import { PageHeader, PageShell, Select } from '@/components/ui';
 
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -327,9 +327,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   
                   <div className="space-y-1 md:space-y-2">
                     <label className="text-xs md:text-sm font-bold text-slate-500 uppercase tracking-wider">Nível Inicial (Touca) *</label>
-                    <select value={level} onChange={(e) => setLevel(e.target.value as CapLevel)} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-sm md:text-base text-slate-700 appearance-none focus:ring-2 focus:ring-amber-500/20 outline-none transition-all">
+                    <Select value={level} onChange={(e) => setLevel(e.target.value as CapLevel)}>
                       {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
-                    </select>
+                    </Select>
                   </div>
 
                   <div className="md:col-span-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">

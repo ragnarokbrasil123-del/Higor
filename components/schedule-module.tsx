@@ -6,7 +6,7 @@ import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { cn } from '@/lib/utils';
-import { Button, Chip, EmptyState, Modal, PageHeader, PageShell, Toggle } from '@/components/ui';
+import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle } from '@/components/ui';
 
 interface ClassSlot {
   id: string;
@@ -278,23 +278,23 @@ export function ScheduleModule() {
         />
 
         {/* ===================== Filtros ===================== */}
-        <div className="bg-surface rounded-panel border border-line shadow-raised p-4 md:p-5 mb-6 space-y-4 sticky top-0 z-20">
-          <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+        <FilterBar>
+          <ChipRow>
             {DAYS.map(d => (
               <Chip key={d} active={!buscando && selectedDay === d} onClick={() => { setSelectedDay(d); setSearch(''); }} count={contagemPorDia[d]}>
                 {d.split('-')[0]}
               </Chip>
             ))}
-          </div>
+          </ChipRow>
 
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
+              <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar aluno ou professor (em todos os dias)..."
-                className="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="pl-9 pr-9 py-2.5"
               />
               {search && (
                 <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -302,24 +302,24 @@ export function ScheduleModule() {
                 </button>
               )}
             </div>
-            <select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 md:max-w-[230px]">
+            <Select value={filterProf} onChange={e => setFilterProf(e.target.value)} className="w-auto py-2.5 md:max-w-[230px]">
               <option value="all">Todos os professores</option>
               {professors.map(p => <option key={p.id} value={p.name || ''}>{p.name}</option>)}
-            </select>
-            <select value={filterTouca} onChange={e => setFilterTouca(e.target.value)} className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20">
+            </Select>
+            <Select value={filterTouca} onChange={e => setFilterTouca(e.target.value)} className="w-auto py-2.5">
               <option value="all">Todas as toucas</option>
               {CAP_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+            </Select>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs font-bold text-slate-500">
+          <FilterFooter>
+            <p className="text-xs font-bold text-ink-muted">
               {visiveis.length} turma(s) · {totalOcupadas} aluno(s) · {totalVagas - totalOcupadas} vaga(s) livre(s)
-              {buscando && <span className="text-indigo-600"> · buscando em todos os dias</span>}
+              {buscando && <span className="text-info"> · buscando em todos os dias</span>}
             </p>
             <Toggle checked={onlyWithStudents} onChange={setOnlyWithStudents} label="Só turmas com aluno" />
-          </div>
-        </div>
+          </FilterFooter>
+        </FilterBar>
 
         {/* ===================== Turmas ===================== */}
         <div className="space-y-8">

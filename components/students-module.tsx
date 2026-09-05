@@ -9,7 +9,7 @@ import {
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, EmptyState, Input, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
+import { Badge, Button, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -175,7 +175,7 @@ export function StudentsModule() {
         />
 
         {/* filtros */}
-        <div className="bg-surface rounded-panel border border-line shadow-raised p-4 space-y-3">
+        <FilterBar>
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -193,10 +193,12 @@ export function StudentsModule() {
               {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
             </Select>
           </div>
-          <p className="text-xs font-bold text-slate-500">
-            {lista.length} de {students.length} aluno(s){semTurma > 0 && <span className="text-amber-600"> · {semTurma} sem turma</span>}
-          </p>
-        </div>
+          <FilterFooter>
+            <p className="text-xs font-bold text-ink-muted">
+              {lista.length} de {students.length} aluno(s){semTurma > 0 && <span className="text-warning-ink"> · {semTurma} sem turma</span>}
+            </p>
+          </FilterFooter>
+        </FilterBar>
 
         {/* lista */}
         {loading ? (

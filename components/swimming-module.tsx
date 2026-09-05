@@ -11,7 +11,7 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, Chip, EmptyState, Input, Loading, PageHeader, PageShell, Select, Textarea, Toggle } from '@/components/ui';
+import { Badge, Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Loading, PageHeader, PageShell, Select, Textarea, Toggle } from '@/components/ui';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
 interface SlotRow { id: string; class_id: string; cap_color: string; student_id: string | null }
@@ -634,7 +634,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         />
 
         {/* busca + filtro de professor */}
-        <div className="flex flex-col md:flex-row gap-3">
+        <FilterBar>
+          <div className="flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar aluno pelo nome..." className="pl-9 pr-9 bg-surface shadow-raised" />
@@ -646,7 +647,8 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               {profsDisponiveis.map(p => <option key={p} value={p}>{p}</option>)}
             </Select>
           )}
-        </div>
+          </div>
+        </FilterBar>
 
         {!semTurmaMode && filterProf !== 'all' && (
           <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-1.5">
@@ -676,7 +678,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
             {/* filtros */}
             <div className="space-y-2.5">
-              <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              <ChipRow>
                 {[{ key: 'all', titulo: 'Todos' }, ...GRUPOS_SEM_TURMA].map(g => {
                   const n = g.key === 'all'
                     ? semTurma.filter(s => passaTouca(s) && passaPendente(s)).length
@@ -688,9 +690,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                     </Chip>
                   );
                 })}
-              </div>
+              </ChipRow>
 
-              <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              <ChipRow>
                 <Chip active={filtroTouca === 'all'} onClick={() => setFiltroTouca('all')}>Todas as toucas</Chip>
                 {toucasPresentes.map(k => {
                   const n = semTurma.filter(s => s.level === k && passaGrupo(s) && passaPendente(s)).length;
@@ -700,9 +702,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                     </Chip>
                   );
                 })}
-              </div>
+              </ChipRow>
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <FilterFooter>
                 <Toggle checked={soPendentes} onChange={setSoPendentes} label="Só quem falta avaliar" />
                 <div className="flex items-center gap-3">
                   {(filtroGrupo !== 'all' || filtroTouca !== 'all' || soPendentes) && (
@@ -711,9 +713,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                       Limpar filtros <X className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  <p className="text-xs font-bold text-slate-400">{semTurmaFiltrado.length} aluno(s)</p>
+                  <p className="text-xs font-bold text-ink-subtle">{semTurmaFiltrado.length} aluno(s)</p>
                 </div>
-              </div>
+              </FilterFooter>
             </div>
 
             {semTurmaFiltrado.length === 0 && semTurma.length > 0 && (
@@ -796,7 +798,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
           <>
             {/* dias — na aba de sábado o dia é fixo, então não aparecem */}
             {!sabadoMode && (
-              <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              <ChipRow>
                 {DAYS.map(d => {
                   const n = classesFiltradas.filter(c => c.day_of_week === d && comAluno(c)).length;
                   return (
@@ -805,7 +807,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                     </Chip>
                   );
                 })}
-              </div>
+              </ChipRow>
             )}
 
             {/* só quem falta avaliar */}
