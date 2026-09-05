@@ -40,7 +40,7 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -52,17 +52,25 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
           <motion.div
             role="dialog"
             aria-modal="true"
-            initial={{ opacity: 0, scale: 0.95, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 12 }}
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ type: 'spring', damping: 32, stiffness: 320 }}
             className={cn(
-              'relative bg-surface w-full rounded-panel shadow-overlay',
-              'flex flex-col max-h-[92vh] overflow-hidden',
+              'relative bg-surface w-full shadow-overlay flex flex-col overflow-hidden',
+              // celular: folha inferior colada embaixo, ocupando quase toda a altura
+              'rounded-t-panel max-h-[92dvh] pb-[env(safe-area-inset-bottom)]',
+              // tablet para cima: diálogo centralizado
+              'sm:rounded-panel sm:max-h-[90vh] sm:pb-0',
               LARGURA[size]
             )}
           >
+            <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0" aria-hidden="true">
+              <span className="w-10 h-1 rounded-full bg-line-strong" />
+            </div>
+
             {(title || headerAction) && (
-              <div className="p-5 border-b border-line bg-surface-sunken flex items-center justify-between gap-3 shrink-0">
+              <div className="px-4 py-3 sm:p-5 border-b border-line bg-surface-sunken flex items-center justify-between gap-3 shrink-0">
                 <div className="min-w-0 flex-1">
                   {typeof title === 'string' ? (
                     <h2 className="text-lg font-black text-ink truncate">{title}</h2>
@@ -79,7 +87,7 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
               </div>
             )}
 
-            <div className="p-5 overflow-y-auto custom-scrollbar flex-1">{children}</div>
+            <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 overscroll-contain">{children}</div>
 
             {footer && (
               <div className="p-4 bg-surface-sunken border-t border-line shrink-0 flex items-center gap-3">{footer}</div>

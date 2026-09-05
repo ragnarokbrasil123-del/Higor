@@ -477,7 +477,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               <div key={crit.id} className={cn('bg-white rounded-2xl border p-4 transition-colors',
                 st === 'passed' ? 'border-emerald-300 bg-emerald-50/40' : st === 'failed' ? 'border-red-200 bg-red-50/30' : 'border-slate-200')}>
                 <p className="text-sm font-bold text-slate-700 leading-snug mb-3">{crit.label}</p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button onClick={() => setScores({ ...scores, [crit.id]: 'passed' })} className={cn('py-3.5 rounded-xl font-black text-sm transition-all active:scale-95 flex items-center justify-center gap-2',
                     st === 'passed' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-emerald-50')}>
                     <Check className="w-4 h-4" strokeWidth={3} /> Passou

@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Users, Search, Edit2, Trash2, X, Save, Plus, Clock, User, MapPin,
-  Phone, Lock, MessageCircle, AlertTriangle, CalendarDays, StickyNote,
+  Phone, Lock, MessageCircle, AlertTriangle, CalendarDays, StickyNote, ChevronRight,
 } from 'lucide-react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -205,62 +205,96 @@ export function StudentsModule() {
           <Loading label="Carregando alunos..." />
         ) : (
           <div className="bg-surface rounded-panel border border-line shadow-raised overflow-hidden">
-            <DataTable minWidth={860}>
-                <THead>
-                  <TH>Aluno</TH>
-                  <TH>Touca</TH>
-                  <TH>Responsável</TH>
-                  <TH>WhatsApp</TH>
-                  <TH>Turmas</TH>
-                  <TH align="right">Ações</TH>
-                </THead>
-                <tbody>
-                  {lista.length === 0 ? (
-                    <TEmpty colSpan={6}>Nenhum aluno encontrado.</TEmpty>
-                  ) : lista.map(s => {
-                    const aulas = aulasDe(s.id);
-                    const info = levels[s.level];
-                    return (
-                      <TR key={s.id}>
-                        <TD>
-                          <p className="font-bold text-slate-800 leading-tight">{s.name}</p>
-                          <p className="text-xs text-slate-500">
-                            {s.age ? `${s.age} anos` : 'idade —'}
-                            {s.modalidade && s.modalidade !== 'fixo' && (
-                              <span className="ml-2 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded text-[10px] font-bold uppercase">{s.modalidade}</span>
+            <ResponsiveTable
+              table={
+                <DataTable minWidth={860}>
+                  <THead>
+                    <TH>Aluno</TH>
+                    <TH>Touca</TH>
+                    <TH>Responsável</TH>
+                    <TH>WhatsApp</TH>
+                    <TH>Turmas</TH>
+                    <TH align="right">Ações</TH>
+                  </THead>
+                  <tbody>
+                    {lista.length === 0 ? (
+                      <TEmpty colSpan={6}>Nenhum aluno encontrado.</TEmpty>
+                    ) : lista.map(s => {
+                      const aulas = aulasDe(s.id);
+                      const info = levels[s.level];
+                      return (
+                        <TR key={s.id}>
+                          <TD>
+                            <p className="font-bold text-ink leading-tight">{s.name}</p>
+                            <p className="text-xs text-ink-muted">
+                              {s.age ? `${s.age} anos` : 'idade —'}
+                              {s.modalidade && s.modalidade !== 'fixo' && (
+                                <Badge tone="info" uppercase className="ml-2">{s.modalidade}</Badge>
+                              )}
+                            </p>
+                          </TD>
+                          <TD>
+                            <Badge uppercase className={cn('text-white', info?.bgClass || 'bg-ink-subtle')}>
+                              {info?.label || s.level}
+                            </Badge>
+                          </TD>
+                          <TD className="text-sm font-medium text-ink-muted">{s.guardian_name || '—'}</TD>
+                          <TD className="text-sm font-medium text-ink-subtle">{s.phone || '—'}</TD>
+                          <TD>
+                            {aulas.length === 0 ? (
+                              <Badge tone="warning">sem turma</Badge>
+                            ) : (
+                              <div className="flex flex-wrap gap-1">
+                                {aulas.map(a => (
+                                  <Badge key={a.slot.id}>{a.cls!.day_of_week.slice(0, 3)} {hhmm(a.cls!.start_time)}</Badge>
+                                ))}
+                              </div>
                             )}
-                          </p>
-                        </TD>
-                        <TD>
-                          <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', info?.bgClass || 'bg-slate-400')}>
+                          </TD>
+                          <TD align="right">
+                            <Button size="sm" variant="secondary" onClick={() => { setEditing({ ...s }); setShowAdd(false); }}>
+                              <Edit2 className="w-3.5 h-3.5" /> Abrir ficha
+                            </Button>
+                          </TD>
+                        </TR>
+                      );
+                    })}
+                  </tbody>
+                </DataTable>
+              }
+              cards={
+                lista.length === 0 ? (
+                  <p className="p-10 text-center text-ink-subtle font-medium text-sm">Nenhum aluno encontrado.</p>
+                ) : lista.map(s => {
+                  const aulas = aulasDe(s.id);
+                  const info = levels[s.level];
+                  return (
+                    <RowCard
+                      key={s.id}
+                      onClick={() => { setEditing({ ...s }); setShowAdd(false); }}
+                      title={s.name}
+                      subtitle={s.age ? `${s.age} anos` : undefined}
+                      badges={
+                        <>
+                          <Badge uppercase className={cn('text-white', info?.bgClass || 'bg-ink-subtle')}>
                             {info?.label || s.level}
-                          </span>
-                        </TD>
-                        <TD className="text-sm font-medium text-ink-muted">{s.guardian_name || '—'}</TD>
-                        <TD className="text-sm font-medium text-ink-subtle">{s.phone || '—'}</TD>
-                        <TD>
-                          {aulas.length === 0 ? (
-                            <Badge tone="warning">sem turma</Badge>
-                          ) : (
-                            <div className="flex flex-wrap gap-1">
-                              {aulas.map(a => (
-                                <span key={a.slot.id} className="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 whitespace-nowrap">
-                                  {a.cls!.day_of_week.slice(0, 3)} {hhmm(a.cls!.start_time)}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </TD>
-                        <TD align="right">
-                          <button onClick={() => { setEditing({ ...s }); setShowAdd(false); }} className="px-3 py-2 bg-slate-100 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors inline-flex items-center gap-2 text-xs font-bold">
-                            <Edit2 className="w-3.5 h-3.5" /> Abrir ficha
-                          </button>
-                        </TD>
-                      </TR>
-                    );
-                  })}
-                </tbody>
-            </DataTable>
+                          </Badge>
+                          {s.modalidade && s.modalidade !== 'fixo' && <Badge tone="info" uppercase>{s.modalidade}</Badge>}
+                          {aulas.length === 0
+                            ? <Badge tone="warning">sem turma</Badge>
+                            : aulas.map(a => <Badge key={a.slot.id}>{a.cls!.day_of_week.slice(0, 3)} {hhmm(a.cls!.start_time)}</Badge>)}
+                        </>
+                      }
+                      fields={[
+                        { label: 'Responsável', value: s.guardian_name || '—' },
+                        { label: 'WhatsApp', value: s.phone || '—' },
+                      ]}
+                      action={<ChevronRight className="w-5 h-5 text-ink-subtle" />}
+                    />
+                  );
+                })
+              }
+            />
           </div>
         )}
 

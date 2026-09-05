@@ -20,9 +20,9 @@ const VARIANTE: Record<Variant, string> = {
 };
 
 const TAMANHO: Record<Size, string> = {
-  sm: 'px-3 py-2 text-xs gap-1.5',
-  md: 'px-4 py-2.5 text-sm gap-2',
-  lg: 'px-6 py-4 text-base gap-2',
+  sm: 'px-3 py-2 text-xs gap-1.5 min-h-9 sm:min-h-8',
+  md: 'px-4 py-2.5 text-sm gap-2 min-h-11',
+  lg: 'px-6 py-4 text-base gap-2 min-h-12',
 };
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -75,7 +75,7 @@ export function IconButton({ tone = 'neutral', className, children, ...props }: 
   return (
     <button
       className={cn(
-        'p-2 rounded-control transition-colors active:scale-95',
+        'p-2 min-w-11 min-h-11 inline-flex items-center justify-center rounded-control transition-colors active:scale-95',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
         'disabled:opacity-50 disabled:pointer-events-none',
         TOM[tone],

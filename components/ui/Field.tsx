@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 /** Base compartilhada por input, select e textarea — um só lugar define a forma. */
 const CONTROLE = cn(
   'w-full bg-surface-sunken border border-line rounded-control',
-  'px-4 py-3 text-sm text-ink',
+  'px-4 py-3 min-h-11 text-base sm:text-sm text-ink',
   'outline-none transition-all',
   'placeholder:text-ink-subtle',
   'focus:border-brand focus:ring-2 focus:ring-brand/20',

@@ -5,3 +5,6 @@ export { PageShell, PageHeader, FilterBar, ChipRow, FilterFooter } from './Page'
 export { Modal } from './Modal';
 export { DateNav } from './DateNav';
 export { DataTable, THead, TH, TR, TD, TEmpty } from './DataTable';
+export { MobileNav } from './MobileNav';
+export type { NavItem } from './MobileNav';
+export { ResponsiveTable, RowCard } from './DataTable';

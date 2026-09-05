@@ -25,8 +25,12 @@ export function PageShell({
     <div className="flex-1 h-full overflow-y-auto custom-scrollbar bg-canvas">
       <div
         className={cn(
-          'mx-auto w-full px-4 py-5 md:px-8 md:py-8 space-y-5',
-          width === 'wide' ? 'max-w-6xl' : 'max-w-4xl',
+          'mx-auto w-full space-y-5',
+          // celular respira menos; monitor grande respira mais
+          'px-4 py-5 sm:px-6 md:px-8 md:py-8 2xl:px-12',
+          // no notebook e no monitor grande o conteudo cresce em vez de ficar
+          // uma coluna estreita no meio da tela
+          width === 'wide' ? 'max-w-6xl 2xl:max-w-[1400px]' : 'max-w-4xl 2xl:max-w-5xl',
           className
         )}
       >

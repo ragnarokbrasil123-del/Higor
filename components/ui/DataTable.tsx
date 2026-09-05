@@ -29,6 +29,82 @@ export function DataTable({
   );
 }
 
+/**
+ * Tabela no desktop, lista de cards no celular.
+ *
+ * Rolar uma tabela densa na horizontal com uma mão molhada é inviável,
+ * então abaixo de `md` o conteúdo vira cards empilhados.
+ */
+export function ResponsiveTable({
+  table,
+  cards,
+  className,
+}: {
+  /** O que aparece de md para cima. */
+  table: React.ReactNode;
+  /** O que aparece no celular. */
+  cards: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="hidden md:block">{table}</div>
+      <div className="md:hidden divide-y divide-line/60">{cards}</div>
+    </div>
+  );
+}
+
+/** Card de uma linha, para o modo celular da ResponsiveTable. */
+export function RowCard({
+  title,
+  subtitle,
+  badges,
+  fields,
+  action,
+  muted = false,
+  onClick,
+}: {
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  badges?: React.ReactNode;
+  /** Pares rótulo/valor mostrados em duas colunas. */
+  fields?: { label: string; value: React.ReactNode }[];
+  action?: React.ReactNode;
+  muted?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <div
+      onClick={onClick}
+      className={cn(
+        'p-4 space-y-3 bg-surface transition-colors',
+        onClick && 'cursor-pointer active:bg-surface-sunken',
+        muted && 'opacity-50'
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-ink leading-tight break-words">{title}</p>
+          {subtitle && <p className="text-xs text-ink-muted mt-0.5">{subtitle}</p>}
+          {badges && <div className="flex flex-wrap gap-1.5 mt-2">{badges}</div>}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
+      </div>
+
+      {fields && fields.length > 0 && (
+        <dl className="grid grid-cols-2 gap-x-3 gap-y-2">
+          {fields.map(f => (
+            <div key={f.label} className="min-w-0">
+              <dt className="text-micro font-bold text-ink-subtle uppercase tracking-wider">{f.label}</dt>
+              <dd className="text-sm text-ink-muted break-words">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
+  );
+}
+
 /** Cabeçalho fixo ao rolar. */
 export function THead({ children }: { children: React.ReactNode }) {
   return (
