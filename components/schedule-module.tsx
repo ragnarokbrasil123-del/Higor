@@ -6,7 +6,7 @@ import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { cn } from '@/lib/utils';
-import { Toggle, EmptyState } from '@/components/ui';
+import { Chip, EmptyState, Toggle } from '@/components/ui';
 
 interface ClassSlot {
   id: string;
@@ -286,20 +286,12 @@ export function ScheduleModule() {
         </div>
 
         {/* ===================== Filtros ===================== */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 md:p-5 mb-6 space-y-4 sticky top-0 z-20">
+        <div className="bg-surface rounded-panel border border-line shadow-raised p-4 md:p-5 mb-6 space-y-4 sticky top-0 z-20">
           <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
             {DAYS.map(d => (
-              <button key={d} onClick={() => { setSelectedDay(d); setSearch(''); }} className={cn(
-                'px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap border transition-all flex items-center gap-2',
-                !buscando && selectedDay === d
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
-                  : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
-              )}>
+              <Chip key={d} active={!buscando && selectedDay === d} onClick={() => { setSelectedDay(d); setSearch(''); }} count={contagemPorDia[d]}>
                 {d.split('-')[0]}
-                <span className={cn('text-[10px] font-black px-1.5 py-0.5 rounded', !buscando && selectedDay === d ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>
-                  {contagemPorDia[d]}
-                </span>
-              </button>
+              </Chip>
             ))}
           </div>
 

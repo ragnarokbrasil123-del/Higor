@@ -155,7 +155,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         )}
 
         {/* Nível */}
-        <div className="bg-white rounded-3xl p-6 shadow-lg shadow-slate-200 border border-slate-100 flex justify-between items-center">
+        <div className="bg-surface rounded-panel p-6 shadow-overlay border border-line flex justify-between items-center">
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nível Atual</p>
             <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
         {/* Aulas */}
         {minhasAulas.length > 0 && (
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+          <div className="bg-surface rounded-panel p-6 shadow-raised border border-line">
             <h2 className="text-sm font-black text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
               <Clock className="w-4 h-4" /> Aulas da semana
             </h2>
@@ -214,7 +214,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                 const passou = criterios.filter(c => scores[c.id] === 'passed').length;
 
                 return (
-                  <div key={ev.id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                  <div key={ev.id} className="bg-surface rounded-card p-5 shadow-raised border border-line">
                     <div className="flex flex-wrap justify-between items-start gap-3 mb-4">
                       <div>
                         <p className="font-extrabold text-slate-800 text-lg leading-tight">

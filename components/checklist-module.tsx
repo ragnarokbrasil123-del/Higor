@@ -221,7 +221,7 @@ export function ChecklistModule() {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl border border-amber-100/50 overflow-hidden">
+        <div className="bg-surface rounded-panel shadow-overlay border border-brand-line overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 bg-amber-50/30">
             <form onSubmit={handleAddTask} className="flex gap-3">
               <Input value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} placeholder="+ Adicionar nova tarefa..." className="flex-1 bg-surface" />

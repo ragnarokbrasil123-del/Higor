@@ -11,7 +11,7 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Toggle, EmptyState } from '@/components/ui';
+import { Badge, Chip, EmptyState, Toggle } from '@/components/ui';
 import { Button, Input, Select, Textarea, Loading } from '@/components/ui';
 
 interface ClassRow { id: string; teacher_name: string; day_of_week: string; start_time: string; end_time: string }
@@ -400,11 +400,11 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     const ok = avaliadoAgora(sid);
     const ult = ultimaAval(sid);
     return ok ? (
-      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded whitespace-nowrap">
+      <Badge tone="success">
         ✓ {new Date(ult!.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
-      </span>
+      </Badge>
     ) : (
-      <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded whitespace-nowrap">pendente</span>
+      <Badge tone="warning">pendente</Badge>
     );
   };
 
@@ -551,7 +551,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
 
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
+          <div className="bg-surface rounded-panel border border-line shadow-raised p-5 flex items-center gap-4">
             <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shrink-0', info?.bgClass)}>
               {aluno.name.charAt(0)}
             </div>
@@ -566,7 +566,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
             <Award className="w-6 h-6" /> Fazer avaliação
           </button>
 
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5">
+          <div className="bg-surface rounded-panel border border-line shadow-raised p-5">
             <h3 className="font-black text-slate-800 flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
               <History className="w-5 h-5 text-indigo-500" /> Histórico
             </h3>
@@ -666,7 +666,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         )}
 
         {buscando ? (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm divide-y divide-slate-50">
+          <div className="bg-surface rounded-panel border border-line shadow-raised divide-y divide-slate-50">
             {resultadoBusca.length === 0 ? (
               <p className="p-8 text-center text-slate-400 font-medium text-sm">Nenhum aluno encontrado.</p>
             ) : resultadoBusca.map(s => (
@@ -694,32 +694,21 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                     : semTurma.filter(s => (s.modalidade || 'fixo') === g.key && passaTouca(s) && passaPendente(s)).length;
                   if (g.key !== 'all' && n === 0 && filtroGrupo !== g.key) return null;
                   return (
-                    <button key={g.key} onClick={() => setFiltroGrupo(g.key)} className={cn(
-                      'px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap border transition-all flex items-center gap-2',
-                      filtroGrupo === g.key ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-600 border-slate-200')}>
+                    <Chip key={g.key} active={filtroGrupo === g.key} onClick={() => setFiltroGrupo(g.key)} count={n}>
                       {g.titulo}
-                      <span className={cn('text-[10px] font-black px-1.5 py-0.5 rounded', filtroGrupo === g.key ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>{n}</span>
-                    </button>
+                    </Chip>
                   );
                 })}
               </div>
 
               <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
-                <button onClick={() => setFiltroTouca('all')} className={cn(
-                  'px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap border transition-all',
-                  filtroTouca === 'all' ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-600 border-slate-200')}>
-                  Todas as toucas
-                </button>
+                <Chip active={filtroTouca === 'all'} onClick={() => setFiltroTouca('all')}>Todas as toucas</Chip>
                 {toucasPresentes.map(k => {
                   const n = semTurma.filter(s => s.level === k && passaGrupo(s) && passaPendente(s)).length;
                   return (
-                    <button key={k} onClick={() => setFiltroTouca(k)} className={cn(
-                      'px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap border transition-all flex items-center gap-2',
-                      filtroTouca === k ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-600 border-slate-200')}>
-                      <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', levels[k].bgClass)} />
+                    <Chip key={k} active={filtroTouca === k} onClick={() => setFiltroTouca(k)} count={n} dotClass={levels[k].bgClass}>
                       {levels[k].label}
-                      <span className={cn('text-[10px] font-black px-1.5 py-0.5 rounded', filtroTouca === k ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>{n}</span>
-                    </button>
+                    </Chip>
                   );
                 })}
               </div>
@@ -757,7 +746,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
               if (doGrupo.length === 0) return null;
               const pend = doGrupo.filter(s => !avaliadoAgora(s.id));
               return (
-                <div key={g.key} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div key={g.key} className="bg-surface rounded-card border border-line shadow-raised overflow-hidden">
                   <div className="p-4 flex flex-wrap items-center gap-3 border-b border-slate-50">
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-sm shrink-0">
                       <span className={cn('w-2.5 h-2.5 rounded-full', g.cor)} />
@@ -822,11 +811,9 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                 {DAYS.map(d => {
                   const n = classesFiltradas.filter(c => c.day_of_week === d && comAluno(c)).length;
                   return (
-                    <button key={d} onClick={() => setSelectedDay(d)} className={cn('px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap border transition-all flex items-center gap-2',
-                      selectedDay === d ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-white text-slate-600 border-slate-200')}>
+                    <Chip key={d} active={selectedDay === d} onClick={() => setSelectedDay(d)} count={n}>
                       {d.split('-')[0]}
-                      <span className={cn('text-[10px] font-black px-1.5 py-0.5 rounded', selectedDay === d ? 'bg-white/20' : 'bg-slate-100 text-slate-500')}>{n}</span>
-                    </button>
+                    </Chip>
                   );
                 })}
               </div>
@@ -860,7 +847,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
                   const pend = alunos.filter(a => !avaliadoAgora(a.id));
                   const toucas = capLevelOrder.filter(k => alunos.some(a => a.level === k));
                   return (
-                    <div key={bloco.chave} className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div key={bloco.chave} className="bg-surface rounded-card border border-line shadow-raised overflow-hidden">
                       <div className="p-4 flex flex-wrap items-center gap-3 border-b border-slate-50">
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-sm shrink-0">
                           <Clock className="w-3.5 h-3.5" /> {bloco.hora}

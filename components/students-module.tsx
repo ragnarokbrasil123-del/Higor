@@ -9,7 +9,7 @@ import {
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Button, Input, Select, EmptyState, Loading } from '@/components/ui';
+import { Badge, Button, EmptyState, Input, Loading, Select } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -179,7 +179,7 @@ export function StudentsModule() {
         </header>
 
         {/* filtros */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <div className="bg-surface rounded-panel border border-line shadow-raised p-4 space-y-3">
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -206,7 +206,7 @@ export function StudentsModule() {
         {loading ? (
           <Loading label="Carregando alunos..." />
         ) : (
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-surface rounded-panel border border-line shadow-raised overflow-hidden">
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse min-w-[860px]">
                 <thead className="bg-slate-50 sticky top-0 z-10">
@@ -245,7 +245,7 @@ export function StudentsModule() {
                         <td className="p-3 text-sm font-medium text-slate-500">{s.phone || '—'}</td>
                         <td className="p-3">
                           {aulas.length === 0 ? (
-                            <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded">sem turma</span>
+                            <Badge tone="warning">sem turma</Badge>
                           ) : (
                             <div className="flex flex-wrap gap-1">
                               {aulas.map(a => (

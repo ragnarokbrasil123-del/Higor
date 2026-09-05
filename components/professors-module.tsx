@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { Toggle, EmptyState } from '@/components/ui';
+import { Badge, EmptyState, Toggle } from '@/components/ui';
 import { Button, Input, Loading } from '@/components/ui';
 
 type Shift = { start: string; end: string };
@@ -392,11 +392,11 @@ export function ProfessorsModule() {
                       <p className="font-bold text-slate-800 leading-tight">{p.name || <span className="text-slate-400 italic">Sem nome</span>}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
                         {p.username ? (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded uppercase tracking-wider">Login: {p.username}</span>
+                          <Badge tone="success" uppercase>Login: {p.username}</Badge>
                         ) : (
-                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider">Sem login</span>
+                          <Badge uppercase>Sem login</Badge>
                         )}
-                        {!isActive && <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded uppercase tracking-wider">Inativo</span>}
+                        {!isActive && <Badge tone="danger" uppercase>Inativo</Badge>}
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {lines.length > 0 ? lines.map(line => (
