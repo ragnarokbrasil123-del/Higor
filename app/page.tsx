@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { SwimmingModule } from '@/components/swimming-module';
+import { SwimmingModule } from '@/components/swimming/SwimmingModule';
 import { ChecklistModule } from '@/components/checklist-module';
 import { MaintenanceModule } from '@/components/maintenance-module';
 import { RegistrationModule } from '@/components/registration-module';
