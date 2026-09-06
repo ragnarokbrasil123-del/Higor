@@ -159,9 +159,10 @@ Importados de `Informações para criação do app.xlsx` (3 abas: alunos fixos, 
 
 ### Bloqueios operacionais
 
-1. **Push para o GitHub travado.** O repo local (`main`) tem `origin` = `github.com/ragnarokbrasil123-del/Higor.git`, com a história dos 111 commits originais já mesclada (`git merge -s ours`, sem force). Falta autenticar: o dono está logado como `souzahigor-cmyk`, mas o repo pertence à conta `ragnarokbrasil123-del`. **O ambiente do Claude Code bloqueia `git push`** — o push precisa partir do usuário. Há trabalho não commitado além dos 3 commits locais.
-2. **11 dos 12 professores não têm login.** Sem isso, nada da aba de avaliação chega até eles.
-3. **6 alunos "fixo" ficaram sem turma** — o horário da planilha não bateu com nenhum professor. Aparecem num grupo próprio, com aviso, na aba Avulsos & Wellhub.
+1. **11 dos 12 professores não têm login.** Sem isso, nada da aba de avaliação chega até eles.
+2. **6 alunos "fixo" ficaram sem turma** — o horário da planilha não bateu com nenhum professor. Aparecem num grupo próprio, com aviso, na aba Avulsos & Wellhub.
+
+> **Deploy:** `origin` é `github.com/ragnarokbrasil123-del/Higor.git` e o Vercel reconstrói sozinho a cada push no `main`. A autenticação já está resolvida: `gh` CLI logado como `ragnarokbrasil123-del` e `gh auth setup-git` ligando essa credencial ao Git — `git push` funciona direto, sem pedir senha.
 
 ### Dívida técnica
 
