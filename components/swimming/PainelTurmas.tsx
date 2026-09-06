@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { CalendarDays, Clock } from 'lucide-react';
-import { Chip, ChipRow, Toggle } from '@/components/ui';
+import { AlertTriangle, CalendarDays, Clock } from 'lucide-react';
+import { Card, Chip, ChipRow, Toggle } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import { CartaoBloco } from './CartaoBloco';
 import { LinhaAluno } from './LinhaAluno';
 import { DAYS, type Bloco } from './constantes';
@@ -32,8 +33,50 @@ export function PainelTurmas({
   soPendentes, setSoPendentes, contarTurmasDoDia, blocos,
   avaliadoAgora, selo, onAbrirAluno, onAvaliarBloco,
 }: PainelTurmasProps) {
+  // resumo do dia para o professor: quantas turmas, quantos alunos, quantos faltam
+  const alunosDoDia = blocos.reduce((s, b) => s + b.alunos.length, 0);
+  const pendentesDoDia = blocos.reduce((s, b) => s + b.alunos.filter(a => !avaliadoAgora(a.id)).length, 0);
+
   return (
         <>
+          {/* O professor abre o app no meio da aula: a primeira coisa que ele
+              precisa ver é o tamanho do trabalho de hoje, não uma grade. */}
+          {!isAdmin && !sabadoMode && (
+            <Card className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <div>
+                <p className="text-mini font-black text-ink-subtle uppercase tracking-wider">Hoje</p>
+                <p className="text-lg font-black text-ink leading-tight capitalize">{diaAtivo.split('-')[0]}</p>
+              </div>
+              <div className="h-8 w-px bg-line hidden sm:block" />
+              <div>
+                <p className="text-lg font-black text-ink leading-tight tabular-nums">{blocos.length}</p>
+                <p className="text-mini font-bold text-ink-subtle uppercase tracking-wider">turmas</p>
+              </div>
+              <div>
+                <p className="text-lg font-black text-ink leading-tight tabular-nums">{alunosDoDia}</p>
+                <p className="text-mini font-bold text-ink-subtle uppercase tracking-wider">alunos</p>
+              </div>
+              <div>
+                <p className={cn('text-lg font-black leading-tight tabular-nums', pendentesDoDia > 0 ? 'text-warning-ink' : 'text-success-ink')}>
+                  {pendentesDoDia}
+                </p>
+                <p className="text-mini font-bold text-ink-subtle uppercase tracking-wider">faltam avaliar</p>
+              </div>
+            </Card>
+          )}
+
+          {/* A escala de sábado gira: a associação aluno-professor do cadastro
+              não vale para o dia. O admin tem uma aba própria por horário. */}
+          {!isAdmin && !sabadoMode && diaAtivo === 'Sábado' && blocos.length > 0 && (
+            <Card className="border-warning/40 bg-warning-soft flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-warning-ink shrink-0 mt-0.5" />
+              <p className="text-xs text-warning-ink leading-relaxed">
+                <b>No sábado a escala gira.</b> Esta lista vem do cadastro e pode não ser quem você
+                atende hoje. Confirme com a administração antes de avaliar.
+              </p>
+            </Card>
+          )}
+
           {/* dias — na aba de sábado o dia é fixo, então não aparecem */}
           {!sabadoMode && (
             <ChipRow>

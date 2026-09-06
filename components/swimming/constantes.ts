@@ -43,13 +43,9 @@ export const hhmm = (t: string) => String(t || '').slice(0, 5);
 
 export const hojeDia = () => { const d = new Date().getDay(); return DAYS[d === 0 ? 0 : d - 1] || DAYS[0]; };
 
-/** Rótulo do trimestre de uma data: "2026-T3" */
-export function trimestre(d: Date | string) {
-  const dt = typeof d === 'string' ? new Date(d) : d;
-  return `${dt.getFullYear()}-T${Math.floor(dt.getMonth() / 3) + 1}`;
-}
-
-export const TRIMESTRE_ATUAL = trimestre(new Date());
+// o cálculo do trimestre mora em lib/trimestre.ts porque o portal dos pais
+// também precisa dele; aqui é só reexport para não mudar quem já importava
+export { trimestre, TRIMESTRE_ATUAL } from '@/lib/trimestre';
 
 export const draftKey = (id: string) => `olimpo_draft_aval_${id}`;
 

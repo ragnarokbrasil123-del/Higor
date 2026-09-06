@@ -7,6 +7,8 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { ativarAvisos, jaInscrito, suportaAvisos } from '@/lib/push';
 import { InstallPrompt } from '@/components/install-prompt';
+import { CaminhoTouca } from '@/components/caminho-touca';
+import { periodoTrimestre } from '@/lib/trimestre';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui';
@@ -31,8 +33,21 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
   const [aulas, setAulas] = useState<Record<string, Aula[]>>({});
   const [avisosOn, setAvisosOn] = useState<boolean | null>(null);
   const [ativando, setAtivando] = useState(false);
+  /**
+   * No iPhone o push só funciona com o app na Tela de Início. Aberto no
+   * Safari comum, o botão "Ativar avisos" só levaria a um erro — então
+   * mostramos a instrução de instalar em vez do botão.
+   */
+  const [iosSemInstalar, setIosSemInstalar] = useState(false);
 
-  useEffect(() => { jaInscrito().then(setAvisosOn); }, []);
+  useEffect(() => {
+    jaInscrito().then(setAvisosOn);
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const instalado = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    setIosSemInstalar(ios && !instalado);
+  }, []);
+
+  const periodo = periodoTrimestre();
 
   const ligarAvisos = async () => {
     setAtivando(true);
@@ -140,12 +155,16 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             <div className="flex-1">
               <p className="font-black text-amber-900 text-sm">Quer ser avisado quando sair a avaliação?</p>
               <p className="text-xs font-medium text-amber-800 mt-0.5">
-                Ative os avisos e o celular te avisa sozinho — não precisa ficar conferindo.
+                {iosSemInstalar
+                  ? 'No iPhone, primeiro adicione o app à Tela de Início: toque em Compartilhar, na barra de baixo, e escolha "Adicionar à Tela de Início". Depois volte aqui.'
+                  : 'Ative os avisos e o celular te avisa sozinho — não precisa ficar conferindo.'}
               </p>
             </div>
-            <button onClick={ligarAvisos} disabled={ativando} className="px-5 py-3 bg-black text-white rounded-xl font-bold text-sm shrink-0 active:scale-95 transition-transform disabled:opacity-50">
-              {ativando ? 'Ativando...' : 'Ativar avisos'}
-            </button>
+            {!iosSemInstalar && (
+              <button onClick={ligarAvisos} disabled={ativando} className="px-5 py-3 bg-black text-white rounded-xl font-bold text-sm shrink-0 active:scale-95 transition-transform disabled:opacity-50">
+                {ativando ? 'Ativando...' : 'Ativar avisos'}
+              </button>
+            )}
           </div>
         )}
         {avisosOn === true && (
@@ -170,6 +189,9 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             </div>
           ) : null}
         </div>
+
+        {/* O que falta para trocar de touca — vale mesmo sem nenhuma avaliação */}
+        <CaminhoTouca nome={student.name} nivel={student.level as CapLevel} avaliacoes={avaliacoes} />
 
         {/* Aulas */}
         {minhasAulas.length > 0 && (
@@ -202,8 +224,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           {avaliacoes.length === 0 ? (
             <EmptyState
               icon={<Droplets className="w-12 h-12" />}
-              title="Nenhuma avaliação registrada ainda"
-              description="Assim que o professor avaliar, aparece aqui."
+              title="A primeira avaliação ainda não saiu"
+              description={`A avaliação deste trimestre (${periodo.inicio} a ${periodo.fim}) sai até o fim de ${periodo.fim}. Quando o professor lançar, aparece aqui e você recebe um aviso no celular.`}
             />
           ) : (
             <div className="space-y-4">

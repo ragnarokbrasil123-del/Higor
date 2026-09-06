@@ -14,6 +14,7 @@ import { ScheduleModule } from '@/components/schedule-module';
 import { DashboardModule } from '@/components/dashboard-module';
 import { AccessModule } from '@/components/access-module';
 import { InstallPrompt } from '@/components/install-prompt';
+import { MinhaSemana } from '@/components/minha-semana';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -256,10 +257,13 @@ export default function Page() {
             </button>
           )}
 
-          <button onClick={() => setActiveTab('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
-            <UserPlus className="w-5 h-5" />
-            <span className="font-bold text-sm">Cadastro Alunos</span>
-          </button>
+          {/* matricular aluno e importar planilha e trabalho de secretaria */}
+          {isAdmin && (
+            <button onClick={() => setActiveTab('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <UserPlus className="w-5 h-5" />
+              <span className="font-bold text-sm">Cadastro Alunos</span>
+            </button>
+          )}
 
           {isAdmin && (
             <button onClick={() => setActiveTab('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
@@ -311,7 +315,8 @@ export default function Page() {
           {isStaff && (
             <button onClick={() => setActiveTab('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <CalendarDays className="w-5 h-5" />
-              <span className="font-bold text-sm">Grade de Horários</span>
+              {/* o professor consulta a propria agenda; so o admin edita a grade */}
+              <span className="font-bold text-sm">{isAdmin ? 'Grade de Horários' : 'Minha semana'}</span>
             </button>
           )}
 
@@ -346,9 +351,9 @@ export default function Page() {
           ...(isAdmin ? [{ key: 'dashboard', label: 'Painel', icon: LayoutDashboard, primary: true }] : []),
           { key: 'swimming', label: 'Avaliação', icon: Droplets, primary: true },
           ...(isAdmin ? [{ key: 'sabado', label: 'Sábado', icon: CalendarClock, primary: true }] : []),
-          { key: 'schedule', label: 'Grade', icon: CalendarDays, primary: true },
+          { key: 'schedule', label: isAdmin ? 'Grade' : 'Semana', icon: CalendarDays, primary: true },
           ...(isAdmin ? [{ key: 'avulsos', label: 'Avulsos', icon: Sparkles }] : []),
-          { key: 'registration', label: 'Cadastro', icon: UserPlus },
+          ...(isAdmin ? [{ key: 'registration', label: 'Cadastro', icon: UserPlus }] : []),
           ...(isAdmin ? [{ key: 'students', label: 'Alunos', icon: Users }] : []),
           { key: 'cleaning', label: 'Limpeza', icon: ClipboardList },
           { key: 'maintenance', label: 'Manutenção', icon: Wrench },
@@ -362,7 +367,7 @@ export default function Page() {
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
         {activeTab === 'acessos' && isMaster && <AccessModule meuNome={user.data?.username || user.data?.name || ''} />}
-        {activeTab === 'registration' && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
+        {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
         {activeTab === 'students' && isAdmin && <StudentsModule />}
         {activeTab === 'swimming' && <SwimmingModule />}
         {activeTab === 'avulsos' && isAdmin && <SwimmingModule escopo="sem-turma" />}
@@ -370,7 +375,8 @@ export default function Page() {
         {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
         {activeTab === 'professors' && isAdmin && <ProfessorsModule />}
-        {activeTab === 'schedule' && isStaff && <ScheduleModule />}
+        {activeTab === 'schedule' && isAdmin && <ScheduleModule />}
+        {activeTab === 'schedule' && isTeacher && <MinhaSemana meuNome={user.data?.name || user.data?.username || ''} />}
       </main>
     </div>
   );
