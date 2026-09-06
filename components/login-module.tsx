@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { InstallPrompt } from '@/components/install-prompt';
 import {
   LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO,
   contaLiberada, conviteExpirado, normalizarCodigo,
@@ -177,6 +178,10 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-black overflow-hidden">
+      {/* Instalar antes de entrar é o momento natural — e no iPhone os avisos
+          só funcionam com o app na Tela de Início. */}
+      <InstallPrompt />
+
       {/* Background decoration */}
       <div className="absolute inset-0 bg-gradient-to-br from-black via-slate-900 to-amber-900/20 opacity-80" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/10 blur-[120px] rounded-full pointer-events-none" />

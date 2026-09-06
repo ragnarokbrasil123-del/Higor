@@ -13,6 +13,9 @@ import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui';
 
+/** O login guarda a linha inteira de students, senha inclusive. */
+type AlunoLogado = Student & { password?: string | null };
+
 interface ClientPortalProps {
   students: Student[];
   onLogout: () => void;
@@ -28,7 +31,14 @@ interface Aula {
 const hhmm = (t: string) => String(t || '').slice(0, 5);
 
 export function ClientPortal({ students, onLogout }: ClientPortalProps) {
-  const filhos = (students || []).filter(Boolean);
+  /**
+   * Os dados vinham SÓ da sessão gravada no login — uma fotografia congelada.
+   * O professor lançava a avaliação e o pai continuava vendo a tela antiga,
+   * porque recarregar a página relia a mesma fotografia do localStorage.
+   * Agora o portal busca de novo ao abrir e toda vez que o app volta ao topo.
+   */
+  const [filhos, setFilhos] = useState<AlunoLogado[]>((students || []).filter(Boolean));
+  const [atualizando, setAtualizando] = useState(false);
   const [idx, setIdx] = useState(0);
   const [aulas, setAulas] = useState<Record<string, Aula[]>>({});
   const [avisosOn, setAvisosOn] = useState<boolean | null>(null);
@@ -46,6 +56,37 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     const instalado = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     setIosSemInstalar(ios && !instalado);
   }, []);
+
+  /** Rebusca a ficha dos filhos — mesma consulta que o login faz. */
+  const recarregar = React.useCallback(async () => {
+    const base = ((students || []).filter(Boolean) as AlunoLogado[])[0];
+    const tel = String(base?.phone || '').replace(/\D/g, '');
+    if (!tel || !base?.password) return;
+
+    setAtualizando(true);
+    const { data } = await supabase
+      .from('students')
+      .select('*, evaluations(*)')
+      .ilike('phone', `%${tel}%`)
+      .eq('password', base.password)
+      .order('name');
+    setAtualizando(false);
+
+    if (data?.length) {
+      setFilhos(data as AlunoLogado[]);
+      // mantém a sessão em dia, senão o próximo abrir volta ao dado velho
+      localStorage.setItem('olimpo_session', JSON.stringify({ role: 'client', data }));
+    }
+  }, [students]);
+
+  useEffect(() => { recarregar(); }, [recarregar]);
+
+  // o pai abre o app instalado e ele volta do segundo plano: rebusca
+  useEffect(() => {
+    const aoVoltar = () => { if (document.visibilityState === 'visible') recarregar(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => document.removeEventListener('visibilitychange', aoVoltar);
+  }, [recarregar]);
 
   const periodo = periodoTrimestre();
 
@@ -145,6 +186,10 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
       </div>
 
       <div className="flex-1 px-4 py-5 sm:px-6 md:p-8 pb-[max(2rem,env(safe-area-inset-bottom))] max-w-3xl mx-auto w-full -mt-4 relative z-20 space-y-6">
+
+        {atualizando && (
+          <p className="text-xs font-bold text-ink-subtle text-center animate-pulse">Buscando novidades...</p>
+        )}
 
         {/* Avisos no celular */}
         {suportaAvisos() && avisosOn === false && (
