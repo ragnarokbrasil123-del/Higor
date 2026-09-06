@@ -28,7 +28,7 @@
 export const LOGIN_PROFESSOR_LIBERADO = false;
 
 /** Responsáveis entram pelo portal dos pais. Mesma ideia. */
-export const LOGIN_RESPONSAVEL_LIBERADO = false;
+export const LOGIN_RESPONSAVEL_LIBERADO = true;
 
 /* ---------------- 2. Convite e aprovação ---------------- */
 
