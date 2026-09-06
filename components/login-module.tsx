@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
 
 interface LoginModuleProps {
   onLogin: (role: 'admin' | 'teacher' | 'client', data: any) => void;
@@ -40,6 +41,9 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
     if (dbError || !data) {
       setError('Acesso negado. Verifique usuário e senha.');
+    } else if (data.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
+      // trava temporária: só a administração entra por enquanto
+      setError('O acesso de professor ainda não foi liberado. Fale com a administração.');
     } else {
       onLogin(data.role as 'admin' | 'teacher', data);
     }
@@ -47,8 +51,15 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
   const handleClientLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // trava temporária: nem consulta o banco enquanto o portal está fechado
+    if (!LOGIN_RESPONSAVEL_LIBERADO) {
+      setError('O portal dos responsáveis ainda não foi liberado.');
+      return;
+    }
+
     setLoading(true); setError('');
-    
+
     const cleanPhone = phone.replace(/\D/g, '');
     if (cleanPhone.length < 8) {
       setError('Digite um número de telefone válido.');
@@ -95,17 +106,23 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
               <button onClick={() => setLoginType('team')} className="w-full p-5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl backdrop-blur-md transition-all flex items-center justify-between group active:scale-95">
                 <div className="flex items-center gap-4 text-white">
                   <div className="p-3 bg-amber-500 rounded-xl text-black shadow-lg shadow-amber-500/30"><ShieldCheck className="w-6 h-6" /></div>
-                  <div className="text-left"><p className="font-bold text-lg">Sou da Equipe</p><p className="text-xs text-slate-300">Professores e Administração</p></div>
+                  <div className="text-left"><p className="font-bold text-lg">Sou da Equipe</p><p className="text-xs text-slate-300">{LOGIN_PROFESSOR_LIBERADO ? 'Professores e Administração' : 'Somente Administração'}</p></div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-amber-500 group-hover:translate-x-1 transition-transform" />
               </button>
 
-              <button onClick={() => setLoginType('client')} className="w-full p-5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl backdrop-blur-md transition-all flex items-center justify-between group active:scale-95">
+              <button
+                onClick={() => setLoginType('client')}
+                disabled={!LOGIN_RESPONSAVEL_LIBERADO}
+                className={`w-full p-5 bg-white/10 border border-white/20 rounded-2xl backdrop-blur-md transition-all flex items-center justify-between group ${LOGIN_RESPONSAVEL_LIBERADO ? 'hover:bg-white/20 active:scale-95' : 'opacity-50 cursor-not-allowed'}`}
+              >
                 <div className="flex items-center gap-4 text-white">
                   <div className="p-3 bg-blue-500 rounded-xl text-white shadow-lg shadow-blue-500/30"><User className="w-6 h-6" /></div>
-                  <div className="text-left"><p className="font-bold text-lg">Sou Aluno/Responsável</p><p className="text-xs text-slate-300">Acessar ficha de avaliação</p></div>
+                  <div className="text-left"><p className="font-bold text-lg">Sou Aluno/Responsável</p><p className="text-xs text-slate-300">{LOGIN_RESPONSAVEL_LIBERADO ? 'Acessar ficha de avaliação' : 'Portal ainda não liberado'}</p></div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
+                {LOGIN_RESPONSAVEL_LIBERADO
+                  ? <ArrowRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
+                  : <Lock className="w-5 h-5 text-slate-400" />}
               </button>
             </motion.div>
           ) : loginType === 'team' ? (

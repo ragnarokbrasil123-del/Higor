@@ -16,6 +16,7 @@ import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellR
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { MobileNav } from '@/components/ui';
+import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
 
 type Tab = 'dashboard' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
@@ -116,9 +117,19 @@ export default function Page() {
     const savedUser = localStorage.getItem('olimpo_session');
     if (savedUser) {
       const sessao = JSON.parse(savedUser);
-      setUser(sessao);
-      // admin abre no Painel; professor continua caindo direto na Avaliação
-      if (sessao?.role === 'admin') setActiveTab('dashboard');
+      // sessão de um papel hoje bloqueado não vale mais: derruba na abertura,
+      // senão quem já tinha entrado antes da trava continuaria dentro
+      const bloqueado =
+        (sessao?.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) ||
+        (sessao?.role === 'client' && !LOGIN_RESPONSAVEL_LIBERADO);
+
+      if (bloqueado) {
+        localStorage.removeItem('olimpo_session');
+      } else {
+        setUser(sessao);
+        // admin abre no Painel; professor continua caindo direto na Avaliação
+        if (sessao?.role === 'admin') setActiveTab('dashboard');
+      }
     }
 
     if ('serviceWorker' in navigator) {
