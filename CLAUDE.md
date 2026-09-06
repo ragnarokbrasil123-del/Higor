@@ -61,22 +61,34 @@ O `client` é array porque **irmãos compartilham telefone e senha** — 25 fam�
 | Painel | `dashboard-module.tsx` | admin | visão geral: resumo → pendências (com atalho para a aba) → evolução → atividades recentes. **Aba inicial do admin.** Nenhum número é inventado: sem dado, mostra Empty State |
 | Cadastro Alunos | `registration-module.tsx` | staff | matrícula individual + **importação em massa** (colar planilha/CSV com prévia linha a linha) |
 | Alunos | `students-module.tsx` | admin | ficha completa editável: dados, responsável, endereço, observações e **troca de dia/horário** (mexe em `class_slots`) |
-| Avaliação Natação | `swimming-module.tsx` | staff | avaliação por **turma do dia** |
-| Avulsos & Wellhub | `swimming-module.tsx` com `escopo="sem-turma"` | admin | os 43 alunos sem horário na grade |
-| Avaliação Sábado | `swimming-module.tsx` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor |
+| Avaliação Natação | `swimming/SwimmingModule.tsx` | staff | avaliação por **turma do dia** |
+| Avulsos & Wellhub | `swimming/` com `escopo="sem-turma"` | admin | os 43 alunos sem horário na grade |
+| Avaliação Sábado | `swimming/` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor |
 | Checklist Limpeza | `checklist-module.tsx` | staff | checklist diário + foto (base64) + realtime |
 | Manutenção | `maintenance-module.tsx` | staff | igual limpeza, dispara push para a equipe |
 | Professores | `professors-module.tsx` | admin | CRUD: nome, horário por dia (turno duplo), ativo/inativo, login opcional + view **Disponibilidade** (professores × dias, carga semanal) |
 | Grade de Horários | `schedule-module.tsx` | staff | cria turmas; **cruza com o horário de trabalho do professor** (aviso, não bloqueio) |
 | — | `client-portal.tsx` | responsável | portal dos pais |
 
-### `swimming-module.tsx` (931 linhas — o coração do app)
+### `components/swimming/` — o coração do app
 
-Um componente, três escopos via prop `escopo`. Três telas internas (`view`):
+Era um arquivo de 1047 linhas; hoje são 13. Um componente de entrada, três escopos via prop `escopo`, três telas internas (`view`):
 
 - **`home`** — lista o que avaliar, conforme o escopo.
 - **`avaliando`** — fila em sequência ("Aluno 2 de 6"), critérios com botões grandes Passou/Treinar, atalho "marcar todos como Passou", **gerador de observação**, rascunho automático em `localStorage` (`olimpo_draft_aval_<id>`), botão "Salvar e próximo".
 - **`aluno`** — ficha do aluno: histórico, PDF, botão de avaliar.
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `SwimmingModule.tsx` | orquestrador: dados derivados (permissão, agrupamento, filtros, contadores) e escolha da tela |
+| `useDadosNatacao.ts` | carga paginada das 4 tabelas, sessão e **trava do professor** (`allowedIds`) |
+| `useFilaAvaliacao.ts` | fila, marcação, rascunho, salvar, promoção de touca e push |
+| `TelaAvaliacao.tsx` | tela `avaliando` + tela de conclusão |
+| `FichaAluno.tsx` | tela `aluno`: histórico, PDF, apagar |
+| `PainelTurmas.tsx` | home das abas Avaliação e Sábado |
+| `PainelSemTurma.tsx` | home da aba Avulsos & Wellhub |
+| `CartaoBloco` · `LinhaAluno` · `ChipsTouca` · `SeloAvaliacao` | peças reutilizadas pelos dois painéis e pela busca |
+| `constantes.ts` · `observacao.ts` | tipos/constantes e o gerador de frase (puros, sem React) |
 
 Ao salvar uma avaliação: se passou em **todos** os critérios, grava `approved = true` e o aluno **sobe de touca** automaticamente (via `capLevelOrder`); depois dispara `POST /api/push` com `{ student_id }` para avisar o responsável.
 
