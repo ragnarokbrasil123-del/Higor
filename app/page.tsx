@@ -12,13 +12,14 @@ import { ProfessorsModule } from '@/components/professors-module';
 import { StudentsModule } from '@/components/students-module';
 import { ScheduleModule } from '@/components/schedule-module';
 import { DashboardModule } from '@/components/dashboard-module';
-import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard } from 'lucide-react';
+import { AccessModule } from '@/components/access-module';
+import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { MobileNav } from '@/components/ui';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
 
-type Tab = 'dashboard' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
+type Tab = 'dashboard' | 'acessos' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 
 // ==========================================
@@ -167,6 +168,8 @@ export default function Page() {
   }
 
   const isAdmin = user.role === 'admin';
+  // o admin master e quem convida e corta acesso dos outros
+  const isMaster = isAdmin && user.data?.is_master === true;
   const isTeacher = user.role === 'teacher';
   const isStaff = isAdmin || isTeacher; 
 
@@ -309,6 +312,13 @@ export default function Page() {
             </button>
           )}
 
+          {isMaster && (
+            <button onClick={() => setActiveTab('acessos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'acessos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <ShieldCheck className="w-5 h-5" />
+              <span className="font-bold text-sm">Acessos</span>
+            </button>
+          )}
+
           {isAdmin && (
             <div className="pt-4 mt-4 border-t border-slate-800">
                <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-black rounded-xl transition-all border border-amber-500/30">
@@ -340,6 +350,7 @@ export default function Page() {
           { key: 'cleaning', label: 'Limpeza', icon: ClipboardList },
           { key: 'maintenance', label: 'Manutenção', icon: Wrench },
           ...(isAdmin ? [{ key: 'professors', label: 'Professores', icon: GraduationCap }] : []),
+          ...(isMaster ? [{ key: 'acessos', label: 'Acessos', icon: ShieldCheck }] : []),
         ]}
         active={activeTab}
         onSelect={(k) => setActiveTab(k as Tab)}
@@ -347,6 +358,7 @@ export default function Page() {
 
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
+        {activeTab === 'acessos' && isMaster && <AccessModule meuNome={user.data?.username || user.data?.name || ''} />}
         {activeTab === 'registration' && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
         {activeTab === 'students' && isAdmin && <StudentsModule />}
         {activeTab === 'swimming' && <SwimmingModule />}

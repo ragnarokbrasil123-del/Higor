@@ -54,6 +54,15 @@ O `client` é array porque **irmãos compartilham telefone e senha** — 25 fam�
 
 **Login:** equipe usa `app_users` (username + password); responsável usa `students` (telefone só dígitos + password).
 
+**Controle de acesso** (`lib/acesso.ts`) — duas camadas independentes:
+
+1. **Travas gerais** — `LOGIN_PROFESSOR_LIBERADO` e `LOGIN_RESPONSAVEL_LIBERADO`. Ambas em `false` hoje: **só o admin entra**. Trocar para `true` reabre; nada mais depende delas. Além de recusar o login, derrubam sessão antiga do papel bloqueado na abertura do app.
+2. **Convite + aprovação** — não existe auto-cadastro. O **admin master** (`is_master`, hoje só `souza.higor@gmail.com`) convida pela aba Acessos; o app gera um código `XXXX-XXXX` válido por 14 dias; a pessoa usa em "Tenho um convite" na tela de login e define usuário e senha. `status` vira `aprovado`. O código é queimado no uso (`update ... .eq('status','convidado')` impede reuso).
+
+Convidar alguém que **já existe** (os 12 professores da planilha) preenche a linha existente — não cria professor duplicado na Grade.
+
+> ⚠️ Isso é controle de **interface**, não de banco. Sem RLS, a chave publishable lê `app_users` inteira — códigos de convite e senhas em texto puro inclusive. Organiza quem entra; não impede quem sabe usar a API.
+
 ### Abas e módulos
 
 | Aba | Arquivo | Quem vê | O que faz |
@@ -68,6 +77,7 @@ O `client` é array porque **irmãos compartilham telefone e senha** — 25 fam�
 | Manutenção | `maintenance-module.tsx` | staff | igual limpeza, dispara push para a equipe |
 | Professores | `professors-module.tsx` | admin | CRUD: nome, horário por dia (turno duplo), ativo/inativo, login opcional + view **Disponibilidade** (professores × dias, carga semanal) |
 | Grade de Horários | `schedule-module.tsx` | staff | cria turmas; **cruza com o horário de trabalho do professor** (aviso, não bloqueio) |
+| Acessos | `access-module.tsx` | **admin master** | convida por código, corta e reativa acesso. Só `souza.higor@gmail.com` vê |
 | — | `client-portal.tsx` | responsável | portal dos pais |
 
 ### `components/swimming/` — o coração do app
@@ -104,7 +114,7 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 
 | Tabela | Linhas | Colunas |
 |---|---:|---|
-| `app_users` | 15 | `id, username (nullable), password (texto puro), role ('admin' ou 'teacher'), name, active, schedule (jsonb), created_at` |
+| `app_users` | 15 | `id, username (nullable), password (texto puro), role ('admin' ou 'teacher'), name, active, schedule (jsonb), created_at` + controle de acesso: `status ('convidado'/'aprovado'/'revogado'), is_master, convite_codigo, convite_expira_em, liberado_em, liberado_por` |
 | `students` | 429 | `id, name, age (nullable), level (CapLevel), guardian_name, phone, password, modalidade, endereco, observacoes, created_at` + legado não usado `class_day, class_time` |
 | `classes` | 312 | `id, teacher_name (texto livre), day_of_week, start_time, end_time, created_at` |
 | `class_slots` | 1303 | `id, class_id, cap_color (**chave do nível**, ex. `orange`), student_id (nullable), created_at` |

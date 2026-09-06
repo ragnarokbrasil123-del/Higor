@@ -2,29 +2,113 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
+import {
+  LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO,
+  contaLiberada, conviteExpirado, normalizarCodigo,
+} from '@/lib/acesso';
 
 interface LoginModuleProps {
   onLogin: (role: 'admin' | 'teacher' | 'client', data: any) => void;
 }
 
 export function LoginModule({ onLogin }: LoginModuleProps) {
-  const [loginType, setLoginType] = useState<'none' | 'team' | 'client'>('none');
-  
+  const [loginType, setLoginType] = useState<'none' | 'team' | 'client' | 'convite'>('none');
+
   // Equipe
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showTeamPassword, setShowTeamPassword] = useState(false);
-  
+
   // Cliente
   const [phone, setPhone] = useState('');
   const [clientPassword, setClientPassword] = useState('');
   const [showClientPassword, setShowClientPassword] = useState(false);
-  
+
+  // Convite: primeiro confere o código, depois a pessoa cria o acesso
+  const [codigo, setCodigo] = useState('');
+  const [convidado, setConvidado] = useState<{ id: string; name: string | null; role: string } | null>(null);
+  const [novoUsuario, setNovoUsuario] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [repeteSenha, setRepeteSenha] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const voltarInicio = () => {
+    setLoginType('none'); setError('');
+    setCodigo(''); setConvidado(null);
+    setNovoUsuario(''); setNovaSenha(''); setRepeteSenha('');
+  };
+
+  /** Passo 1 do convite: o código existe, é desta pessoa e ainda vale? */
+  const handleConferirCodigo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+
+    const { data, error: dbError } = await supabase
+      .from('app_users')
+      .select('id, name, role, status, convite_codigo, convite_expira_em')
+      .eq('convite_codigo', normalizarCodigo(codigo))
+      .maybeSingle();
+
+    setLoading(false);
+
+    if (dbError || !data) return setError('Código não encontrado. Confira as letras e tente de novo.');
+    if (data.status !== 'convidado') return setError('Este convite já foi usado.');
+    if (conviteExpirado(data.convite_expira_em)) return setError('Este convite venceu. Peça um código novo à administração.');
+
+    setConvidado({ id: data.id, name: data.name, role: data.role });
+  };
+
+  /** Passo 2 do convite: define usuário e senha e libera a conta. */
+  const handleCriarAcesso = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!convidado) return;
+
+    const usuario = novoUsuario.toLowerCase().trim();
+    if (usuario.length < 4) return setError('O usuário precisa de pelo menos 4 caracteres.');
+    if (novaSenha.length < 6) return setError('A senha precisa de pelo menos 6 caracteres.');
+    if (novaSenha !== repeteSenha) return setError('As duas senhas não são iguais.');
+
+    setLoading(true); setError('');
+
+    // usuário é como a pessoa entra: não pode repetir
+    const { data: existe } = await supabase
+      .from('app_users').select('id').eq('username', usuario).maybeSingle();
+
+    if (existe && existe.id !== convidado.id) {
+      setLoading(false);
+      return setError('Este usuário já está em uso. Escolha outro.');
+    }
+
+    const { data, error: dbError } = await supabase
+      .from('app_users')
+      .update({
+        username: usuario,
+        password: novaSenha,
+        status: 'aprovado',
+        convite_codigo: null,
+        convite_expira_em: null,
+        liberado_em: new Date().toISOString(),
+      })
+      .eq('id', convidado.id)
+      .eq('status', 'convidado') // trava: se alguém já usou o convite, não sobrescreve
+      .select()
+      .single();
+
+    setLoading(false);
+
+    if (dbError || !data) return setError('Não deu para criar o acesso. Tente de novo.');
+
+    if (data.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
+      setError('Acesso criado! Mas a entrada de professores ainda não foi liberada pela administração.');
+      setConvidado(null);
+      return;
+    }
+    onLogin(data.role as 'admin' | 'teacher', data);
+  };
 
   const handleTeamLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +125,11 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
     if (dbError || !data) {
       setError('Acesso negado. Verifique usuário e senha.');
+    } else if (!contaLiberada(data)) {
+      // convite ainda não usado, acesso cortado pelo master, ou conta inativa
+      setError('Esta conta não está liberada. Fale com a administração.');
     } else if (data.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
-      // trava temporária: só a administração entra por enquanto
+      // trava geral: nenhum professor entra por enquanto
       setError('O acesso de professor ainda não foi liberado. Fale com a administração.');
     } else {
       onLogin(data.role as 'admin' | 'teacher', data);
@@ -124,6 +211,10 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
                   ? <ArrowRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
                   : <Lock className="w-5 h-5 text-slate-400" />}
               </button>
+
+              <button onClick={() => { setLoginType('convite'); setError(''); }} className="w-full py-3 text-slate-400 hover:text-amber-500 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+                <KeyRound className="w-4 h-4" /> Tenho um convite
+              </button>
             </motion.div>
           ) : loginType === 'team' ? (
             
@@ -153,8 +244,82 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
               </form>
             </motion.div>
 
+          ) : loginType === 'convite' ? (
+
+            /* --- CRIAR ACESSO COM CÓDIGO DE CONVITE --- */
+            <motion.div key="convite-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
+              <button onClick={voltarInicio} className="mb-6 text-amber-500 flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
+
+              {!convidado ? (
+                /* passo 1: conferir o código */
+                <form onSubmit={handleConferirCodigo} className="space-y-4">
+                  <div className="text-center mb-6">
+                    <div className="w-14 h-14 mx-auto mb-3 bg-amber-500/20 rounded-2xl flex items-center justify-center">
+                      <KeyRound className="w-7 h-7 text-amber-500" />
+                    </div>
+                    <h2 className="text-white font-bold text-lg mb-1">Criar meu acesso</h2>
+                    <p className="text-slate-300 text-xs">Digite o código que a administração te passou.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Código do convite</label>
+                    <input
+                      type="text" required value={codigo} autoCapitalize="characters" autoComplete="off"
+                      onChange={(e) => setCodigo(normalizarCodigo(e.target.value))}
+                      maxLength={9}
+                      className="w-full mt-1 px-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white text-center text-2xl font-mono font-black tracking-[0.3em] outline-none focus:border-amber-500 transition-colors"
+                      placeholder="XXXX-XXXX"
+                    />
+                  </div>
+                  {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
+                  <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-amber-500 text-black font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-amber-500/20">
+                    {loading ? "Conferindo..." : "Continuar"}
+                  </button>
+                </form>
+              ) : (
+                /* passo 2: escolher usuário e senha */
+                <form onSubmit={handleCriarAcesso} className="space-y-4">
+                  <div className="text-center mb-6">
+                    <p className="text-amber-500 text-xs font-bold uppercase tracking-wider">
+                      {convidado.role === 'admin' ? 'Administrador' : 'Professor'}
+                    </p>
+                    <h2 className="text-white font-bold text-lg mt-1 leading-tight">Olá, {(convidado.name || '').split(' ')[0]}!</h2>
+                    <p className="text-slate-300 text-xs mt-1">Escolha como você vai entrar daqui pra frente.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Usuário</label>
+                    <div className="relative mt-1">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input type="text" required value={novoUsuario} autoCapitalize="none" onChange={(e) => setNovoUsuario(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="Ex: maria.silva" />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1.5 ml-1">Mínimo 4 caracteres. Pode ser seu e-mail.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Criar senha</label>
+                    <div className="relative mt-1">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input type={showTeamPassword ? "text" : "password"} required value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="Mínimo 6 caracteres" />
+                      <button type="button" onClick={() => setShowTeamPassword(!showTeamPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-500 transition-colors">
+                        {showTeamPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider ml-1">Repetir a senha</label>
+                    <div className="relative mt-1">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input type={showTeamPassword ? "text" : "password"} required value={repeteSenha} onChange={(e) => setRepeteSenha(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-amber-500 transition-colors" placeholder="••••••••" />
+                    </div>
+                  </div>
+                  {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
+                  <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-amber-500 text-black font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-amber-500/20">
+                    {loading ? "Criando..." : "Criar acesso e entrar"}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+
           ) : (
-            
+
             /* --- LOGIN DO CLIENTE/PAI --- */
             <motion.div key="client-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
               <button onClick={() => {setLoginType('none'); setError('');}} className="mb-6 text-blue-400 flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
