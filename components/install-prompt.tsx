@@ -4,7 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, X, Share, PlusSquare, Smartphone } from 'lucide-react';
 
-export function InstallPrompt() {
+interface InstallPromptProps {
+  /**
+   * No app da equipe existe a barra de navegação colada embaixo — sem isto
+   * o banner cobriria os botões de aba. O portal dos pais não tem barra,
+   * então lá continua colado no rodapé.
+   */
+  acimaDaBarra?: boolean;
+}
+
+export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true); // default true para não piscar na tela de quem já tem
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -87,7 +96,15 @@ export function InstallPrompt() {
 
   // --- MODO 2: BANNER (SUTIL NO RODAPÉ) ---
   return (
-    <motion.div initial={{ y: 100 }} animate={{ y: 0 }} className="fixed bottom-0 left-0 right-0 z-[99999] bg-slate-900 border-t border-slate-700 p-4 pb-8 md:pb-4 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:hidden">
+    <motion.div
+      initial={{ y: 100 }}
+      animate={{ y: 0 }}
+      className={`fixed left-0 right-0 z-[99999] bg-slate-900 border-t border-slate-700 p-4 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:hidden ${
+        acimaDaBarra
+          ? 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]'
+          : 'bottom-0 pb-8 md:pb-4'
+      }`}
+    >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-black rounded-lg border border-slate-700 flex items-center justify-center p-1">
           <img src="/logo.png" className="w-full h-full object-contain" alt="Logo" />

@@ -13,6 +13,7 @@ import { StudentsModule } from '@/components/students-module';
 import { ScheduleModule } from '@/components/schedule-module';
 import { DashboardModule } from '@/components/dashboard-module';
 import { AccessModule } from '@/components/access-module';
+import { InstallPrompt } from '@/components/install-prompt';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -215,6 +216,8 @@ export default function Page() {
     <div className="flex flex-col md:flex-row h-[100dvh] bg-canvas font-sans overflow-hidden overflow-x-clip">
       
       {isAdmin && <GlobalNotifier />}
+      {/* convite para instalar o app — antes so aparecia no portal dos pais */}
+      <InstallPrompt acimaDaBarra />
 
       <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
