@@ -13,11 +13,17 @@ interface InstallPromptProps {
   acimaDaBarra?: boolean;
 }
 
+/** Guarda quando a pessoa fechou o convite, para ele não voltar a cada abertura. */
+const CHAVE_DISPENSA = 'olimpo_install_dispensado';
+const DIAS_DE_SILENCIO = 30;
+
 export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true); // default true para não piscar na tela de quem já tem
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  
+  /** Só vira true quando temos certeza de que dá para instalar. */
+  const [podeConvidar, setPodeConvidar] = useState(false);
+
   // 'modal' (bloqueia tela), 'banner' (rodapé sutil), 'hidden' (fechado)
   // Começa como banner para não atrapalhar quem só quer ver a avaliação.
   const [displayMode, setDisplayMode] = useState<'modal' | 'banner' | 'hidden'>('banner');
@@ -29,33 +35,48 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
 
     if (isAppInstalled) return;
 
+    // Fechou o convite há pouco tempo? Fica quieto.
+    try {
+      const quando = Number(localStorage.getItem(CHAVE_DISPENSA) || 0);
+      if (quando && Date.now() - quando < DIAS_DE_SILENCIO * 86400000) return;
+    } catch { /* navegador sem localStorage: segue */ }
+
     // Detecta se é iPhone (iOS)
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(ios);
 
-    // Captura o evento nativo de instalação do Android
-    window.addEventListener('beforeinstallprompt', (e) => {
+    // No iPhone não existe evento de instalação: só dá para orientar.
+    if (ios) { setPodeConvidar(true); return; }
+
+    /**
+     * No Chrome o `beforeinstallprompt` NÃO dispara quando o app já está
+     * instalado. Por isso o convite só aparece depois de receber o evento —
+     * antes ele ficava insistindo com quem já tinha instalado.
+     */
+    const aoPoderInstalar = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-    });
+      setPodeConvidar(true);
+    };
+    window.addEventListener('beforeinstallprompt', aoPoderInstalar);
+    return () => window.removeEventListener('beforeinstallprompt', aoPoderInstalar);
   }, []);
 
-  // Se já tiver instalado ou se o usuário fechou totalmente, não mostra nada.
-  if (isStandalone || displayMode === 'hidden') return null;
+  /** Fecha e não volta a incomodar por um mês. */
+  const dispensar = () => {
+    setDisplayMode('hidden');
+    try { localStorage.setItem(CHAVE_DISPENSA, String(Date.now())); } catch { /* ignora */ }
+  };
+
+  // Já instalado, sem como instalar, ou fechado pela pessoa: não mostra nada.
+  if (isStandalone || !podeConvidar || displayMode === 'hidden') return null;
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      // Se o Chrome liberou a instalação, prossegue
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        setDisplayMode('hidden'); // Some se instalar
-      }
-      setDeferredPrompt(null);
-    } else {
-      // Se a pessoa abriu pelo navegador do WhatsApp/Instagram ou faltou ícone
-      alert("Para instalar, você precisa abrir este link no navegador Google Chrome! Se você já estiver no Chrome, clique nos 3 pontinhos no canto superior e escolha 'Instalar Aplicativo'.");
-    }
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') setDisplayMode('hidden');
+    setDeferredPrompt(null);
   };
 
   // --- MODO 1: TELA CHEIA (INVASIVO) ---
@@ -121,7 +142,7 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
         ) : (
            <button onClick={handleInstallClick} className="px-4 py-2 bg-amber-500 text-black font-bold text-xs rounded-full shadow-lg shadow-amber-500/20">Instalar</button>
         )}
-        <button onClick={() => setDisplayMode('hidden')} className="p-1 text-slate-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+        <button onClick={dispensar} aria-label="Fechar" className="p-1 text-slate-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
       </div>
     </motion.div>
   );
