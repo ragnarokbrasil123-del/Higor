@@ -353,6 +353,24 @@ export default function Page() {
         </div>
       </header>
 
+      <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
+        {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
+        {activeTab === 'acessos' && isMaster && <AccessModule meuNome={user.data?.username || user.data?.name || ''} />}
+        {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
+        {activeTab === 'students' && isAdmin && <StudentsModule />}
+        {activeTab === 'swimming' && <SwimmingModule />}
+        {activeTab === 'avulsos' && isAdmin && <SwimmingModule escopo="sem-turma" />}
+        {activeTab === 'sabado' && isAdmin && <SwimmingModule escopo="sabado" />}
+        {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
+        {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
+        {activeTab === 'professors' && isAdmin && <ProfessorsModule />}
+        {activeTab === 'hidro' && isStaff && <HidroModule />}
+        {activeTab === 'schedule' && isAdmin && <ScheduleModule />}
+        {activeTab === 'schedule' && isTeacher && <MinhaSemana meuNome={user.data?.name || user.data?.username || ''} />}
+      </main>
+
+      {/* No celular a barra vem DEPOIS do conteudo: empilhando na ordem do
+       * codigo, e isso que a coloca no rodape, ao alcance do polegar. */}
       <MobileNav
         items={[
           // no celular cabem 4 atalhos fixos; o resto vai para o menu "Mais"
@@ -372,22 +390,6 @@ export default function Page() {
         active={activeTab}
         onSelect={(k) => setActiveTab(k as Tab)}
       />
-
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
-        {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
-        {activeTab === 'acessos' && isMaster && <AccessModule meuNome={user.data?.username || user.data?.name || ''} />}
-        {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
-        {activeTab === 'students' && isAdmin && <StudentsModule />}
-        {activeTab === 'swimming' && <SwimmingModule />}
-        {activeTab === 'avulsos' && isAdmin && <SwimmingModule escopo="sem-turma" />}
-        {activeTab === 'sabado' && isAdmin && <SwimmingModule escopo="sabado" />}
-        {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
-        {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
-        {activeTab === 'professors' && isAdmin && <ProfessorsModule />}
-        {activeTab === 'hidro' && isStaff && <HidroModule />}
-        {activeTab === 'schedule' && isAdmin && <ScheduleModule />}
-        {activeTab === 'schedule' && isTeacher && <MinhaSemana meuNome={user.data?.name || user.data?.username || ''} />}
-      </main>
     </div>
   );
 }
