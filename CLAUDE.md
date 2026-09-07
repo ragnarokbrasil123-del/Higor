@@ -7,7 +7,7 @@ PWA de gestão de uma **escola de natação**. Dois objetivos centrais, nessa or
 
 Secundariamente cobre grade de horários, cadastro de alunos/professores e checklists de limpeza e manutenção.
 
-Produção: `https://higor-blush.vercel.app` (Vercel). Desenvolvimento em `localhost:3000`.
+Produção: `https://clubeolimpo.vercel.app` (Vercel; `higor-blush.vercel.app` redireciona). Desenvolvimento em `localhost:3000`.
 
 ---
 
@@ -181,4 +181,4 @@ Importados de `Informações para criação do app.xlsx` (3 abas: alunos fixos, 
 - `hooks/use-mobile.ts` está órfão. `components/install-prompt.tsx` só é usado pelo portal dos pais.
 - Fotos dos checklists são base64 dentro do Postgres (incha o banco e o payload do realtime) — deveriam ir para o Supabase Storage.
 - `GlobalNotifier` está inline dentro de `app/page.tsx` e usa sons hotlinkados de `soundjay.com`.
-- `public/cartao-pais.html` é um cartão A4 imprimível (QR + instruções de acesso) servido como estático, fora do React.
+- `public/cartao-pais.html` é o material impresso para os pais, servido como estático fora do React: folha 1 com dois cartões de balcão, folha 2 com um cartaz de parede. O endereço fica numa constante só no script, injetada no QR e no texto — se divergirem, o QR leva a um lugar e a URL escrita a outro.

@@ -3,19 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cartão do Portal — Clube Olimpo</title>
+<title>Material para os pais — Clube Olimpo</title>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Karla:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Karla:wght@400;500;600;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
-  /* Peça impressa: assume um único mundo visual (papel), pintado explicitamente. */
+  /* ============================================================
+     Peça impressa. Assume um único mundo visual — papel — e pinta
+     tudo explicitamente, sem depender de tema do navegador.
+
+     Duas folhas A4:
+       1. dois cartões de balcão, para cortar e entregar
+       2. um cartaz, para a parede da recepção
+     ============================================================ */
   :root {
     --tinta:   #0B0E14;
     --ouro:    #C0982F;
     --ouro-cl: #EFE3C4;
+    --ouro-bg: #FBF6E8;
     --papel:   #FCFBF8;
     --agua:    #17607A;
+    --agua-cl: #E6F0F3;
     --traco:   #DBD5C6;
     --cinza:   #6E6A60;
     --mesa:    #2A2823;
@@ -40,280 +49,278 @@
     align-items: center;
     gap: 12px 16px;
   }
-  .barra p {
-    margin: 0;
-    color: #C9C4B8;
-    font-size: 13px;
-    line-height: 1.5;
-    flex: 1 1 260px;
-  }
-  .barra strong { color: var(--ouro-cl); font-weight: 600; }
+  .barra p { margin: 0; color: #C9C4B8; font-size: 13px; line-height: 1.5; flex: 1; min-width: 240px; }
+  .barra b { color: #fff; }
   .btn {
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 700;
+    background: var(--ouro); color: #1A1508; border: 0;
+    font-family: inherit; font-weight: 800; font-size: 14px;
+    padding: 12px 22px; border-radius: 999px; cursor: pointer;
     letter-spacing: .02em;
-    color: var(--tinta);
-    background: var(--ouro);
-    border: none;
-    border-radius: 6px;
-    padding: 11px 20px;
-    cursor: pointer;
   }
-  .btn:hover { background: #D4AA37; }
-  .btn:focus-visible { outline: 2px solid var(--ouro-cl); outline-offset: 3px; }
+  .btn:hover { background: #D4AB3B; }
 
-  /* ---------- a folha ---------- */
+  /* ---------- folha ---------- */
   .folha {
-    width: 210mm;
-    min-height: 297mm;
-    margin: 0 auto;
+    width: 210mm; min-height: 297mm;
+    margin: 0 auto 24px;
     background: var(--papel);
-    padding: 14mm 12mm;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
     box-shadow: 0 18px 50px rgba(0,0,0,.45);
+    display: flex; flex-direction: column;
   }
 
-  .corte {
-    border: none;
-    border-top: 1px dashed var(--traco);
-    margin: 0;
-    position: relative;
-  }
-  .corte::after {
-    content: "✂ recorte aqui";
-    position: absolute;
-    right: 0;
-    top: -7px;
-    background: var(--papel);
-    padding-left: 8px;
-    font-size: 8.5px;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--traco);
-  }
-
-  /* ---------- o cartão ---------- */
-  .cartao {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto 1fr auto;
-    column-gap: 10mm;
-    row-gap: 6mm;
-    padding: 9mm 2mm;
-    align-items: start;
-  }
-
-  .marca { grid-column: 1 / -1; }
+  /* ============================================================
+     MARCA — usada nas duas peças
+     ============================================================ */
+  .marca { display: flex; align-items: center; gap: 10px; }
+  .marca img { width: 34px; height: 34px; object-fit: contain; }
+  .marca-txt { line-height: 1; }
   .marca-nome {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 25px;
-    font-weight: 700;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    margin: 0;
-    line-height: 1;
+    font-size: 21px; font-weight: 700; margin: 0;
+    letter-spacing: .06em; text-transform: uppercase;
   }
   .marca-nome span { color: var(--ouro); }
   .marca-sub {
-    margin: 5px 0 0;
-    font-size: 9px;
-    letter-spacing: .26em;
-    text-transform: uppercase;
-    color: var(--cinza);
-    font-weight: 600;
-  }
-  .regua {
-    margin-top: 9px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-  .regua i { flex: 1; height: 1px; background: var(--traco); }
-  .regua b {
-    width: 5px; height: 5px;
-    background: var(--ouro);
-    transform: rotate(45deg);
+    margin: 3px 0 0; font-size: 8.5px; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--cinza); font-weight: 600;
   }
 
-  .conteudo { grid-column: 1; display: flex; flex-direction: column; gap: 6mm; }
+  /* ============================================================
+     FOLHA 1 — CARTÕES DE BALCÃO
+     ============================================================ */
+  .cartao {
+    flex: 1;
+    padding: 13mm 13mm 9mm;
+    display: grid;
+    grid-template-columns: 1fr 46mm;
+    grid-template-rows: auto 1fr auto;
+    gap: 0 9mm;
+    position: relative;
+  }
+
+  .cartao .marca { grid-column: 1 / -1; margin-bottom: 6mm; }
 
   .chamada {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 30px;
-    font-weight: 600;
-    line-height: 1.12;
-    letter-spacing: -.005em;
-    margin: 0;
-    text-wrap: balance;
-    max-width: 20ch;
+    font-size: 27px; font-weight: 600; line-height: 1.12;
+    margin: 0 0 3mm; letter-spacing: -.01em;
   }
-  .chamada em { font-style: italic; color: var(--agua); }
+  .chamada em { font-style: italic; color: var(--ouro); }
+
   .apoio {
-    margin: 0;
-    font-size: 12.5px;
-    line-height: 1.55;
-    color: var(--cinza);
-    max-width: 42ch;
+    margin: 0 0 5mm; font-size: 10.5px; line-height: 1.55;
+    color: var(--cinza); max-width: 92mm;
   }
 
-  /* passos — a numeração é uma sequência real */
-  .passos { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
-  .passos li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: baseline; }
-  .passos .n {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--ouro);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
+  /* benefícios */
+  .ganhos { list-style: none; margin: 0 0 5mm; padding: 0; display: grid; gap: 2.6mm; }
+  .ganhos li { display: flex; gap: 3mm; align-items: flex-start; font-size: 10.5px; line-height: 1.45; }
+  .ganhos i {
+    width: 5mm; height: 5mm; border-radius: 50%; flex: none; margin-top: .4mm;
+    background: var(--ouro-bg); border: 1px solid var(--ouro-cl);
+    display: flex; align-items: center; justify-content: center;
+    font-style: normal; font-size: 8px; font-weight: 800; color: var(--ouro);
   }
-  .passos p { margin: 0; font-size: 12.5px; line-height: 1.5; }
-  .passos strong { font-weight: 700; }
+  .ganhos b { font-weight: 700; }
 
-  /* bloco de acesso — o único elemento com fundo, porque é o que o pai precisa achar */
+  /* caixa de acesso */
   .acesso {
-    background: #F4F0E4;
-    border-left: 3px solid var(--ouro);
-    padding: 9px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    border: 1px solid var(--traco); border-left: 3px solid var(--ouro);
+    background: #fff; padding: 3.5mm 4mm; border-radius: 2px;
   }
   .acesso-tit {
-    font-size: 8.5px;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    color: var(--cinza);
-    font-weight: 700;
-    margin: 0 0 2px;
+    margin: 0 0 2mm; font-size: 8px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--ouro); font-weight: 800;
   }
-  .acesso dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
-  .acesso dt { font-weight: 700; }
-  .acesso dd { margin: 0; }
+  .acesso dl { margin: 0; display: grid; grid-template-columns: 22mm 1fr; gap: 1.2mm 3mm; }
+  .acesso dt { font-size: 9.5px; font-weight: 700; }
+  .acesso dd { margin: 0; font-size: 9.5px; color: var(--cinza); }
   .exemplo {
-    margin: 4px 0 0;
-    font-size: 10.5px;
-    color: var(--cinza);
-    font-variant-numeric: tabular-nums;
+    margin: 2.5mm 0 0; padding-top: 2mm; border-top: 1px dotted var(--traco);
+    font-size: 9px; color: var(--cinza);
   }
-  .exemplo b { color: var(--agua); font-weight: 700; }
+  .exemplo b { color: var(--tinta); background: var(--ouro-cl); padding: 0 3px; border-radius: 2px; }
 
-  /* QR */
-  .qr-area {
-    grid-column: 2;
-    grid-row: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 7px;
-  }
+  /* coluna do QR */
+  .qr-area { grid-row: 2; text-align: center; align-self: start; }
   .qr-caixa {
-    padding: 7px;
-    background: #fff;
-    border: 1px solid var(--traco);
+    background: #fff; border: 1px solid var(--traco);
+    padding: 3mm; border-radius: 3px; display: inline-block; line-height: 0;
   }
-  .qr-caixa img, .qr-caixa canvas { display: block; width: 132px; height: 132px; }
+  .qr-caixa img, .qr-caixa canvas { display: block; width: 38mm !important; height: 38mm !important; }
   .qr-rot {
-    font-size: 8.5px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--cinza);
-    font-weight: 700;
-    text-align: center;
+    margin: 2.5mm 0 1mm; font-size: 8px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ouro); font-weight: 800;
   }
-  .qr-url {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--agua);
-    letter-spacing: .01em;
-  }
+  .qr-url { margin: 0; font-size: 10px; font-weight: 700; word-break: break-all; }
+  .qr-nota { margin: 2mm 0 0; font-size: 8px; color: var(--cinza); line-height: 1.4; }
 
-  /* rodapé: a progressão de toucas — vocabulário próprio do clube */
+  /* instalar */
+  .instalar {
+    grid-column: 1 / -1; margin-top: 5mm;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3mm;
+  }
+  .instalar div {
+    background: var(--agua-cl); border-radius: 2px; padding: 2.5mm 3mm;
+    font-size: 8.5px; line-height: 1.4; color: #123F51;
+  }
+  .instalar strong { display: block; font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: var(--agua); margin-bottom: .8mm; }
+
+  /* rodapé das toucas */
   .toucas {
-    grid-column: 1 / -1;
+    grid-column: 1 / -1; margin-top: 5mm; padding-top: 3mm;
     border-top: 1px solid var(--traco);
-    padding-top: 6px;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px 9px;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 1.5mm 2mm;
   }
   .toucas-rot {
-    font-size: 8px;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: var(--cinza);
-    font-weight: 700;
-    margin-right: 2px;
+    font-size: 7.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--cinza); font-weight: 700; margin-right: 1mm;
   }
-  .touca { display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; color: var(--cinza); font-weight: 500; }
-  .touca i { width: 8px; height: 8px; border-radius: 50%; border: .5px solid rgba(0,0,0,.18); }
-  .seta { color: var(--traco); font-size: 9px; }
+  .touca { display: inline-flex; align-items: center; gap: 1.2mm; font-size: 8px; font-weight: 600; }
+  .touca i { width: 2.4mm; height: 2.4mm; border-radius: 50%; display: inline-block; border: .5px solid rgba(0,0,0,.28); }
+  .seta { color: var(--traco); font-size: 8px; }
 
-  /* ---------- impressão ---------- */
+  .corte {
+    border: 0; border-top: 1px dashed var(--traco);
+    margin: 0 10mm; position: relative;
+  }
+  .corte::after {
+    content: '✁'; position: absolute; left: -6mm; top: -4.5mm;
+    font-size: 11px; color: var(--traco);
+  }
+
+  /* ============================================================
+     FOLHA 2 — CARTAZ DE PAREDE
+     ============================================================ */
+  .cartaz {
+    flex: 1; padding: 18mm 16mm 14mm;
+    display: flex; flex-direction: column; text-align: center;
+  }
+  .cartaz .marca { justify-content: center; margin-bottom: 12mm; }
+  .cartaz .marca img { width: 46px; height: 46px; }
+  .cartaz .marca-nome { font-size: 28px; }
+  .cartaz .marca-sub { font-size: 10px; }
+
+  .cartaz-olho {
+    font-size: 9px; letter-spacing: .3em; text-transform: uppercase;
+    color: var(--ouro); font-weight: 800; margin: 0 0 4mm;
+  }
+  .cartaz-titulo {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 46px; line-height: 1.08; font-weight: 600;
+    margin: 0 0 5mm; letter-spacing: -.015em;
+  }
+  .cartaz-titulo em { font-style: italic; color: var(--ouro); }
+  .cartaz-apoio {
+    font-size: 13px; line-height: 1.55; color: var(--cinza);
+    max-width: 130mm; margin: 0 auto 11mm;
+  }
+
+  .cartaz-qr { margin-bottom: 4mm; }
+  .cartaz-qr .qr-caixa { padding: 5mm; }
+  .cartaz-qr .qr-caixa img, .cartaz-qr .qr-caixa canvas { width: 62mm !important; height: 62mm !important; }
+  .cartaz-acao {
+    font-size: 11px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--ouro); font-weight: 800; margin: 0 0 2mm;
+  }
+  .cartaz-url { font-size: 17px; font-weight: 800; margin: 0 0 10mm; }
+
+  .cartaz-passos {
+    list-style: none; margin: 0 0 10mm; padding: 0;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm;
+    text-align: left;
+  }
+  .cartaz-passos li { display: flex; gap: 3mm; align-items: flex-start; }
+  .cartaz-passos .n {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 26px; font-weight: 700; color: var(--ouro-cl);
+    line-height: .9; flex: none;
+  }
+  .cartaz-passos p { margin: 0; font-size: 10.5px; line-height: 1.45; }
+  .cartaz-passos b { font-weight: 700; }
+
+  .cartaz .acesso { text-align: left; max-width: 118mm; margin: 0 auto auto; width: 100%; }
+  .cartaz .acesso dt, .cartaz .acesso dd { font-size: 11px; }
+  .cartaz .acesso-tit { font-size: 9px; }
+  .cartaz .exemplo { font-size: 10px; }
+
+  .cartaz .toucas { margin-top: 10mm; justify-content: center; }
+
+  /* ============================================================
+     IMPRESSÃO
+     ============================================================ */
   @page { size: A4; margin: 0; }
+
   @media print {
     body { background: #fff; padding: 0; }
-    .barra { display: none; }
-    .folha { box-shadow: none; margin: 0; width: 210mm; min-height: 297mm; }
-  }
-
-  @media (max-width: 820px) {
-    .folha { width: 100%; min-height: 0; padding: 20px 16px; }
-    .cartao { grid-template-columns: 1fr; }
-    .qr-area { grid-column: 1; grid-row: auto; align-items: flex-start; }
-    .chamada { font-size: 26px; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition: none !important; }
+    .barra { display: none !important; }
+    .folha {
+      box-shadow: none; margin: 0;
+      width: 210mm; height: 297mm;
+      page-break-after: always; break-after: page;
+    }
+    .folha:last-of-type { page-break-after: auto; break-after: auto; }
+    /* sem isto o navegador descarta os fundos e a peça perde a cor */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   }
 </style>
 </head>
 <body>
+
 <div class="barra">
-  <p>Folha A4 com <strong>dois cartões iguais</strong> — imprima, recorte na linha tracejada e entregue na matrícula.</p>
+  <p>
+    <b>Duas peças prontas.</b> A primeira folha traz dois cartões iguais — imprima, corte no
+    tracejado e entregue no balcão. A segunda é um cartaz para a parede da recepção.
+    Imprima em <b>papel comum A4</b>, colorido.
+  </p>
   <button class="btn" onclick="window.print()">Imprimir</button>
 </div>
 
+<!-- ============================ FOLHA 1: CARTÕES ============================ -->
 <div class="folha">
 
-  <!-- CARTÃO 1 -->
   <article class="cartao">
     <header class="marca">
-      <h1 class="marca-nome">Clube <span>Olimpo</span></h1>
-      <p class="marca-sub">Escola de Natação</p>
-      <div class="regua"><i></i><b></b><i></i></div>
+      <img src="/logo.png" alt="">
+      <div class="marca-txt">
+        <h1 class="marca-nome">Clube <span>Olimpo</span></h1>
+        <p class="marca-sub">Escola de Natação</p>
+      </div>
     </header>
 
-    <div class="conteudo">
-      <h2 class="chamada">A evolução do seu filho, <em>no seu celular</em>.</h2>
-      <p class="apoio">Veja a avaliação trimestral, o recado do professor, os fundamentos já conquistados e o horário das aulas.</p>
+    <div>
+      <h2 class="chamada">Não perca nenhuma <em>conquista</em> do seu filho.</h2>
+      <p class="apoio">
+        A cada trimestre o professor avalia. Agora você acompanha tudo pelo celular,
+        sem precisar perguntar na recepção.
+      </p>
 
-      <ol class="passos">
-        <li><span class="n">1</span><p>Aponte a <strong>câmera do celular</strong> para o código ao lado.</p></li>
-        <li><span class="n">2</span><p>Toque em <strong>Sou Aluno/Responsável</strong> e entre com os seus dados.</p></li>
-        <li><span class="n">3</span><p>Adicione à tela de início e <strong>ative os avisos</strong> — o app te avisa quando a avaliação sair.</p></li>
-      </ol>
+      <ul class="ganhos">
+        <li><i>1</i><span><b>A touca de hoje e o que falta</b> para a próxima — fundamento por fundamento.</span></li>
+        <li><i>2</i><span><b>O recado do professor</b> sobre a evolução, e o boletim em PDF para guardar.</span></li>
+        <li><i>3</i><span><b>Um aviso no celular</b> assim que a avaliação sair. Você fica sabendo primeiro.</span></li>
+      </ul>
 
       <div class="acesso">
-        <p class="acesso-tit">Seus dados de acesso</p>
+        <p class="acesso-tit">Seu acesso já está pronto</p>
         <dl>
-          <dt>WhatsApp</dt><dd>o seu número, só os algarismos</dd>
-          <dt>Senha</dt><dd>os 4 últimos algarismos do seu WhatsApp</dd>
+          <dt>Usuário</dt><dd>o WhatsApp que você deixou na secretaria</dd>
+          <dt>Senha</dt><dd>os 4 últimos números desse WhatsApp</dd>
         </dl>
-        <p class="exemplo">Exemplo: WhatsApp (11) 98748-8566 → senha <b>8566</b></p>
+        <p class="exemplo">Exemplo: (11) 98748-8566 &rarr; senha <b>8566</b></p>
       </div>
     </div>
 
     <div class="qr-area">
       <div class="qr-caixa" id="qr1"></div>
       <p class="qr-rot">Aponte a câmera</p>
-      <p class="qr-url">higor-blush.vercel.app</p>
+      <p class="qr-url" data-url></p>
+      <p class="qr-nota">Não precisa baixar da loja.<br>Não ocupa espaço. É gratuito.</p>
+    </div>
+
+    <div class="instalar">
+      <div><strong>Android</strong>Abra o site, toque no menu <b>⋮</b> e escolha <b>Instalar aplicativo</b>.</div>
+      <div><strong>iPhone</strong>No Safari, toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>. No iPhone isso é obrigatório para receber os avisos.</div>
     </div>
 
     <footer class="toucas">
@@ -330,38 +337,48 @@
 
   <hr class="corte">
 
-  <!-- CARTÃO 2 -->
   <article class="cartao">
     <header class="marca">
-      <h1 class="marca-nome">Clube <span>Olimpo</span></h1>
-      <p class="marca-sub">Escola de Natação</p>
-      <div class="regua"><i></i><b></b><i></i></div>
+      <img src="/logo.png" alt="">
+      <div class="marca-txt">
+        <h1 class="marca-nome">Clube <span>Olimpo</span></h1>
+        <p class="marca-sub">Escola de Natação</p>
+      </div>
     </header>
 
-    <div class="conteudo">
-      <h2 class="chamada">A evolução do seu filho, <em>no seu celular</em>.</h2>
-      <p class="apoio">Veja a avaliação trimestral, o recado do professor, os fundamentos já conquistados e o horário das aulas.</p>
+    <div>
+      <h2 class="chamada">Não perca nenhuma <em>conquista</em> do seu filho.</h2>
+      <p class="apoio">
+        A cada trimestre o professor avalia. Agora você acompanha tudo pelo celular,
+        sem precisar perguntar na recepção.
+      </p>
 
-      <ol class="passos">
-        <li><span class="n">1</span><p>Aponte a <strong>câmera do celular</strong> para o código ao lado.</p></li>
-        <li><span class="n">2</span><p>Toque em <strong>Sou Aluno/Responsável</strong> e entre com os seus dados.</p></li>
-        <li><span class="n">3</span><p>Adicione à tela de início e <strong>ative os avisos</strong> — o app te avisa quando a avaliação sair.</p></li>
-      </ol>
+      <ul class="ganhos">
+        <li><i>1</i><span><b>A touca de hoje e o que falta</b> para a próxima — fundamento por fundamento.</span></li>
+        <li><i>2</i><span><b>O recado do professor</b> sobre a evolução, e o boletim em PDF para guardar.</span></li>
+        <li><i>3</i><span><b>Um aviso no celular</b> assim que a avaliação sair. Você fica sabendo primeiro.</span></li>
+      </ul>
 
       <div class="acesso">
-        <p class="acesso-tit">Seus dados de acesso</p>
+        <p class="acesso-tit">Seu acesso já está pronto</p>
         <dl>
-          <dt>WhatsApp</dt><dd>o seu número, só os algarismos</dd>
-          <dt>Senha</dt><dd>os 4 últimos algarismos do seu WhatsApp</dd>
+          <dt>Usuário</dt><dd>o WhatsApp que você deixou na secretaria</dd>
+          <dt>Senha</dt><dd>os 4 últimos números desse WhatsApp</dd>
         </dl>
-        <p class="exemplo">Exemplo: WhatsApp (11) 98748-8566 → senha <b>8566</b></p>
+        <p class="exemplo">Exemplo: (11) 98748-8566 &rarr; senha <b>8566</b></p>
       </div>
     </div>
 
     <div class="qr-area">
       <div class="qr-caixa" id="qr2"></div>
       <p class="qr-rot">Aponte a câmera</p>
-      <p class="qr-url">higor-blush.vercel.app</p>
+      <p class="qr-url" data-url></p>
+      <p class="qr-nota">Não precisa baixar da loja.<br>Não ocupa espaço. É gratuito.</p>
+    </div>
+
+    <div class="instalar">
+      <div><strong>Android</strong>Abra o site, toque no menu <b>⋮</b> e escolha <b>Instalar aplicativo</b>.</div>
+      <div><strong>iPhone</strong>No Safari, toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>. No iPhone isso é obrigatório para receber os avisos.</div>
     </div>
 
     <footer class="toucas">
@@ -378,17 +395,82 @@
 
 </div>
 
+<!-- ============================ FOLHA 2: CARTAZ ============================ -->
+<div class="folha">
+  <article class="cartaz">
+    <header class="marca">
+      <img src="/logo.png" alt="">
+      <div class="marca-txt">
+        <h1 class="marca-nome">Clube <span>Olimpo</span></h1>
+        <p class="marca-sub">Escola de Natação</p>
+      </div>
+    </header>
+
+    <p class="cartaz-olho">Pais e responsáveis</p>
+    <h2 class="cartaz-titulo">Acompanhe cada<br><em>conquista</em> do seu filho.</h2>
+    <p class="cartaz-apoio">
+      Avaliação trimestral, recado do professor e o que falta para a próxima touca.
+      Tudo no seu celular, a qualquer hora.
+    </p>
+
+    <div class="cartaz-qr">
+      <div class="qr-caixa" id="qr3"></div>
+    </div>
+    <p class="cartaz-acao">Aponte a câmera do celular</p>
+    <p class="cartaz-url" data-url></p>
+
+    <ol class="cartaz-passos">
+      <li><span class="n">1</span><p>Aponte a <b>câmera</b> para o código acima e abra o link.</p></li>
+      <li><span class="n">2</span><p>Toque em <b>Sou Aluno/Responsável</b> e entre com o seu WhatsApp.</p></li>
+      <li><span class="n">3</span><p>Adicione à tela de início e <b>ative os avisos</b>.</p></li>
+    </ol>
+
+    <div class="acesso">
+      <p class="acesso-tit">Seu acesso já está pronto</p>
+      <dl>
+        <dt>Usuário</dt><dd>o WhatsApp que você deixou na secretaria</dd>
+        <dt>Senha</dt><dd>os 4 últimos números desse WhatsApp</dd>
+      </dl>
+      <p class="exemplo">Exemplo: (11) 98748-8566 &rarr; senha <b>8566</b> &nbsp;·&nbsp; Esqueceu? Fale com a recepção.</p>
+    </div>
+
+    <footer class="toucas">
+      <span class="toucas-rot">Progressão das toucas</span>
+      <span class="touca"><i style="background:#FACC15"></i>Amarela</span><span class="seta">›</span>
+      <span class="touca"><i style="background:#F97316"></i>Laranja</span><span class="seta">›</span>
+      <span class="touca"><i style="background:#EF4444"></i>Vermelha</span><span class="seta">›</span>
+      <span class="touca"><i style="background:#22C55E"></i>Verde</span><span class="seta">›</span>
+      <span class="touca"><i style="background:#38BDF8"></i>Azul Claro</span><span class="seta">›</span>
+      <span class="touca"><i style="background:#1D4ED8"></i>Azul Escuro</span><span class="seta">›</span>
+      <span class="touca"><i style="background:#111827"></i>Preta</span>
+    </footer>
+  </article>
+</div>
+
 <script>
   (function () {
-    var url = 'https://higor-blush.vercel.app';
-    ['qr1', 'qr2'].forEach(function (id) {
-      new QRCode(document.getElementById(id), {
-        text: url,
-        width: 264,
-        height: 264,
+    /* Endereço num lugar só: o texto impresso e o QR não podem divergir —
+       um cartaz com QR levando a um lugar e a URL escrita a outro é pior
+       que não ter cartaz nenhum. */
+    var HOST = 'clubeolimpo.vercel.app';
+    var URL_APP = 'https://' + HOST;
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-url]'), function (el) {
+      el.textContent = HOST;
+    });
+
+    [['qr1', 300], ['qr2', 300], ['qr3', 460]].forEach(function (par) {
+      var alvo = document.getElementById(par[0]);
+      if (!alvo) return;
+      new QRCode(alvo, {
+        text: URL_APP,
+        width: par[1],
+        height: par[1],
         colorDark: '#0B0E14',
         colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+        /* correção alta: o cartaz vive na parede e o cartão vai na bolsa —
+           os dois levam dobra, sujeira e reflexo. */
+        correctLevel: QRCode.CorrectLevel.H
       });
     });
   })();
