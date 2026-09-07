@@ -85,8 +85,12 @@ export function PageHeader({ icon: Icon, title, description, metric, action }: P
 }
 
 /**
- * Painel de filtros. Fica grudado no topo ao rolar — no celular isso
- * evita ter que voltar lá em cima para trocar de dia ou de turma.
+ * Painel de filtros.
+ *
+ * Gruda no topo só a partir do tablet. No celular ele empilha chips,
+ * busca, selects e toggle numa coluna alta — grudado, comia metade da
+ * tela o tempo todo e sobrava quase nada para o conteúdo. Rolando junto,
+ * sai da frente assim que a pessoa começa a ler a lista.
  */
 export function FilterBar({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
@@ -94,7 +98,7 @@ export function FilterBar({ children, className }: { children: React.ReactNode; 
       className={cn(
         'bg-surface rounded-panel border border-line shadow-raised',
         'p-3 md:p-4 space-y-3',
-        'sticky top-0 z-20',
+        'md:sticky md:top-0 md:z-20',
         className
       )}
     >

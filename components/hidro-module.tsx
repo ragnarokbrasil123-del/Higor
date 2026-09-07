@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Star, Waves, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Card, EmptyState, Input, PageHeader, PageShell } from '@/components/ui';
@@ -38,12 +39,23 @@ export function HidroModule() {
   const [aberta, setAberta] = useState<number | null>(null);
   const [irPara, setIrPara] = useState('');
   const [ultima, setUltima] = useState<number | null>(null);
+  /** O portal só existe no navegador; no servidor não há document. */
+  const [montado, setMontado] = useState(false);
 
   useEffect(() => {
+    setMontado(true);
     setFavoritos(lerFavoritos());
     const u = Number(localStorage.getItem(CHAVE_ULTIMA) || 0);
     if (u > 0 && u <= TOTAL) setUltima(u);
   }, []);
+
+  // enquanto o visualizador está aberto, a página atrás não rola junto
+  useEffect(() => {
+    if (aberta === null) return;
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = antes; };
+  }, [aberta]);
 
   const guardar = (lista: number[]) => {
     setFavoritos(lista);
@@ -158,8 +170,15 @@ export function HidroModule() {
         </div>
       )}
 
-      {/* visualizador */}
-      {aberta !== null && (
+      {/*
+        Visualizador: vai para o <body> por portal.
+
+        Dentro da árvore normal ele era recortado — a raiz do app tem
+        `overflow-x-clip`, que corta descendente `fixed`, então a tela
+        cheia ficava presa abaixo da barra de abas e a página aparecia
+        cortada. No body não há ancestral que recorte.
+      */}
+      {aberta !== null && montado && createPortal(
         <div className="fixed inset-0 z-[100] bg-surface-raised/95 flex flex-col">
           <div className="flex items-center gap-3 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] shrink-0">
             <span className="text-white font-black text-sm tabular-nums">
@@ -208,7 +227,8 @@ export function HidroModule() {
               Próxima <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </PageShell>
   );
