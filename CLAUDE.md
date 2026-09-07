@@ -73,6 +73,7 @@ Convidar alguém que **já existe** (os 12 professores da planilha) preenche a l
 | Avaliação Natação | `swimming/SwimmingModule.tsx` | staff | avaliação por **turma do dia** |
 | Avulsos & Wellhub | `swimming/` com `escopo="sem-turma"` | admin | os 43 alunos sem horário na grade |
 | Avaliação Sábado | `swimming/` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor |
+| Hidro | `hidro-module.tsx` | staff | acervo de 448 páginas de exercícios de hidroginástica para consulta na aula. Imagens estáticas em `public/hidro/`, **fora do Supabase**. Marcações e última página vista em localStorage |
 | Checklist Limpeza | `checklist-module.tsx` | staff | checklist diário + foto (base64) + realtime |
 | Manutenção | `maintenance-module.tsx` | staff | igual limpeza, dispara push para a equipe |
 | Professores | `professors-module.tsx` | admin | CRUD: nome, horário por dia (turno duplo), ativo/inativo, login opcional + view **Disponibilidade** (professores × dias, carga semanal) |

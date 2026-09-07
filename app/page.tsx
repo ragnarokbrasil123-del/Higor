@@ -15,13 +15,14 @@ import { DashboardModule } from '@/components/dashboard-module';
 import { AccessModule } from '@/components/access-module';
 import { InstallPrompt } from '@/components/install-prompt';
 import { MinhaSemana } from '@/components/minha-semana';
-import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { HidroModule } from '@/components/hidro-module';
+import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { MobileNav } from '@/components/ui';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
 
-type Tab = 'dashboard' | 'acessos' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
+type Tab = 'dashboard' | 'acessos' | 'hidro' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 
 // ==========================================
@@ -292,6 +293,13 @@ export default function Page() {
           )}
 
           {isStaff && (
+            <button onClick={() => setActiveTab('hidro')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'hidro' ? "bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+              <Waves className="w-5 h-5" />
+              <span className="font-bold text-sm">Hidro</span>
+            </button>
+          )}
+
+          {isStaff && (
             <button onClick={() => setActiveTab('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <ClipboardList className="w-5 h-5" />
               <span className="font-bold text-sm">Checklist Limpeza</span>
@@ -355,6 +363,7 @@ export default function Page() {
           ...(isAdmin ? [{ key: 'avulsos', label: 'Avulsos', icon: Sparkles }] : []),
           ...(isAdmin ? [{ key: 'registration', label: 'Cadastro', icon: UserPlus }] : []),
           ...(isAdmin ? [{ key: 'students', label: 'Alunos', icon: Users }] : []),
+          { key: 'hidro', label: 'Hidro', icon: Waves },
           { key: 'cleaning', label: 'Limpeza', icon: ClipboardList },
           { key: 'maintenance', label: 'Manutenção', icon: Wrench },
           ...(isAdmin ? [{ key: 'professors', label: 'Professores', icon: GraduationCap }] : []),
@@ -375,6 +384,7 @@ export default function Page() {
         {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
         {activeTab === 'professors' && isAdmin && <ProfessorsModule />}
+        {activeTab === 'hidro' && isStaff && <HidroModule />}
         {activeTab === 'schedule' && isAdmin && <ScheduleModule />}
         {activeTab === 'schedule' && isTeacher && <MinhaSemana meuNome={user.data?.name || user.data?.username || ''} />}
       </main>
