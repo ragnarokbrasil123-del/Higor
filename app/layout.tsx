@@ -38,6 +38,14 @@ export default function RootLayout({
     <html lang="pt-BR">
       <head>
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/*
+          O Next emite só `mobile-web-app-capable`, o nome padronizado.
+          O Safari do iPhone historicamente lê a versão com prefixo — sem
+          ela, o atalho na Tela de Início pode abrir dentro do navegador,
+          com barra de endereço, em vez de abrir como app. Custa nada ter
+          as duas.
+        */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className={inter.className}>{children}</body>
     </html>
