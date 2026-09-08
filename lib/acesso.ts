@@ -22,10 +22,13 @@
 
 /**
  * Professores entram pelo formulário da Equipe.
- * PARA REABRIR: troque para `true`. Enquanto for `false`, nenhum
+ * PARA FECHAR DE NOVO: troque para `false`. Enquanto for `false`, nenhum
  * professor entra — nem os que você já tiver aprovado.
+ *
+ * Liberado: quem entra agora é só quem tem conta aprovada, e conta só
+ * nasce por convite do admin master pela aba Acessos.
  */
-export const LOGIN_PROFESSOR_LIBERADO = false;
+export const LOGIN_PROFESSOR_LIBERADO = true;
 
 /** Responsáveis entram pelo portal dos pais. Mesma ideia. */
 export const LOGIN_RESPONSAVEL_LIBERADO = true;
