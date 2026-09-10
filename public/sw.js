@@ -4,7 +4,13 @@
 //  2. Cache para o app abrir com internet ruim na beira da piscina
 // ============================================================
 
-const CACHE = 'olimpo-v1';
+/**
+ * SUBA ESTE NÚMERO sempre que trocar um arquivo de /public que mantém o
+ * nome — logo, ícones, manifest. O `activate` apaga todo cache com nome
+ * diferente deste, e é isso que descongela quem já tinha a versão antiga
+ * guardada no aparelho.
+ */
+const CACHE = 'olimpo-v2';
 
 // Casca mínima: o que precisa estar guardado para a tela não vir vazia.
 const ESSENCIAL = ['/', '/manifest.json', '/logo.png', '/icon-192x192.png'];
@@ -77,8 +83,9 @@ self.addEventListener('activate', (event) => {
  * de um deploy — a tela branca com HTML 200 e JS 404. Por isso a navegação
  * é sempre rede primeiro, e o cache só entra quando a rede falha.
  *
- * Os arquivos de /_next/static/ podem vir do cache sem medo: o nome deles
- * tem hash do conteúdo, então um arquivo novo nunca reusa o nome do antigo.
+ * O resto se divide em dois: arquivo com hash no nome pode vir do cache
+ * sem medo; arquivo que mantém o nome (logo, ícones) precisa buscar a
+ * versão nova em paralelo, senão congela na primeira que foi guardada.
  */
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -108,23 +115,47 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // --- Estáticos com hash no nome: cache primeiro, é seguro ---
-  const estatico =
-    url.pathname.startsWith('/_next/static/') ||
-    /\.(png|jpg|jpeg|svg|webp|ico|woff2?|json)$/i.test(url.pathname);
+  const guardavel = (resp) => resp && resp.status === 200 && resp.type === 'basic';
+  const guardar = (chave, resp) => {
+    const copia = resp.clone();
+    caches.open(CACHE).then((c) => c.put(chave, copia)).catch(() => {});
+  };
 
-  if (estatico) {
+  // --- /_next/static/: cache primeiro, sem medo ---
+  // O nome tem hash do conteúdo, então arquivo novo nunca reusa nome antigo.
+  if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
       caches.match(req).then((emCache) => {
         if (emCache) return emCache;
         return fetch(req).then((resp) => {
-          // só guarda resposta boa; erro em cache vira erro permanente
-          if (resp && resp.status === 200 && resp.type === 'basic') {
-            const copia = resp.clone();
-            caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {});
-          }
+          if (guardavel(resp)) guardar(req, resp);
           return resp;
         });
+      })
+    );
+    return;
+  }
+
+  /**
+   * --- Logo, ícones, manifest: serve do cache, mas busca a versão nova ---
+   *
+   * Estes MANTÊM o nome quando o conteúdo muda. Com cache-primeiro puro
+   * ficavam congelados para sempre: trocamos a logo e o navegador seguiu
+   * mostrando a antiga. Aqui a resposta sai do cache na hora (rápido) e
+   * uma cópia fresca é baixada em paralelo, valendo na próxima abertura.
+   */
+  const midia = /\.(png|jpg|jpeg|svg|webp|ico|woff2?|json)$/i.test(url.pathname);
+
+  if (midia) {
+    event.respondWith(
+      caches.match(req).then((emCache) => {
+        const daRede = fetch(req)
+          .then((resp) => {
+            if (guardavel(resp)) guardar(req, resp);
+            return resp;
+          })
+          .catch(() => emCache);
+        return emCache || daRede;
       })
     );
   }
