@@ -132,9 +132,18 @@
     margin: 0 0 2mm; font-size: 8px; letter-spacing: .18em;
     text-transform: uppercase; color: var(--ouro); font-weight: 800;
   }
-  .acesso dl { margin: 0; display: grid; grid-template-columns: 22mm 1fr; gap: 1.2mm 3mm; }
-  .acesso dt { font-size: 9.5px; font-weight: 700; }
-  .acesso dd { margin: 0; font-size: 9.5px; color: var(--cinza); }
+  /* Rótulo ACIMA do valor. Em duas colunas o valor espremia numa tira
+     estreita e a frase quebrava letra a letra; empilhado, lê bem em
+     qualquer largura, no papel e na tela. */
+  .acesso dl { margin: 0; display: grid; gap: 2.8mm; }
+  .acesso dt {
+    font-size: 7.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--cinza); font-weight: 700; margin-bottom: .8mm;
+  }
+  .acesso dd {
+    margin: 0; font-size: 10.5px; font-weight: 600;
+    color: var(--tinta); line-height: 1.35;
+  }
   .exemplo {
     margin: 2.5mm 0 0; padding-top: 2mm; border-top: 1px dotted var(--traco);
     font-size: 9px; color: var(--cinza);
@@ -240,7 +249,10 @@
   .cartaz-passos b { font-weight: 700; }
 
   .cartaz .acesso { text-align: left; max-width: 118mm; margin: 0 auto auto; width: 100%; }
-  .cartaz .acesso dt, .cartaz .acesso dd { font-size: 11px; }
+  /* no cartaz o valor cresce; o rótulo continua pequeno, senão perde a
+     hierarquia de "etiqueta acima do conteúdo" */
+  .cartaz .acesso dd { font-size: 12.5px; }
+  .cartaz .acesso dt { font-size: 8px; }
   .cartaz .acesso-tit { font-size: 9px; }
   .cartaz .exemplo { font-size: 10px; }
 
@@ -249,6 +261,24 @@
   /* ============================================================
      IMPRESSÃO
      ============================================================ */
+  /* ============================================================
+     TELA PEQUENA
+
+     A folha tem 210mm fixos — no celular ela estoura a largura e a
+     pessoa vê um pedaço, tendo que arrastar para os lados. `zoom`
+     encolhe a peça INTEIRA junto com o espaço que ela ocupa, então a
+     folha cabe e continua proporcional. Vale só na tela: a impressão
+     não é afetada.
+     ============================================================ */
+  @media screen and (max-width: 900px) {
+    body { padding: 16px 8px 40px; }
+    .barra { max-width: 100%; }
+    .folha { zoom: 0.62; }
+  }
+  @media screen and (max-width: 620px) {
+    .folha { zoom: 0.42; }
+  }
+
   @page { size: A4; margin: 0; }
 
   @media print {
@@ -304,8 +334,8 @@
       <div class="acesso">
         <p class="acesso-tit">Seu acesso já está pronto</p>
         <dl>
-          <dt>Usuário</dt><dd>o WhatsApp que você deixou na secretaria</dd>
-          <dt>Senha</dt><dd>os 4 últimos números desse WhatsApp</dd>
+          <div><dt>Usuário</dt><dd>O WhatsApp informado no ato da matrícula</dd></div>
+          <div><dt>Senha</dt><dd>Os 4 últimos números desse WhatsApp</dd></div>
         </dl>
         <p class="exemplo">Exemplo: (11) 98748-8566 &rarr; senha <b>8566</b></p>
       </div>
@@ -362,8 +392,8 @@
       <div class="acesso">
         <p class="acesso-tit">Seu acesso já está pronto</p>
         <dl>
-          <dt>Usuário</dt><dd>o WhatsApp que você deixou na secretaria</dd>
-          <dt>Senha</dt><dd>os 4 últimos números desse WhatsApp</dd>
+          <div><dt>Usuário</dt><dd>O WhatsApp informado no ato da matrícula</dd></div>
+          <div><dt>Senha</dt><dd>Os 4 últimos números desse WhatsApp</dd></div>
         </dl>
         <p class="exemplo">Exemplo: (11) 98748-8566 &rarr; senha <b>8566</b></p>
       </div>
@@ -428,8 +458,8 @@
     <div class="acesso">
       <p class="acesso-tit">Seu acesso já está pronto</p>
       <dl>
-        <dt>Usuário</dt><dd>o WhatsApp que você deixou na secretaria</dd>
-        <dt>Senha</dt><dd>os 4 últimos números desse WhatsApp</dd>
+        <div><dt>Usuário</dt><dd>O WhatsApp informado no ato da matrícula</dd></div>
+        <div><dt>Senha</dt><dd>Os 4 últimos números desse WhatsApp</dd></div>
       </dl>
       <p class="exemplo">Exemplo: (11) 98748-8566 &rarr; senha <b>8566</b> &nbsp;·&nbsp; Esqueceu? Fale com a recepção.</p>
     </div>
