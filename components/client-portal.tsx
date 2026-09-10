@@ -154,7 +154,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
       <div className="bg-black pt-[max(3rem,calc(env(safe-area-inset-top)+1.5rem))] pb-6 px-5 sm:px-6 shadow-xl relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="flex justify-between items-start relative z-10">
-          <img src="/logo.png" alt="Clube Olimpo" className="h-10 w-auto object-contain" />
+          <img src="/logo.png" alt="Clube Olimpo" className="h-10 w-10 object-contain bg-white rounded-xl p-1" />
           <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
             Sair <LogOut className="w-4 h-4" />
           </button>

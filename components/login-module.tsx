@@ -188,7 +188,9 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
       <div className="relative z-10 w-full max-w-md p-6">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center mb-10">
-          <img src="/logo.png" alt="Clube Olimpo" className="w-48 h-auto object-contain drop-shadow-2xl mb-4" />
+          <div className="w-40 h-40 bg-white rounded-3xl p-3 mb-5 shadow-2xl shadow-black/60 flex items-center justify-center">
+            <img src="/logo.png" alt="Clube Olimpo" className="w-full h-full object-contain" />
+          </div>
           <h1 className="text-white text-2xl font-bold tracking-widest uppercase">Portal de Acesso</h1>
         </motion.div>
 
