@@ -22,6 +22,10 @@ interface StudentRow {
   modalidade: string | null;
   endereco: string | null;
   observacoes: string | null;
+  /** Matrícula ativa. Quem cancela vira false e mantém ficha e histórico. */
+  ativo: boolean | null;
+  inativo_em: string | null;
+  inativo_motivo: string | null;
 }
 interface ClassRow {
   id: string;
@@ -50,6 +54,8 @@ export function StudentsModule() {
   const [search, setSearch] = useState('');
   const [fTouca, setFTouca] = useState<string>('all');
   const [fModal, setFModal] = useState<string>('all');
+  /** Por padrao a lista mostra so quem esta matriculado. */
+  const [fSituacao, setFSituacao] = useState<'ativos' | 'inativos' | 'todos'>('ativos');
 
   const [editing, setEditing] = useState<StudentRow | null>(null);
   /**
@@ -143,13 +149,65 @@ export function StudentsModule() {
     setOriginal(null);
   };
 
+  /**
+   * Cancelar matrícula — o caminho normal de quem sai.
+   *
+   * Libera a vaga na turma (senão o lugar fica bloqueado para quem quer
+   * entrar) mas preserva ficha, avaliações e histórico de touca. Se a
+   * pessoa voltar em seis meses, está tudo lá.
+   */
+  const cancelarMatricula = async (s: StudentRow) => {
+    const motivo = prompt(
+      `Cancelar a matrícula de ${s.name}?\n\n` +
+      'A ficha, as avaliações e o histórico de touca são mantidos — só a vaga na turma é liberada.\n\n' +
+      'Motivo (opcional):'
+    );
+    if (motivo === null) return; // clicou em cancelar no diálogo
+
+    await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
+    const { error } = await supabase.from('students').update({
+      ativo: false,
+      inativo_em: new Date().toISOString(),
+      inativo_motivo: motivo.trim() || null,
+    }).eq('id', s.id);
+
+    if (error) return alert('Erro ao cancelar: ' + error.message);
+    setEditing(null);
+    setOriginal(null);
+    fetchAll();
+  };
+
+  /** Volta a matrícula. A turma precisa ser escolhida de novo. */
+  const reativarMatricula = async (s: StudentRow) => {
+    const { error } = await supabase.from('students').update({
+      ativo: true,
+      inativo_em: null,
+      inativo_motivo: null,
+    }).eq('id', s.id);
+    if (error) return alert('Erro ao reativar: ' + error.message);
+    setEditing(e => (e ? { ...e, ativo: true, inativo_em: null, inativo_motivo: null } : e));
+    setOriginal(o => (o ? { ...o, ativo: true, inativo_em: null, inativo_motivo: null } : o));
+    fetchAll();
+    alert(`${s.name} voltou para a lista de ativos. Escolha a turma dele aqui na ficha.`);
+  };
+
+  /**
+   * Apagar de verdade. Fica escondido atrás do cancelamento porque é
+   * irreversível e leva as avaliações junto — serve para cadastro
+   * duplicado ou digitado errado, não para aluno que saiu.
+   */
   const excluir = async (s: StudentRow) => {
-    if (!confirm(`Excluir ${s.name}? As avaliações e as vagas dele serão liberadas.`)) return;
+    if (!confirm(
+      `APAGAR ${s.name} de vez?\n\n` +
+      'As avaliações dele serão apagadas junto e não há como desfazer.\n\n' +
+      'Se a pessoa apenas saiu da escola, use "Cancelar matrícula" — ela mantém o histórico.'
+    )) return;
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
     await supabase.from('evaluations').delete().eq('student_id', s.id);
     const { error } = await supabase.from('students').delete().eq('id', s.id);
     if (error) return alert('Erro ao excluir: ' + error.message);
     setEditing(null);
+    setOriginal(null);
     fetchAll();
   };
 
@@ -184,6 +242,9 @@ export function StudentsModule() {
   const lista = students.filter(s => {
     if (fTouca !== 'all' && s.level !== fTouca) return false;
     if (fModal !== 'all' && (s.modalidade || 'fixo') !== fModal) return false;
+    const ativo = s.ativo !== false;
+    if (fSituacao === 'ativos' && !ativo) return false;
+    if (fSituacao === 'inativos' && ativo) return false;
     if (busca) {
       const alvo = `${s.name} ${s.guardian_name || ''} ${s.phone || ''}`.toLowerCase();
       if (!alvo.includes(busca)) return false;
@@ -219,6 +280,11 @@ export function StudentsModule() {
             <Select value={fModal} onChange={e => setFModal(e.target.value)} className="w-full md:w-auto py-2.5">
               <option value="all">Todas as modalidades</option>
               {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
+            </Select>
+            <Select value={fSituacao} onChange={e => setFSituacao(e.target.value as typeof fSituacao)} className="w-full md:w-auto py-2.5">
+              <option value="ativos">Matriculados</option>
+              <option value="inativos">Matrícula cancelada</option>
+              <option value="todos">Todos</option>
             </Select>
           </div>
           <FilterFooter>
@@ -349,16 +415,41 @@ export function StudentsModule() {
           </a>
         ) : undefined}
         footer={
-          <>
-            <Button variant="danger" size="lg" onClick={() => excluir(editing)}>
-              <Trash2 className="w-4 h-4" /> Excluir
-            </Button>
-            <Button size="lg" className="flex-1" onClick={salvar} disabled={saving}>
-              <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar alterações'}
-            </Button>
-          </>
+          editing.ativo === false ? (
+            <>
+              <Button variant="secondary" size="lg" onClick={() => excluir(editing)} title="Apagar de vez, com as avaliações">
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              <Button size="lg" className="flex-1" onClick={() => reativarMatricula(editing)}>
+                <Save className="w-4 h-4" /> Reativar matrícula
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="danger" size="lg" onClick={() => cancelarMatricula(editing)}>
+                <X className="w-4 h-4" /> Cancelar matrícula
+              </Button>
+              <Button size="lg" className="flex-1" onClick={salvar} disabled={saving}>
+                <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar alterações'}
+              </Button>
+            </>
+          )
         }
       >
+                {editing.ativo === false && (
+                  <div className="mb-5 flex items-start gap-3 bg-warning-soft border border-warning/40 rounded-card p-4">
+                    <AlertTriangle className="w-5 h-5 text-warning-ink shrink-0 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="font-bold text-warning-ink text-sm">Matrícula cancelada</p>
+                      <p className="text-xs text-warning-ink/80 mt-0.5 leading-relaxed">
+                        {editing.inativo_em && <>Desde {new Date(editing.inativo_em).toLocaleDateString('pt-BR')}. </>}
+                        {editing.inativo_motivo ? <>Motivo: <b>{editing.inativo_motivo}</b>. </> : null}
+                        A ficha e as avaliações foram mantidas. Toque em <b>Reativar matrícula</b> para trazer de volta —
+                        depois é só escolher a turma.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* dados do aluno */}
                 <section>

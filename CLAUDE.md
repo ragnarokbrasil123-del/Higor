@@ -69,7 +69,7 @@ Convidar alguém que **já existe** (os 12 professores da planilha) preenche a l
 |---|---|---|---|
 | Painel | `dashboard-module.tsx` | admin | visão geral: resumo → pendências (com atalho para a aba) → evolução → atividades recentes. **Aba inicial do admin.** Nenhum número é inventado: sem dado, mostra Empty State |
 | Cadastro Alunos | `registration-module.tsx` | staff | matrícula individual + **importação em massa** (colar planilha/CSV com prévia linha a linha) |
-| Alunos | `students-module.tsx` | admin | ficha completa editável: dados, responsável, endereço, observações e **troca de dia/horário** (mexe em `class_slots`) |
+| Alunos | `students-module.tsx` | admin | ficha completa editável: dados, responsável, endereço, observações e **troca de dia/horário** (mexe em `class_slots`). **Cancelar matrícula** libera a vaga mas mantém ficha e avaliações (`ativo=false`); filtro de situação e botão Reativar. Apagar de vez existe, mas escondido |
 | Avaliação Natação | `swimming/SwimmingModule.tsx` | staff | avaliação por **turma do dia** |
 | Avulsos & Wellhub | `swimming/` com `escopo="sem-turma"` | admin | os 43 alunos sem horário na grade |
 | Avaliação Sábado | `swimming/` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor |
@@ -116,7 +116,7 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 | Tabela | Linhas | Colunas |
 |---|---:|---|
 | `app_users` | 15 | `id, username (nullable), password (texto puro), role ('admin' ou 'teacher'), name, active, schedule (jsonb), created_at` + controle de acesso: `status ('convidado'/'aprovado'/'revogado'), is_master, convite_codigo, convite_expira_em, liberado_em, liberado_por` |
-| `students` | 429 | `id, name, age (nullable), level (CapLevel), guardian_name, phone, password, modalidade, endereco, observacoes, created_at` + legado não usado `class_day, class_time` |
+| `students` | 429 | `id, name, age (nullable), level (CapLevel), guardian_name, phone, password, modalidade, endereco, observacoes, created_at` + legado não usado `class_day, class_time` + matrícula: `ativo, inativo_em, inativo_motivo` |
 | `classes` | 312 | `id, teacher_name (texto livre), day_of_week, start_time, end_time, created_at` |
 | `class_slots` | 1303 | `id, class_id, cap_color (**chave do nível**, ex. `orange`), student_id (nullable), created_at` |
 | `evaluations` | 0 | `id, student_id, date, level, scores (jsonb), notes, approved, created_at` |
@@ -171,7 +171,7 @@ Importados de `Informações para criação do app.xlsx` (3 abas: alunos fixos, 
 ### Bloqueios operacionais
 
 1. **11 dos 12 professores não têm login.** Sem isso, nada da aba de avaliação chega até eles.
-2. **6 alunos "fixo" ficaram sem turma** — o horário da planilha não bateu com nenhum professor. Aparecem num grupo próprio, com aviso, na aba Avulsos & Wellhub.
+2. **2 alunos "fixo" sem turma** — os dois Bernardo, touca Verde, pedidos para quinta 8h30, mas nesse horário só existem turmas Laranja e Vermelha. Aparecem num grupo próprio, com aviso, na aba Avulsos & Wellhub.
 
 > **Deploy:** `origin` é `github.com/ragnarokbrasil123-del/Higor.git` e o Vercel reconstrói sozinho a cada push no `main`. A autenticação já está resolvida: `gh` CLI logado como `ragnarokbrasil123-del` e `gh auth setup-git` ligando essa credencial ao Git — `git push` funciona direto, sem pedir senha.
 

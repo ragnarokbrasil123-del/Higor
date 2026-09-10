@@ -44,7 +44,9 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
       page('class_slots', 'id, class_id, cap_color, student_id'),
     ]);
 
-    setStudents((std as Aluno[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
+    // matricula cancelada some da avaliacao. Sem isto, como cancelar libera a
+    // vaga, o aluno cairia em 'Avulsos & Wellhub' como se precisasse de turma.
+    setStudents((std as Aluno[]).filter(a => (a as any).ativo !== false).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     setEvaluations((evl as any[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setClasses(cls as ClassRow[]);
     setSlots(slt as SlotRow[]);
@@ -74,7 +76,7 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
     const { data: evl } = await supabase.from('evaluations').select('*');
     const { data: std } = await supabase.from('students').select('*');
     if (evl) setEvaluations((evl as any[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    if (std) setStudents((std as Student[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
+    if (std) setStudents((std as any[]).filter(a => a.ativo !== false).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     return evl || [];
   };
 

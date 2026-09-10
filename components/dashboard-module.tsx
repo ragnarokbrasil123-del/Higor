@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils';
    honesto em vez de um gráfico de enfeite.
    ============================================================ */
 
-type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null };
+type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null; ativo: boolean | null };
 type Aval = { id: string; student_id: string; date: string; level: CapLevel; approved: boolean };
 type Turma = { id: string; day_of_week: string; start_time: string; teacher_name: string };
 type Vaga = { class_id: string; student_id: string | null };
@@ -122,7 +122,7 @@ export function DashboardModule() {
     (async () => {
       try {
         const [alunos, avals, turmas, vagas, equipe, limpeza, manut] = await Promise.all([
-          buscarTudo<Aluno>('students', 'id,name,level,modalidade'),
+          buscarTudo<Aluno>('students', 'id,name,level,modalidade,ativo'),
           buscarTudo<Aval>('evaluations', 'id,student_id,date,level,approved'),
           buscarTudo<Turma>('classes', 'id,day_of_week,start_time,teacher_name'),
           buscarTudo<Vaga>('class_slots', 'class_id,student_id'),
@@ -130,7 +130,8 @@ export function DashboardModule() {
           buscarTudo<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
           buscarTudo<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),
         ]);
-        if (vivo) setDados({ alunos, avals, turmas, vagas, equipe, limpeza, manut });
+        // matricula cancelada nao entra em nenhuma conta do painel
+        if (vivo) setDados({ alunos: alunos.filter(a => a.ativo !== false), avals, turmas, vagas, equipe, limpeza, manut });
       } catch (e: any) {
         if (vivo) setErro(e?.message ?? 'Falha ao carregar os dados.');
       }
