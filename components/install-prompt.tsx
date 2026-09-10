@@ -83,7 +83,7 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
   if (displayMode === 'modal') {
     return (
       <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center md:hidden">
-        <div className="w-24 h-24 bg-white rounded-3xl mb-8 shadow-[0_0_40px_rgba(245,158,11,0.4)] flex items-center justify-center p-3">
+        <div className="w-24 h-24 mb-8 flex items-center justify-center">
           <img src="/logo.png" className="w-full h-full object-contain" alt="Logo" />
         </div>
         
@@ -127,7 +127,7 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-lg border border-slate-700 flex items-center justify-center p-1">
+        <div className="w-10 h-10 flex items-center justify-center">
           <img src="/logo.png" className="w-full h-full object-contain" alt="Logo" />
         </div>
         <div>

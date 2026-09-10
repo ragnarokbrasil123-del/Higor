@@ -232,7 +232,7 @@ export default function Page() {
 
       <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-contain bg-white p-0.5" />
+          <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain" />
           <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-amber-500">Olimpo</span></span>
         </div>
         
@@ -252,7 +252,7 @@ export default function Page() {
       <header className="hidden md:flex bg-slate-950 text-white shrink-0 w-60 lg:w-72 flex-col z-20 shadow-2xl relative">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-            <img src="/logo.png" alt="Logo Clube Olimpo" className="w-full h-full object-contain bg-white p-0.5" />
+            <img src="/logo.png" alt="Logo Clube Olimpo" className="w-full h-full object-contain" />
           </div>
           <span className="font-bold text-lg tracking-tight uppercase">
             Clube <span className="text-amber-500">Olimpo</span>
