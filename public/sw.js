@@ -10,7 +10,7 @@
  * diferente deste, e é isso que descongela quem já tinha a versão antiga
  * guardada no aparelho.
  */
-const CACHE = 'olimpo-v2';
+const CACHE = 'olimpo-v3';
 
 // Casca mínima: o que precisa estar guardado para a tela não vir vazia.
 const ESSENCIAL = ['/', '/manifest.json', '/logo.png', '/icon-192x192.png'];
