@@ -30,16 +30,31 @@ type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
 // ==========================================
 function GlobalNotifier() {
   const [alert, setAlert] = useState<{title: string, message: string} | null>(null);
-  const [soundUnlocked, setSoundUnlocked] = useState(false);
 
-  const unlockSound = () => {
-    setSoundUnlocked(true);
-    try {
-      const audio = new Audio('https://www.soundjay.com/buttons/button-09.mp3');
-      audio.volume = 0.1;
-      audio.play().catch(()=>{});
-    } catch(e) {}
-  };
+  /**
+   * O navegador só deixa tocar som depois de a pessoa interagir com a
+   * página — mas serve QUALQUER toque, não precisa de um botão dedicado.
+   *
+   * Antes havia um botão laranja "Ligar o Alarme Sonoro" fixo no rodapé.
+   * Como o estado dele não era lembrado, voltava a cada recarga, e ainda
+   * cobria a barra de abas. Agora o primeiro toque em qualquer lugar já
+   * destrava, e a pessoa nem percebe.
+   */
+  useEffect(() => {
+    const destravar = () => {
+      try {
+        const audio = new Audio('https://www.soundjay.com/buttons/button-09.mp3');
+        audio.volume = 0;          // silencioso: serve só para liberar o áudio
+        audio.play().catch(() => {});
+      } catch { /* sem áudio neste aparelho: segue sem som */ }
+    };
+    window.addEventListener('pointerdown', destravar, { once: true });
+    window.addEventListener('keydown', destravar, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', destravar);
+      window.removeEventListener('keydown', destravar);
+    };
+  }, []);
 
   useEffect(() => {
     const playSound = () => {
@@ -77,12 +92,6 @@ function GlobalNotifier() {
 
   return (
     <>
-      {!soundUnlocked && (
-        <button onClick={unlockSound} className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[99999] bg-amber-500 text-black px-6 py-3 rounded-full font-bold shadow-2xl animate-bounce hover:bg-amber-400 transition-colors">
-          🔊 Clique aqui para Ligar o Alarme Sonoro
-        </button>
-      )}
-
       <AnimatePresence>
         {alert && (
           <motion.div 

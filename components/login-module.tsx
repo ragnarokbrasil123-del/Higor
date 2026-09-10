@@ -217,9 +217,6 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
                   : <Lock className="w-5 h-5 text-slate-400" />}
               </button>
 
-              <button onClick={() => { setLoginType('convite'); setError(''); }} className="w-full py-3 text-slate-400 hover:text-amber-500 text-sm font-bold flex items-center justify-center gap-2 transition-colors">
-                <KeyRound className="w-4 h-4" /> Tenho um convite
-              </button>
             </motion.div>
           ) : loginType === 'team' ? (
             
