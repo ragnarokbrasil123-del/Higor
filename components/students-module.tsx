@@ -52,6 +52,13 @@ export function StudentsModule() {
   const [fModal, setFModal] = useState<string>('all');
 
   const [editing, setEditing] = useState<StudentRow | null>(null);
+  /**
+   * Cópia de como a ficha estava ao abrir. Serve só para avisar quem
+   * fecha sem salvar — já aconteceu de digitar a observação, não
+   * alcançar o botão Salvar (o teclado do celular cobre) e perder tudo
+   * sem nenhum aviso.
+   */
+  const [original, setOriginal] = useState<StudentRow | null>(null);
   const [saving, setSaving] = useState(false);
   const [addDay, setAddDay] = useState<string>(DAYS[0]);
   const [showAdd, setShowAdd] = useState(false);
@@ -93,6 +100,26 @@ export function StudentsModule() {
         return d !== 0 ? d : a.cls!.start_time.localeCompare(b.cls!.start_time);
       });
 
+  /** Abre a ficha guardando o estado inicial, para saber o que mudou. */
+  const abrirFicha = (s: StudentRow) => {
+    setEditing({ ...s });
+    setOriginal({ ...s });
+    setShowAdd(false);
+  };
+
+  const CAMPOS: (keyof StudentRow)[] = [
+    'name', 'age', 'level', 'guardian_name', 'phone', 'password', 'modalidade', 'endereco', 'observacoes',
+  ];
+  const temMudanca = () =>
+    !!editing && !!original && CAMPOS.some(c => (editing[c] ?? '') !== (original[c] ?? ''));
+
+  /** Fecha a ficha, mas não deixa perder texto digitado em silêncio. */
+  const fecharFicha = () => {
+    if (temMudanca() && !confirm('Você alterou a ficha e ainda não salvou. Fechar mesmo assim e perder as alterações?')) return;
+    setEditing(null);
+    setOriginal(null);
+  };
+
   // ------------------------------------------------ salvar dados
   const salvar = async () => {
     if (!editing) return;
@@ -113,6 +140,7 @@ export function StudentsModule() {
     if (error) return alert('Erro ao salvar: ' + error.message);
     await fetchAll();
     setEditing(null);
+    setOriginal(null);
   };
 
   const excluir = async (s: StudentRow) => {
@@ -252,7 +280,7 @@ export function StudentsModule() {
                             )}
                           </TD>
                           <TD align="right">
-                            <Button size="sm" variant="secondary" onClick={() => { setEditing({ ...s }); setShowAdd(false); }}>
+                            <Button size="sm" variant="secondary" onClick={() => abrirFicha(s)}>
                               <Edit2 className="w-3.5 h-3.5" /> Abrir ficha
                             </Button>
                           </TD>
@@ -271,7 +299,7 @@ export function StudentsModule() {
                   return (
                     <RowCard
                       key={s.id}
-                      onClick={() => { setEditing({ ...s }); setShowAdd(false); }}
+                      onClick={() => abrirFicha(s)}
                       title={s.name}
                       subtitle={s.age ? `${s.age} anos` : undefined}
                       badges={
@@ -302,7 +330,7 @@ export function StudentsModule() {
       {editing && (
       <Modal
         open={!!editing}
-        onClose={() => setEditing(null)}
+        onClose={fecharFicha}
         size="xl"
         title={
           <div className="flex items-center gap-3 min-w-0">

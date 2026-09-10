@@ -27,6 +27,11 @@ export const viewport: Viewport = {
   // com baixa visão de ampliar a ficha do filho.
   maximumScale: 5,
   userScalable: true,
+  // Sem isto, o teclado do celular sobe POR CIMA da tela: numa ficha longa
+  // ele cobre o botão Salvar, a pessoa digita, não alcança o botão, fecha
+  // e perde o que escreveu. Com "resizes-content" a página encolhe e o
+  // rodapé do diálogo continua alcançável.
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({
