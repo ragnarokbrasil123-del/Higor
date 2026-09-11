@@ -14,6 +14,7 @@ import { TelaAvaliacao } from './TelaAvaliacao';
 import { TRIMESTRE_ATUAL, hhmm, hojeDia, trimestre, type Aluno, type Bloco, type ClassRow, type Escopo } from './constantes';
 import { useDadosNatacao } from './useDadosNatacao';
 import { useFilaAvaliacao } from './useFilaAvaliacao';
+import { lecionaEm, professoresDe, rotuloProfessor } from '@/lib/professor';
 
 interface SwimmingModuleProps {
   escopo?: Escopo;
@@ -75,10 +76,12 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
       .map(s => alunoPorId.get(s.student_id!))
       .filter(Boolean) as Student[];
 
-  // turmas visíveis (professor vê só as dele) + filtro de professor
-  const minhasClasses = classes.filter(c => isAdmin || !meuNome || c.teacher_name === meuNome);
-  const profsDisponiveis = [...new Set(minhasClasses.map(c => c.teacher_name))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  const classesFiltradas = minhasClasses.filter(c => filterProf === 'all' || c.teacher_name === filterProf);
+  // turmas visíveis (professor vê só as dele) + filtro de professor.
+  // No sábado teacher_name é a dupla "A / B": lecionaEm entende os dois.
+  const minhasClasses = classes.filter(c => isAdmin || !meuNome || lecionaEm(c.teacher_name, meuNome));
+  // o filtro lista pessoas, não postos — a dupla vira dois nomes
+  const profsDisponiveis = [...new Set(minhasClasses.flatMap(c => professoresDe(c.teacher_name)))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const classesFiltradas = minhasClasses.filter(c => filterProf === 'all' || lecionaEm(c.teacher_name, filterProf));
 
   // na aba de sábado o dia é fixo
   const diaAtivo = sabadoMode ? 'Sábado' : selectedDay;
@@ -113,7 +116,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     : classesDoDia.map(c => ({
         chave: c.id,
         hora: hhmm(c.start_time),
-        professor: c.teacher_name,
+        professor: rotuloProfessor(c.teacher_name),
         alunos: alunosVisiveis(c.id),
       }));
 

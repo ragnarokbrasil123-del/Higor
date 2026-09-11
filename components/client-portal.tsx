@@ -10,6 +10,7 @@ import { InstallPrompt } from '@/components/install-prompt';
 import { CaminhoTouca } from '@/components/caminho-touca';
 import { periodoTrimestre } from '@/lib/trimestre';
 import { supabase } from '@/lib/supabase';
+import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui';
 
@@ -124,7 +125,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         const c = porId.get(s.class_id);
         if (!c || !s.student_id) return;
         (mapa[s.student_id] ||= []).push({
-          dia: c.day_of_week, inicio: hhmm(c.start_time), fim: hhmm(c.end_time), professor: c.teacher_name,
+          dia: c.day_of_week, inicio: hhmm(c.start_time), fim: hhmm(c.end_time), professor: rotuloProfessor(c.teacher_name),
         });
       });
       const ORDEM = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];

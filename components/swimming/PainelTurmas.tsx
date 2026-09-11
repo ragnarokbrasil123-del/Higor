@@ -65,14 +65,14 @@ export function PainelTurmas({
             </Card>
           )}
 
-          {/* A escala de sábado gira: a associação aluno-professor do cadastro
-              não vale para o dia. O admin tem uma aba própria por horário. */}
+          {/* No sábado a turma é de uma dupla que alterna (um sábado cada).
+              O cadastro sabe a dupla, não quem está de escala hoje. */}
           {!isAdmin && !sabadoMode && diaAtivo === 'Sábado' && blocos.length > 0 && (
             <Card className="border-warning/40 bg-warning-soft flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-warning-ink shrink-0 mt-0.5" />
               <p className="text-xs text-warning-ink leading-relaxed">
-                <b>No sábado a escala gira.</b> Esta lista vem do cadastro e pode não ser quem você
-                atende hoje. Confirme com a administração antes de avaliar.
+                <b>Sábado é escala alternada.</b> Estas turmas são da sua dupla: num sábado é você,
+                no outro é o colega. Avalie só os alunos que você atendeu hoje.
               </p>
             </Card>
           )}

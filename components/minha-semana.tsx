@@ -7,6 +7,7 @@ import { capLevelOrder, levels, type CapLevel } from '@/types';
 import { cn } from '@/lib/utils';
 import { Badge, Card, EmptyState, ErrorState, Loading, PageHeader, PageShell } from '@/components/ui';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
+import { lecionaEm } from '@/lib/professor';
 
 /* ============================================================
    Minha Semana — a agenda do professor, só leitura.
@@ -65,7 +66,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
     if (!dados) return null;
     const { turmas, vagas, alunos, avals } = dados;
 
-    const minhas = turmas.filter(t => t.teacher_name === meuNome);
+    const minhas = turmas.filter(t => lecionaEm(t.teacher_name, meuNome));
     const alunoPorId = new Map(alunos.map(a => [a.id, a]));
     const avaliado = (id: string) => avals.some(e => e.student_id === id && trimestre(e.date) === TRIMESTRE_ATUAL);
 
@@ -163,8 +164,8 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
             <Card className="border-warning/40 bg-warning-soft flex items-start gap-3">
               <AlertTriangle className="w-5 h-5 text-warning-ink shrink-0 mt-0.5" />
               <p className="text-xs text-warning-ink leading-relaxed">
-                <b>No sábado a escala gira.</b> Esta lista vem do cadastro e pode não corresponder a quem
-                você atende neste sábado. Confirme com a administração antes de avaliar.
+                <b>Sábado é escala alternada.</b> Estas turmas são da sua dupla: num sábado é você,
+                no outro é o colega. Confira com a administração qual sábado é o seu.
               </p>
             </Card>
           )}

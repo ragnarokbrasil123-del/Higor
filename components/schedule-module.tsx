@@ -6,6 +6,7 @@ import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, Chev
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { cn } from '@/lib/utils';
+import { lecionaEm, rotuloProfessor } from '@/lib/professor';
 import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle } from '@/components/ui';
 
 interface ClassSlot {
@@ -116,13 +117,11 @@ export function ScheduleModule() {
     const raw = localStorage.getItem('olimpo_session');
     const sess = raw ? JSON.parse(raw) : null;
 
-    let query = supabase.from('classes').select('*').order('start_time', { ascending: true });
-    if (sess && sess.role !== 'admin') {
-      const tName = sess.data?.name || sess.data?.username;
-      if (tName) query = query.eq('teacher_name', tName);
-    }
-
-    const { data: clsData } = await query;
+    // professor vê só as próprias turmas — filtrado aqui, e não no banco,
+    // porque no sábado teacher_name é a dupla "A / B"
+    const tName = sess && sess.role !== 'admin' ? (sess.data?.name || sess.data?.username) : null;
+    const { data: todas } = await supabase.from('classes').select('*').order('start_time', { ascending: true });
+    const clsData = tName ? (todas ?? []).filter(c => lecionaEm(c.teacher_name, tName)) : todas;
     const { data: slotData } = await supabase.from('class_slots').select('*');
     const { data: stuData } = await supabase.from('students').select('id, name');
 
@@ -240,7 +239,7 @@ export function ScheduleModule() {
     (c.class_slots || []).map(s => (s.student_id ? studentsMap[s.student_id] : null)).filter(Boolean) as string[];
 
   const passaFiltros = (c: ClassBlock) => {
-    if (filterProf !== 'all' && c.teacher_name !== filterProf) return false;
+    if (filterProf !== 'all' && !lecionaEm(c.teacher_name, filterProf)) return false;
     if (filterTouca !== 'all' && !(c.class_slots || []).some(s => s.cap_color === filterTouca)) return false;
     if (onlyWithStudents && !(c.class_slots || []).some(s => s.student_id)) return false;
     if (buscando) {
@@ -363,7 +362,7 @@ export function ScheduleModule() {
 
                           <div className="flex items-start gap-2 mb-3 pr-6">
                             <User className="w-3.5 h-3.5 text-ink-subtle mt-0.5 shrink-0" />
-                            <span className="text-xs font-black text-ink-muted leading-tight">{cls.teacher_name}</span>
+                            <span className="text-xs font-black text-ink-muted leading-tight">{rotuloProfessor(cls.teacher_name)}</span>
                           </div>
 
                           <div className="flex flex-col gap-1.5">

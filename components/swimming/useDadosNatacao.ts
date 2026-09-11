@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Student } from '@/types';
 import type { Aluno, ClassRow, SlotRow } from './constantes';
+import { lecionaEm } from '@/lib/professor';
 
 /**
  * Carga inicial da Avaliação de Natação e a trava de permissão do professor.
@@ -54,7 +55,8 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
     // trava do professor: só vê os alunos das turmas dele
     if (sess?.role === 'teacher') {
       const nome = sess.data?.name || sess.data?.username;
-      const minhas = new Set((cls as ClassRow[]).filter(c => c.teacher_name === nome).map(c => c.id));
+      // no sabado teacher_name e a dupla "A / B" — lecionaEm reconhece os dois
+      const minhas = new Set((cls as ClassRow[]).filter(c => lecionaEm(c.teacher_name, nome)).map(c => c.id));
       const ids = (slt as SlotRow[]).filter(s => minhas.has(s.class_id) && s.student_id).map(s => s.student_id!);
       setAllowedIds([...new Set(ids)]);
     } else {

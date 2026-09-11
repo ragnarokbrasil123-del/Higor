@@ -72,7 +72,7 @@ Convidar alguém que **já existe** (os 12 professores da planilha) preenche a l
 | Alunos | `students-module.tsx` | admin | ficha completa editável: dados, responsável, endereço, observações e **troca de dia/horário** (mexe em `class_slots`). **Cancelar matrícula** libera a vaga mas mantém ficha e avaliações (`ativo=false`); filtro de situação e botão Reativar. Apagar de vez existe, mas escondido |
 | Avaliação Natação | `swimming/SwimmingModule.tsx` | staff | avaliação por **turma do dia** |
 | Avulsos & Wellhub | `swimming/` com `escopo="sem-turma"` | admin | os 43 alunos sem horário na grade |
-| Avaliação Sábado | `swimming/` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor |
+| Avaliação Sábado | `swimming/` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor (a turma é da dupla, não de quem está de escala) |
 | Hidro | `hidro-module.tsx` | staff | acervo de 448 páginas de exercícios de hidroginástica para consulta na aula. Imagens estáticas em `public/hidro/`, **fora do Supabase**. Marcações e última página vista em localStorage |
 | Checklist Limpeza | `checklist-module.tsx` | staff | checklist diário + foto (base64) + realtime |
 | Manutenção | `maintenance-module.tsx` | staff | igual limpeza, dispara push para a equipe |
@@ -135,7 +135,7 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 
 - **429 alunos** — 392 fixo, 24 wellhub, 13 avulso. **386 com turma**, **43 sem**.
 - Toucas: vermelha 139 · laranja 99 · verde 99 · amarela 61 · azul claro 22 · azul escuro 9 · preta 0.
-- **312 turmas**, 1303 vagas, **587 ocupadas**. Por dia: Seg 48 · Ter 52 · Qua 51 · Qui 43 · Sex 50 · **Sáb 68**.
+- **278 turmas** (eram 312; o sábado foi juntado por dupla em 11/09/2026). Por dia: Seg 48 · Ter 52 · Qua 51 · Qui 43 · Sex 50 · **Sáb 34**. Backup pré-junção em `backups/sabado-antes-da-juncao-2026-09-11.json`.
 - **12 professores**, mas **só 1 tem login** (`leticia`). 3 admins: `admin`, `rony`, `souza.higor@gmail.com`.
 - **0 avaliações** — o recurso nunca chegou a ser usado em produção.
 
@@ -145,6 +145,7 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 
 - **Toucas**: fonte única em `types/index.ts` — `levels` (7 níveis, `yellow` → `black`) e `capLevelOrder`. **Não existe Prata/silver** (foi removida a pedido do dono). `class_slots.cap_color` guarda a **chave** (`'orange'`), nunca o rótulo em português.
 - **Critérios de avaliação** por touca: `lib/evaluation-criteria.ts` — usado pela Avaliação e pelo Portal dos Pais.
+- **Professor da turma**: `lib/professor.ts`. Dias de semana = um nome; sábado = dupla `"A / B"`. `lecionaEm(teacher_name, nome)` para filtrar, `professoresDe` para listar pessoas, `rotuloProfessor` para exibir ("LETÍCIA / DOUGLAS").
 - **Trimestre**: rótulo `2026-T3`, calculado por `Math.floor(mês / 3) + 1`. "Avaliado" significa que existe avaliação no trimestre corrente.
 - **PDF do boletim**: `lib/boletim-pdf.ts`, compartilhado entre professor e responsável.
 - `cn()` (clsx + tailwind-merge) é **redefinido localmente em cada módulo** — é o padrão atual do projeto, não é bug.
@@ -154,7 +155,7 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 ## Regras de negócio (vieram do dono, não estão dedutíveis do código)
 
 - **O professor não pode falar com os pais pelo número pessoal.** Qualquer aviso ao responsável sai do número da academia ou do próprio app. Por isso o telefone do responsável **só aparece para admin**; nenhuma tela de professor mostra contato. O `/api/push` recebe só o `student_id` e resolve o telefone **no servidor**, justamente para não expor o número ao navegador do professor.
-- **No sábado a escala dos professores gira: todo funcionário trabalha um sábado sim, outro não.** Por isso (a) a associação aluno↔professor no sábado **não é confiável** e a aba de sábado agrupa por **horário** sem mostrar professor; (b) `app_users.schedule.sab` fica desligado para todos e **não é editável** na aba Professores — um horário semanal fixo não representa escala quinzenal; (c) a Grade **não confere expediente no sábado** (`windowFits` devolve ok) — qualquer aviso ali seria falso.
+- **No sábado a escala é em duplas fixas que alternam** (um sábado um, no outro o colega): Letícia/Douglas, Eduardo/Paula, Caio/André, Anderson/Luiz — 4 professores por sábado. No banco isso é **uma turma por posto**, com `classes.teacher_name = "NOME A / NOME B"` (nomes completos, separador `" / "`). **Nunca compare `teacher_name` por igualdade** — use `lecionaEm` / `professoresDe` / `rotuloProfessor` de `lib/professor.ts`, senão o sábado some da visão dos dois. Consequências: (a) a aba Avaliação Sábado agrupa por **horário** sem professor, porque o cadastro sabe a dupla e não quem está de escala hoje; (b) `app_users.schedule.sab` fica desligado para todos e **não é editável** na aba Professores — um horário semanal fixo não representa escala quinzenal; (c) a Grade **não confere expediente no sábado** (`windowFits` devolve ok) — qualquer aviso ali seria falso.
 - Turmas de **Amarela, Laranja e Vermelha** são de nível único; de **Verde em diante** podem misturar níveis na mesma turma.
 - Senha do responsável = **4 últimos dígitos do telefone**. Decisão consciente (fácil de informar no balcão); o dado exposto é apenas a ficha de natação da criança.
 

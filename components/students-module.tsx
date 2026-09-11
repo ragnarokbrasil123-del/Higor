@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
 
@@ -500,7 +501,7 @@ export function StudentsModule() {
                             <p className="text-sm font-bold text-ink">
                               {a.cls!.day_of_week} · {hhmm(a.cls!.start_time)} às {hhmm(a.cls!.end_time)}
                             </p>
-                            <p className="text-xs font-medium text-ink-muted truncate">Prof. {a.cls!.teacher_name}</p>
+                            <p className="text-xs font-medium text-ink-muted truncate">Prof. {rotuloProfessor(a.cls!.teacher_name)}</p>
                             {divergente && (
                               <p className="text-[11px] font-bold text-warning-ink flex items-center gap-1 mt-1">
                                 <AlertTriangle className="w-3 h-3" /> vaga de {levels[a.slot.cap_color as CapLevel]?.label || a.slot.cap_color} — touca do aluno mudou
@@ -536,7 +537,7 @@ export function StudentsModule() {
                               <p className="text-sm font-black text-ink flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-indigo-500" /> {hhmm(v.cls!.start_time)}
                               </p>
-                              <p className="text-[11px] font-medium text-ink-muted truncate">Prof. {v.cls!.teacher_name}</p>
+                              <p className="text-[11px] font-medium text-ink-muted truncate">Prof. {rotuloProfessor(v.cls!.teacher_name)}</p>
                             </button>
                           ))}
                         </div>
