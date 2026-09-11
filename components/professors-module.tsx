@@ -337,6 +337,14 @@ export function ProfessorsModule() {
                               {!isActive && <span className="ml-2 text-[9px] font-bold text-danger uppercase">inativo</span>}
                             </TD>
                             {DAYS.map(d => {
+                              // sábado é escala alternada para todos — não há horário a mostrar
+                              if (d.key === 'sab') {
+                                return (
+                                  <TD key={d.key} className="align-top">
+                                    <span className="text-[10px] font-bold text-ink-subtle uppercase tracking-wider">escala</span>
+                                  </TD>
+                                );
+                              }
                               const day = wk[d.key];
                               const shifts = day?.enabled ? (day.shifts || []).filter(s => s.start && s.end) : [];
                               return (
@@ -505,6 +513,20 @@ export function ProfessorsModule() {
                     <div className="space-y-2">
                       {DAYS.map(({ key, full }) => {
                         const day = form.schedule[key];
+
+                        // Sábado não é cadastrado: todo funcionário faz escala
+                        // um sábado sim, outro não. Um horário fixo aqui mentiria.
+                        if (key === 'sab') {
+                          return (
+                            <div key={key} className="rounded-2xl border border-dashed border-line-strong bg-surface-sunken p-3 flex items-center justify-between gap-3">
+                              <span className="font-bold text-sm text-ink-subtle w-16">{full}</span>
+                              <span className="text-xs font-medium text-ink-muted text-right">
+                                Escala alternada — um sábado sim, outro não. Vale para toda a equipe e não é definido aqui.
+                              </span>
+                            </div>
+                          );
+                        }
+
                         return (
                           <div key={key} className={cn("rounded-2xl border p-3 transition-colors", day.enabled ? "bg-surface border-line" : "bg-surface-sunken border-line")}>
                             <div className="flex items-center justify-between">

@@ -154,7 +154,7 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 ## Regras de negócio (vieram do dono, não estão dedutíveis do código)
 
 - **O professor não pode falar com os pais pelo número pessoal.** Qualquer aviso ao responsável sai do número da academia ou do próprio app. Por isso o telefone do responsável **só aparece para admin**; nenhuma tela de professor mostra contato. O `/api/push` recebe só o `student_id` e resolve o telefone **no servidor**, justamente para não expor o número ao navegador do professor.
-- **No sábado a escala dos professores gira.** A associação aluno↔professor no sábado **não é confiável** — por isso a aba de sábado agrupa por **horário** e não mostra professor nenhum.
+- **No sábado a escala dos professores gira: todo funcionário trabalha um sábado sim, outro não.** Por isso (a) a associação aluno↔professor no sábado **não é confiável** e a aba de sábado agrupa por **horário** sem mostrar professor; (b) `app_users.schedule.sab` fica desligado para todos e **não é editável** na aba Professores — um horário semanal fixo não representa escala quinzenal; (c) a Grade **não confere expediente no sábado** (`windowFits` devolve ok) — qualquer aviso ali seria falso.
 - Turmas de **Amarela, Laranja e Vermelha** são de nível único; de **Verde em diante** podem misturar níveis na mesma turma.
 - Senha do responsável = **4 últimos dígitos do telefone**. Decisão consciente (fácil de informar no balcão); o dado exposto é apenas a ficha de natação da criança.
 

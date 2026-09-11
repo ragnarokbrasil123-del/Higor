@@ -45,6 +45,15 @@ const emptySlots = () => capLevelOrder.reduce((acc, k) => ({ ...acc, [k]: 0 }), 
 
 // Verifica se a janela [start,end] cabe em algum turno do professor naquele dia
 function windowFits(schedule: ProfLite['schedule'], dayKey: string, start: string, end: string): { ok: boolean; hours: string } {
+  /**
+   * Sábado é escala: todo funcionário trabalha um sábado sim, outro não.
+   * Um horário semanal fixo não consegue representar isso, então não há o
+   * que conferir — e um aviso de "fora do expediente" aqui seria sempre
+   * falso. É a mesma razão pela qual a aba de sábado agrupa por horário e
+   * não mostra professor.
+   */
+  if (dayKey === 'sab') return { ok: true, hours: 'escala alternada' };
+
   const d = schedule?.[dayKey];
   if (!d?.enabled) return { ok: false, hours: 'folga' };
   const shifts = (Array.isArray(d.shifts) ? d.shifts : []).filter(s => s?.start && s?.end);
@@ -63,7 +72,9 @@ function summarizeProf(schedule: ProfLite['schedule']): string {
     const txt = (d.shifts || []).filter(s => s.start && s.end).map(s => `${s.start}–${s.end}`).join(' / ');
     if (txt) parts.push(`${DAY_KEY_SHORT[k]} ${txt}`);
   });
-  return parts.length ? parts.join('  •  ') : 'sem horário cadastrado';
+  // o sábado não entra no cadastro semanal: é escala alternada para todos
+  if (!parts.length) return 'sem horário na semana  •  sáb escala';
+  return parts.join('  •  ') + '  •  sáb escala';
 }
 
 export function ScheduleModule() {
