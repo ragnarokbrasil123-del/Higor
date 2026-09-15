@@ -11,7 +11,7 @@ import { PainelSemTurma } from './PainelSemTurma';
 import { PainelTurmas } from './PainelTurmas';
 import { SeloAvaliacao } from './SeloAvaliacao';
 import { TelaAvaliacao } from './TelaAvaliacao';
-import { GRUPOS_SEM_TURMA, TRIMESTRE_ATUAL, hhmm, hojeDia, trimestre, type Aluno, type Bloco, type ClassRow, type Escopo } from './constantes';
+import { TRIMESTRE_ATUAL, hhmm, hojeDia, trimestre, type Aluno, type Bloco, type ClassRow, type Escopo } from './constantes';
 import { useDadosNatacao } from './useDadosNatacao';
 import { useFilaAvaliacao, type Grupo } from './useFilaAvaliacao';
 import { lecionaEm, professoresDe, rotuloProfessor } from '@/lib/professor';
@@ -150,16 +150,16 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
   const abrirAluno = (id: string) => { setAlunoId(id); setView('aluno'); };
 
   /**
-   * Os grupos da tela, na ordem em que aparecem: turmas do dia (ou horários,
-   * no sábado) ou os grupos de avulsos. A fila usa isto para emendar sozinha
-   * o próximo aluno do mesmo grupo e para oferecer o grupo seguinte no fim.
+   * Os grupos da tela, na ordem em que aparecem: as turmas do dia (ou os
+   * horários, no sábado). A fila usa isto para emendar sozinha o próximo aluno
+   * da mesma turma e para oferecer a turma seguinte no fim.
+   *
+   * Em Avulsos & Wellhub não há emenda: o aluno não é de um professor, então
+   * outro colega pode estar avaliando o mesmo grupo — a fila fica só com quem
+   * o professor tocou.
    */
   const grupos: Grupo[] = semTurmaMode
-    ? GRUPOS_SEM_TURMA.map(g => ({
-        chave: g.key,
-        rotulo: g.titulo,
-        ids: semTurmaFiltrado.filter(s => (s.modalidade || 'fixo') === g.key).map(s => s.id),
-      })).filter(g => g.ids.length > 0)
+    ? []
     : blocosDoDia.map(b => ({ chave: b.chave, rotulo: 'Turma das ' + b.hora, ids: b.alunos.map(a => a.id) }));
 
   // fila de avaliação em sequência (marcação, rascunho, salvar e avançar)

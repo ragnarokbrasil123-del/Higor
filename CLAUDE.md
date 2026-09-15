@@ -86,7 +86,7 @@ Convidar alguém que **já existe** (os 12 professores da planilha) preenche a l
 Era um arquivo de 1047 linhas; hoje são 13. Um componente de entrada, três escopos via prop `escopo`, três telas internas (`view`):
 
 - **`home`** — lista o que avaliar, conforme o escopo.
-- **`avaliando`** — fila em sequência ("Aluno 2 de 6"), critérios com botões grandes Passou/Treinar, atalho "marcar todos como Passou", **gerador de observação**, rascunho automático em `localStorage` (`olimpo_draft_aval_<id>`), botão "Salvar e próximo". **A fila emenda sozinha**: ao acabar, entram os que ainda faltam no mesmo grupo (turma do dia, horário de sábado ou grupo de avulsos — `grupos` vindos do módulo); só quando não sobra ninguém aparece a conclusão, com botão para o próximo grupo do dia que tem pendente. A seta de voltar sai direto quando não há nada marcado.
+- **`avaliando`** — fila em sequência ("Aluno 2 de 6"), critérios com botões grandes Passou/Treinar, atalho "marcar todos como Passou", **gerador de observação**, rascunho automático em `localStorage` (`olimpo_draft_aval_<id>`), botão "Salvar e próximo". **A fila emenda sozinha nas turmas**: ao acabar, entram os que ainda faltam na mesma turma (turma do dia ou horário de sábado — `grupos` vindos do módulo); só quando não sobra ninguém aparece a conclusão, com botão para a próxima turma do dia que tem pendente. Em Avulsos & Wellhub **não emenda** (`grupos = []`): o aluno não é de um professor e outro colega pode estar avaliando o mesmo grupo. A seta de voltar sai direto quando não há nada marcado.
 - **`aluno`** — ficha do aluno: histórico, PDF, botão de avaliar.
 
 | Arquivo | Responsabilidade |
