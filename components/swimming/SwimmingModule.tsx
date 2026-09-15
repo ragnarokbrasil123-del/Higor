@@ -11,9 +11,9 @@ import { PainelSemTurma } from './PainelSemTurma';
 import { PainelTurmas } from './PainelTurmas';
 import { SeloAvaliacao } from './SeloAvaliacao';
 import { TelaAvaliacao } from './TelaAvaliacao';
-import { TRIMESTRE_ATUAL, hhmm, hojeDia, trimestre, type Aluno, type Bloco, type ClassRow, type Escopo } from './constantes';
+import { GRUPOS_SEM_TURMA, TRIMESTRE_ATUAL, hhmm, hojeDia, trimestre, type Aluno, type Bloco, type ClassRow, type Escopo } from './constantes';
 import { useDadosNatacao } from './useDadosNatacao';
-import { useFilaAvaliacao } from './useFilaAvaliacao';
+import { useFilaAvaliacao, type Grupo } from './useFilaAvaliacao';
 import { lecionaEm, professoresDe, rotuloProfessor } from '@/lib/professor';
 
 interface SwimmingModuleProps {
@@ -55,16 +55,6 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
   const alunoPorId = new Map(students.map(s => [s.id, s]));
   const meusAlunos = students.filter(s => podeVer(s.id));
-
-  // fila de avaliação em sequência (marcação, rascunho, salvar e avançar)
-  const aval = useFilaAvaliacao({
-    view,
-    alunoPorId,
-    recarregarAvaliacoes,
-    aoIniciar: () => setView('avaliando'),
-    aoSair: () => setView('home'),
-  });
-  const abrirFila = aval.abrir;
 
   const ultimaAval = (sid: string) => evaluations.find(e => e.student_id === sid);
   const avaliadoAgora = (sid: string) =>
@@ -144,7 +134,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     ? semTurmaFiltrado
     : sabadoMode
       ? alunosDeClasses(idsSabado)
-      : filterProf === 'all'
+      : filterProf === 'all' && isAdmin
         ? meusAlunos
         : alunosDeClasses(idsFiltro);
   const totalAvaliados = alunosNoEscopo.filter(s => avaliadoAgora(s.id)).length;
@@ -158,6 +148,31 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
     : [];
 
   const abrirAluno = (id: string) => { setAlunoId(id); setView('aluno'); };
+
+  /**
+   * Os grupos da tela, na ordem em que aparecem: turmas do dia (ou horários,
+   * no sábado) ou os grupos de avulsos. A fila usa isto para emendar sozinha
+   * o próximo aluno do mesmo grupo e para oferecer o grupo seguinte no fim.
+   */
+  const grupos: Grupo[] = semTurmaMode
+    ? GRUPOS_SEM_TURMA.map(g => ({
+        chave: g.key,
+        rotulo: g.titulo,
+        ids: semTurmaFiltrado.filter(s => (s.modalidade || 'fixo') === g.key).map(s => s.id),
+      })).filter(g => g.ids.length > 0)
+    : blocosDoDia.map(b => ({ chave: b.chave, rotulo: 'Turma das ' + b.hora, ids: b.alunos.map(a => a.id) }));
+
+  // fila de avaliação em sequência (marcação, rascunho, salvar e avançar)
+  const aval = useFilaAvaliacao({
+    view,
+    alunoPorId,
+    grupos,
+    avaliadoAgora,
+    recarregarAvaliacoes,
+    aoIniciar: () => setView('avaliando'),
+    aoSair: () => setView('home'),
+  });
+  const abrirFila = aval.abrir;
   const selo = (sid: string) => <SeloAvaliacao avaliado={avaliadoAgora(sid)} ultima={ultimaAval(sid)} />;
 
   // ================================================================ RENDER

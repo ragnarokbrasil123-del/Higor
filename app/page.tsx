@@ -287,7 +287,7 @@ export default function Page() {
             <span className="font-bold text-sm">Avaliação Natação</span>
           </button>
 
-          {isAdmin && (
+          {isStaff && (
             <button onClick={() => setActiveTab('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <Sparkles className="w-5 h-5" />
               <span className="font-bold text-sm">Avulsos & Wellhub</span>
@@ -368,7 +368,7 @@ export default function Page() {
         {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
         {activeTab === 'students' && isAdmin && <StudentsModule />}
         {activeTab === 'swimming' && <SwimmingModule />}
-        {activeTab === 'avulsos' && isAdmin && <SwimmingModule escopo="sem-turma" />}
+        {activeTab === 'avulsos' && isStaff && <SwimmingModule escopo="sem-turma" />}
         {activeTab === 'sabado' && isAdmin && <SwimmingModule escopo="sabado" />}
         {activeTab === 'cleaning' && isStaff && <ChecklistModule />}
         {activeTab === 'maintenance' && isStaff && <MaintenanceModule />}
@@ -387,7 +387,7 @@ export default function Page() {
           { key: 'swimming', label: 'Avaliação', icon: Droplets, primary: true },
           ...(isAdmin ? [{ key: 'sabado', label: 'Sábado', icon: CalendarClock, primary: true }] : []),
           { key: 'schedule', label: isAdmin ? 'Grade' : 'Semana', icon: CalendarDays, primary: true },
-          ...(isAdmin ? [{ key: 'avulsos', label: 'Avulsos', icon: Sparkles }] : []),
+          { key: 'avulsos', label: 'Avulsos', icon: Sparkles },
           ...(isAdmin ? [{ key: 'registration', label: 'Cadastro', icon: UserPlus }] : []),
           ...(isAdmin ? [{ key: 'students', label: 'Alunos', icon: Users }] : []),
           { key: 'hidro', label: 'Hidro', icon: Waves },

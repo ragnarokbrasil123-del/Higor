@@ -47,7 +47,7 @@ Sessão em `localStorage`, chave **`olimpo_session`**, formato `{ role, data }`:
 | Papel | `data` | Acesso |
 |---|---|---|
 | `admin` | linha de `app_users` | tudo |
-| `teacher` | linha de `app_users` | só os alunos das próprias turmas |
+| `teacher` | linha de `app_users` | os alunos das próprias turmas **+ todos os sem turma** (avulso, wellhub) |
 | `client` | **array** de linhas de `students` | cai direto no `ClientPortal`, só leitura |
 
 O `client` é array porque **irmãos compartilham telefone e senha** — 25 famílias têm 2+ filhos.
@@ -71,7 +71,7 @@ Convidar alguém que **já existe** (os 12 professores da planilha) preenche a l
 | Cadastro Alunos | `registration-module.tsx` | staff | matrícula individual + **importação em massa** (colar planilha/CSV com prévia linha a linha) |
 | Alunos | `students-module.tsx` | admin | ficha completa editável: dados, responsável, endereço, observações e **troca de dia/horário** (mexe em `class_slots`). **Cancelar matrícula** libera a vaga mas mantém ficha e avaliações (`ativo=false`); filtro de situação e botão Reativar. Apagar de vez existe, mas escondido |
 | Avaliação Natação | `swimming/SwimmingModule.tsx` | staff | avaliação por **turma do dia** |
-| Avulsos & Wellhub | `swimming/` com `escopo="sem-turma"` | admin | os 43 alunos sem horário na grade |
+| Avulsos & Wellhub | `swimming/` com `escopo="sem-turma"` | staff | os 43 alunos sem horário na grade. O professor também vê: avulso/wellhub aparece em qualquer aula e quem estiver dando a aula avalia |
 | Avaliação Sábado | `swimming/` com `escopo="sabado"` | admin | sábado **agrupado por horário**, sem professor (a turma é da dupla, não de quem está de escala) |
 | Hidro | `hidro-module.tsx` | staff | acervo de 448 páginas de exercícios de hidroginástica para consulta na aula. Imagens estáticas em `public/hidro/`, **fora do Supabase**. Marcações e última página vista em localStorage |
 | Checklist Limpeza | `checklist-module.tsx` | staff | checklist diário + foto (base64) + realtime |
@@ -86,7 +86,7 @@ Convidar alguém que **já existe** (os 12 professores da planilha) preenche a l
 Era um arquivo de 1047 linhas; hoje são 13. Um componente de entrada, três escopos via prop `escopo`, três telas internas (`view`):
 
 - **`home`** — lista o que avaliar, conforme o escopo.
-- **`avaliando`** — fila em sequência ("Aluno 2 de 6"), critérios com botões grandes Passou/Treinar, atalho "marcar todos como Passou", **gerador de observação**, rascunho automático em `localStorage` (`olimpo_draft_aval_<id>`), botão "Salvar e próximo".
+- **`avaliando`** — fila em sequência ("Aluno 2 de 6"), critérios com botões grandes Passou/Treinar, atalho "marcar todos como Passou", **gerador de observação**, rascunho automático em `localStorage` (`olimpo_draft_aval_<id>`), botão "Salvar e próximo". **A fila emenda sozinha**: ao acabar, entram os que ainda faltam no mesmo grupo (turma do dia, horário de sábado ou grupo de avulsos — `grupos` vindos do módulo); só quando não sobra ninguém aparece a conclusão, com botão para o próximo grupo do dia que tem pendente. A seta de voltar sai direto quando não há nada marcado.
 - **`aluno`** — ficha do aluno: histórico, PDF, botão de avaliar.
 
 | Arquivo | Responsabilidade |

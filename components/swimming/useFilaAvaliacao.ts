@@ -7,10 +7,16 @@ import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { TRIMESTRE_ATUAL, draftKey, trimestre, type Aluno } from './constantes';
 import { gerarObservacao } from './observacao';
 
+/** Um bloco da tela inicial (turma, horário de sábado ou grupo de avulsos). */
+export interface Grupo { chave: string; rotulo: string; ids: string[] }
+
 interface Opcoes {
   /** A tela atual do módulo — o rascunho só é gravado enquanto está avaliando. */
   view: 'home' | 'avaliando' | 'aluno';
   alunoPorId: Map<string, Aluno>;
+  /** Grupos da tela inicial, na ordem em que aparecem. */
+  grupos: Grupo[];
+  avaliadoAgora: (id: string) => boolean;
   recarregarAvaliacoes: () => Promise<any[]>;
   /** Chamado por abrir(): quem decide a tela é o módulo. */
   aoIniciar: () => void;
@@ -25,14 +31,14 @@ interface Opcoes {
  * Movido do SwimmingModule preservando a regra de aprovação e a promoção
  * de touca exatamente como estavam.
  */
-export function useFilaAvaliacao({ view, alunoPorId, recarregarAvaliacoes, aoIniciar, aoSair }: Opcoes) {
+export function useFilaAvaliacao({ view, alunoPorId, grupos, avaliadoAgora, recarregarAvaliacoes, aoIniciar, aoSair }: Opcoes) {
   const [fila, setFila] = useState<string[]>([]);
   const [filaIdx, setFilaIdx] = useState(0);
   const [scores, setScores] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [variacaoFrase, setVariacaoFrase] = useState(0);
-  const [feito, setFeito] = useState<{ total: number; aprovados: number } | null>(null);
+  const [feito, setFeito] = useState<{ total: number; aprovados: number; proximo: Grupo | null } | null>(null);
   /** Banner rápido logo após salvar: quem foi salvo e se trocou de touca. */
   const [ultimoSalvo, setUltimoSalvo] = useState<{ nome: string; novaTouca?: string } | null>(null);
   const [sairAberto, setSairAberto] = useState(false);
@@ -78,6 +84,18 @@ export function useFilaAvaliacao({ view, alunoPorId, recarregarAvaliacoes, aoIni
     typeof window !== 'undefined' &&
     !!localStorage.getItem(draftKey(alunoAtual.id));
   const criterios = alunoAtual ? EVALUATION_CRITERIA[alunoAtual.level as CapLevel] || [] : [];
+
+  /**
+   * A fila nasce de um toque (um aluno, ou os pendentes de uma turma), mas o
+   * professor quer emendar: ao acabar, entram os que ainda faltam NO MESMO
+   * grupo — sem voltar para a tela inicial.
+   */
+  // (por qualquer um da fila: com "só quem falta avaliar" ligado, o já salvo sai do grupo)
+  const grupoDaFila = fila.length ? grupos.find(g => fila.some(id => g.ids.includes(id))) ?? null : null;
+  const restantesDoGrupo = (avaliado: (id: string) => boolean) =>
+    (grupoDaFila?.ids ?? []).filter(id => !fila.includes(id) && !avaliado(id));
+  /** Quantos ainda entrariam na fila depois do último — para o rótulo do botão. */
+  const restamNoGrupo = restantesDoGrupo(avaliadoAgora).length;
   const marcados = criterios.filter(c => scores[c.id] && scores[c.id] !== 'pending').length;
   const passou = criterios.filter(c => scores[c.id] === 'passed').length;
 
@@ -176,11 +194,31 @@ export function useFilaAvaliacao({ view, alunoPorId, recarregarAvaliacoes, aoIni
       setFilaIdx(prox);
       carregarAluno(fila[prox]);
       topoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
-      const dados = await recarregarAvaliacoes();
-      const aprovados = fila.filter(id => dados.some((e: any) => e.student_id === id && e.approved && trimestre(e.date) === TRIMESTRE_ATUAL)).length;
-      setFeito({ total: fila.length, aprovados });
+      return;
     }
+
+    const dados = await recarregarAvaliacoes();
+    const avaliadoNoBanco = (id: string) => dados.some((e: any) => e.student_id === id && trimestre(e.date) === TRIMESTRE_ATUAL);
+
+    // ainda falta alguém neste grupo? emenda na fila e segue
+    const mais = restantesDoGrupo(avaliadoNoBanco);
+    if (mais.length) {
+      setFila([...fila, ...mais]);
+      setFilaIdx(prox);
+      carregarAluno(mais[0]);
+      topoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    // grupo encerrado: oferece o próximo grupo da tela que ainda tem pendente
+    const idxGrupo = grupoDaFila ? grupos.indexOf(grupoDaFila) : -1;
+    const proximo = grupos
+      .slice(idxGrupo + 1)
+      .map(g => ({ ...g, ids: g.ids.filter(id => !avaliadoNoBanco(id)) }))
+      .find(g => g.ids.length > 0) ?? null;
+
+    const aprovados = fila.filter(id => dados.some((e: any) => e.student_id === id && e.approved && trimestre(e.date) === TRIMESTRE_ATUAL)).length;
+    setFeito({ total: fila.length, aprovados, proximo });
   };
 
   /** Botão "Voltar para as turmas" da tela de conclusão. */
@@ -189,11 +227,20 @@ export function useFilaAvaliacao({ view, alunoPorId, recarregarAvaliacoes, aoIni
   /** Confirmação do diálogo "Sair da avaliação?" — o rascunho fica guardado. */
   const sair = () => { setSairAberto(false); aoSair(); setFila([]); };
 
+  /**
+   * Seta de voltar: se não há nada marcado neste aluno, sai direto — o
+   * diálogo só faz sentido quando existe marcação que ficaria de rascunho.
+   */
+  const pedirSaida = () => {
+    if (marcados === 0 && !notes.trim()) return sair();
+    setSairAberto(true);
+  };
+
   return {
     fila, filaIdx, scores, notes, setNotes, salvando, feito, ultimoSalvo,
     sairAberto, setSairAberto, salvosNaFila, puladosNaFila, topoRef,
-    alunoAtual, temRascunho, criterios, marcados, passou,
+    alunoAtual, temRascunho, criterios, marcados, passou, restamNoGrupo,
     abrir, marcarTodos, marcarCriterio, gerarSugestao, irParaAluno, voltarAluno,
-    salvarEAvancar, encerrar, sair,
+    salvarEAvancar, encerrar, sair, pedirSaida,
   };
 }

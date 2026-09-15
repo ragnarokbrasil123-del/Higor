@@ -52,13 +52,17 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
     setClasses(cls as ClassRow[]);
     setSlots(slt as SlotRow[]);
 
-    // trava do professor: só vê os alunos das turmas dele
+    // trava do professor: vê os alunos das turmas dele e, além deles, quem não
+    // tem turma nenhuma (avulso, wellhub) — esses aparecem em qualquer aula e
+    // qualquer professor pode avaliar quando o aluno vier.
     if (sess?.role === 'teacher') {
       const nome = sess.data?.name || sess.data?.username;
       // no sabado teacher_name e a dupla "A / B" — lecionaEm reconhece os dois
       const minhas = new Set((cls as ClassRow[]).filter(c => lecionaEm(c.teacher_name, nome)).map(c => c.id));
       const ids = (slt as SlotRow[]).filter(s => minhas.has(s.class_id) && s.student_id).map(s => s.student_id!);
-      setAllowedIds([...new Set(ids)]);
+      const comTurma = new Set((slt as SlotRow[]).filter(s => s.student_id).map(s => s.student_id!));
+      const semTurma = (std as Aluno[]).filter(a => !comTurma.has(a.id)).map(a => a.id);
+      setAllowedIds([...new Set([...ids, ...semTurma])]);
     } else {
       setAllowedIds('all');
     }

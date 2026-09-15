@@ -26,9 +26,9 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
   const {
     fila, filaIdx, scores, notes, setNotes, salvando, feito, ultimoSalvo,
     sairAberto, setSairAberto, salvosNaFila, puladosNaFila, topoRef,
-    alunoAtual, temRascunho, criterios, marcados, passou,
+    alunoAtual, temRascunho, criterios, marcados, passou, restamNoGrupo,
     marcarTodos, marcarCriterio, gerarSugestao, irParaAluno, voltarAluno,
-    salvarEAvancar, encerrar, sair,
+    salvarEAvancar, encerrar, sair, pedirSaida, abrir,
   } = aval;
   if (feito) {
     return (
@@ -40,9 +40,21 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
         <p className="text-ink-muted font-medium mt-2">
           {feito.total} aluno(s) concluído(s){feito.aprovados > 0 && <> · <b className="text-success">{feito.aprovados} trocaram de touca 🏅</b></>}
         </p>
-        <button onClick={encerrar} className="mt-8 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl active:scale-95 transition-transform">
-          Voltar para as turmas
-        </button>
+        {feito.proximo ? (
+          <>
+            {/* o professor emenda a turma seguinte sem passar pela tela inicial */}
+            <button onClick={() => abrir(feito.proximo!.ids)} className="mt-8 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl active:scale-95 transition-transform flex items-center gap-2">
+              {feito.proximo.rotulo} · {feito.proximo.ids.length} a avaliar <ChevronRight className="w-5 h-5" />
+            </button>
+            <button onClick={encerrar} className="mt-3 px-6 py-3 text-ink-muted font-bold rounded-2xl active:scale-95 transition-transform">
+              Voltar para as turmas
+            </button>
+          </>
+        ) : (
+          <button onClick={encerrar} className="mt-8 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl active:scale-95 transition-transform">
+            Voltar para as turmas
+          </button>
+        )}
       </div>
     );
   }
@@ -56,7 +68,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
       <div className="sticky top-0 z-20 bg-surface border-b border-line shadow-raised">
         <div className="max-w-3xl mx-auto p-4">
           <div className="flex items-center gap-3">
-            <IconButton onClick={() => setSairAberto(true)} aria-label="Sair da avaliação" className="bg-surface-sunken shrink-0">
+            <IconButton onClick={pedirSaida} aria-label="Sair da avaliação" className="bg-surface-sunken shrink-0">
               <ArrowLeft className="w-5 h-5 text-ink-muted" />
             </IconButton>
             <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center text-white font-black shrink-0', info?.bgClass)}>
@@ -216,7 +228,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
             Pular
           </button>
           <button onClick={() => salvarEAvancar(false)} disabled={salvando} className="flex-1 h-14 bg-surface-raised text-white font-black rounded-control active:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2">
-            {salvando ? 'Salvando...' : filaIdx + 1 < fila.length ? <>Salvar e próximo <ChevronRight className="w-5 h-5" /></> : <>Salvar e finalizar <CheckCircle2 className="w-5 h-5" /></>}
+            {salvando ? 'Salvando...' : filaIdx + 1 < fila.length || restamNoGrupo > 0 ? <>Salvar e próximo <ChevronRight className="w-5 h-5" /></> : <>Salvar e finalizar <CheckCircle2 className="w-5 h-5" /></>}
           </button>
         </div>
         {passou === criterios.length && criterios.length > 0 && (
