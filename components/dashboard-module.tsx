@@ -317,7 +317,7 @@ export function DashboardModule() {
   // "avaliado" aqui é no trimestre corrente — mesma regra usada na Avaliação e nos Alunos
   const avaliadoNoTrimestre = (id: string) => resumo.avals.some(a => a.student_id === id && trimestre(a.date) === TRIMESTRE_ATUAL);
 
-  const gerarRelatorio = () => {
+  const gerarRelatorio = async () => {
     const linhas = resumo.alunos
       .filter(a => fTouca === 'todas' || a.level === fTouca)
       .filter(a => fModalidade === 'todas' || (a.modalidade || 'fixo') === fModalidade)
@@ -348,8 +348,8 @@ export function DashboardModule() {
     if (fHorario !== 'todos') partes.push(`Horário: ${fHorario}`);
     if (fModalidade !== 'todas') partes.push(`Modalidade: ${fModalidade}`);
 
-    gerarRelatorioAlunosPDF(linhas, partes.join(' · '));
     setRelatorioAberto(false);
+    await gerarRelatorioAlunosPDF(linhas, partes.join(' · '));
   };
 
   return (

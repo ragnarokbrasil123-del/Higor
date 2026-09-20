@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { carregarLogoBase64 } from '@/lib/pdf-logo';
 
 export interface LinhaRelatorio {
   nome: string;
@@ -14,7 +15,7 @@ const truncar = (s: string, max: number) => (s.length > max ? s.slice(0, max - 1
  * Gera e baixa um relatório de alunos em PDF, com os filtros escolhidos
  * descritos no topo — usado pelo botão "Gerar relatório" do Painel.
  */
-export function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFiltros: string) {
+export async function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFiltros: string) {
   const doc = new jsPDF();
   const COLS = [
     { titulo: 'Aluno', x: 12, max: 32 },
@@ -28,6 +29,10 @@ export function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFiltros:
   doc.rect(0, 0, 210, 297, 'F');
   doc.setFillColor(30, 41, 59);
   doc.rect(0, 0, 210, 32, 'F');
+
+  const logo = await carregarLogoBase64();
+  if (logo) doc.addImage(logo, 'PNG', 12, 6, 18, 18);
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);

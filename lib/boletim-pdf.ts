@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import { CapLevel, levels } from '@/types';
 import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
+import { carregarLogoBase64 } from '@/lib/pdf-logo';
 
 interface AvaliacaoPDF {
   date: string;
@@ -11,7 +12,7 @@ interface AvaliacaoPDF {
 }
 
 /** Gera e baixa o boletim trimestral em PDF. Usado pela Avaliação e pelo Portal dos Pais. */
-export function gerarBoletimPDF(evaluation: AvaliacaoPDF, alunoNome: string) {
+export async function gerarBoletimPDF(evaluation: AvaliacaoPDF, alunoNome: string) {
   const doc = new jsPDF();
   const isApproved = !!evaluation.approved;
 
@@ -19,6 +20,10 @@ export function gerarBoletimPDF(evaluation: AvaliacaoPDF, alunoNome: string) {
   doc.rect(0, 0, 210, 297, 'F');
   doc.setFillColor(30, 41, 59);
   doc.rect(0, 0, 210, 40, 'F');
+
+  const logo = await carregarLogoBase64();
+  if (logo) doc.addImage(logo, 'PNG', 14, 10, 20, 20);
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(24);
