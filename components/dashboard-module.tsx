@@ -126,7 +126,7 @@ export function DashboardModule() {
 
   // ----- filtros do relatório em PDF -----
   const [relatorioAberto, setRelatorioAberto] = useState(false);
-  const [fAval, setFAval] = useState<'todos' | 'avaliado' | 'pendente'>('todos');
+  const [fAval, setFAval] = useState<'todos' | 'pendente' | 'aprovado' | 'treinamento'>('todos');
   const [fTouca, setFTouca] = useState<'todas' | CapLevel>('todas');
   const [fDia, setFDia] = useState('todos');
   const [fHorario, setFHorario] = useState('todos');
@@ -314,8 +314,14 @@ export function DashboardModule() {
   const diasDisponiveis = [...new Set(resumo.turmas.map(t => t.day_of_week))].sort((a, b) => DIAS.indexOf(a) - DIAS.indexOf(b));
   const horariosDisponiveis = [...new Set(resumo.turmas.map(t => t.start_time.slice(0, 5)))].sort();
 
-  // "avaliado" aqui é no trimestre corrente — mesma regra usada na Avaliação e nos Alunos
-  const avaliadoNoTrimestre = (id: string) => resumo.avals.some(a => a.student_id === id && trimestre(a.date) === TRIMESTRE_ATUAL);
+  // avaliação no trimestre corrente — mesma regra usada na Avaliação e nos Alunos.
+  // Pega a mais recente do trimestre (pode haver mais de uma), pra saber o resultado.
+  const ultimaAvaliacaoNoTrimestre = (id: string) => {
+    const doTrimestre = resumo.avals.filter(a => a.student_id === id && trimestre(a.date) === TRIMESTRE_ATUAL);
+    if (!doTrimestre.length) return null;
+    return doTrimestre.reduce((mais, atual) => (atual.date > mais.date ? atual : mais));
+  };
+  const avaliadoNoTrimestre = (id: string) => ultimaAvaliacaoNoTrimestre(id) !== null;
 
   const gerarRelatorio = async () => {
     const linhas = resumo.alunos
@@ -323,8 +329,10 @@ export function DashboardModule() {
       .filter(a => fModalidade === 'todas' || (a.modalidade || 'fixo') === fModalidade)
       .filter(a => {
         if (fAval === 'todos') return true;
-        const ok = avaliadoNoTrimestre(a.id);
-        return fAval === 'avaliado' ? ok : !ok;
+        const ultima = ultimaAvaliacaoNoTrimestre(a.id);
+        if (fAval === 'pendente') return !ultima;
+        if (!ultima) return false;
+        return fAval === 'aprovado' ? ultima.approved : !ultima.approved;
       })
       .filter(a => {
         if (fDia === 'todos' && fHorario === 'todos') return true;
@@ -333,16 +341,21 @@ export function DashboardModule() {
         );
       })
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
-      .map(a => ({
-        nome: a.name,
-        touca: levels[a.level]?.label || a.level,
-        aulas: aulasDoAluno(a.id).map(t => `${t.day_of_week.split('-')[0]} ${t.start_time.slice(0, 5)}`).join(' / ') || 'sem turma',
-        responsavel: a.guardian_name || '—',
-        situacao: (avaliadoNoTrimestre(a.id) ? 'Avaliado' : 'Pendente') as 'Avaliado' | 'Pendente',
-      }));
+      .map(a => {
+        const ultima = ultimaAvaliacaoNoTrimestre(a.id);
+        const situacao: 'Aprovado' | 'Em treinamento' | 'Pendente' = !ultima ? 'Pendente' : ultima.approved ? 'Aprovado' : 'Em treinamento';
+        return {
+          nome: a.name,
+          touca: levels[a.level]?.label || a.level,
+          aulas: aulasDoAluno(a.id).map(t => `${t.day_of_week.split('-')[0]} ${t.start_time.slice(0, 5)}`).join(' / ') || 'sem turma',
+          responsavel: a.guardian_name || '—',
+          situacao,
+        };
+      });
 
+    const AVAL_LABEL = { pendente: 'pendente', aprovado: 'aprovado', treinamento: 'em treinamento' } as const;
     const partes: string[] = [];
-    if (fAval !== 'todos') partes.push(`Avaliação: ${fAval === 'avaliado' ? 'pronta' : 'pendente'} (trimestre ${TRIMESTRE_ATUAL})`);
+    if (fAval !== 'todos') partes.push(`Avaliação: ${AVAL_LABEL[fAval]} (trimestre ${TRIMESTRE_ATUAL})`);
     if (fTouca !== 'todas') partes.push(`Touca: ${levels[fTouca].label}`);
     if (fDia !== 'todos') partes.push(`Dia: ${fDia.split('-')[0]}`);
     if (fHorario !== 'todos') partes.push(`Horário: ${fHorario}`);
@@ -609,8 +622,9 @@ export function DashboardModule() {
             <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Avaliação (trimestre {TRIMESTRE_ATUAL})</label>
             <Select value={fAval} onChange={e => setFAval(e.target.value as typeof fAval)} className="mt-1">
               <option value="todos">Todos</option>
-              <option value="avaliado">Avaliação pronta</option>
               <option value="pendente">Avaliação pendente</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="treinamento">Em treinamento (não aprovado)</option>
             </Select>
           </div>
 

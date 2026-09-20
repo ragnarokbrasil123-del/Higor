@@ -6,8 +6,15 @@ export interface LinhaRelatorio {
   touca: string;
   aulas: string;
   responsavel: string;
-  situacao: 'Avaliado' | 'Pendente';
+  situacao: 'Aprovado' | 'Em treinamento' | 'Pendente';
 }
+
+/** Cor e texto (mais curto, pra caber na coluna) de cada situação. */
+const SITUACAO_PDF: Record<LinhaRelatorio['situacao'], { texto: string; cor: [number, number, number] }> = {
+  Aprovado: { texto: 'Aprovado', cor: [22, 163, 74] },
+  'Em treinamento': { texto: 'Treinando', cor: [217, 119, 6] },
+  Pendente: { texto: 'Pendente', cor: [100, 116, 139] },
+};
 
 const truncar = (s: string, max: number) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
 
@@ -86,10 +93,10 @@ export async function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFi
     doc.text(linha.touca, COLS[1].x, y);
     doc.text(truncar(linha.aulas, COLS[2].max), COLS[2].x, y);
     doc.text(truncar(linha.responsavel, COLS[3].max), COLS[3].x, y);
-    const ok = linha.situacao === 'Avaliado';
-    doc.setTextColor(ok ? 22 : 217, ok ? 163 : 119, ok ? 74 : 6);
+    const { texto, cor } = SITUACAO_PDF[linha.situacao];
+    doc.setTextColor(...cor);
     doc.setFont('helvetica', 'bold');
-    doc.text(linha.situacao, COLS[4].x, y);
+    doc.text(texto, COLS[4].x, y);
     y += 8;
   });
 
