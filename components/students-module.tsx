@@ -10,6 +10,8 @@ import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
+import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
+import { SeloAvaliacao } from '@/components/swimming/SeloAvaliacao';
 import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
 
 interface StudentRow {
@@ -41,6 +43,10 @@ interface SlotRow {
   cap_color: string;
   student_id: string | null;
 }
+interface EvalRow {
+  student_id: string;
+  date: string;
+}
 
 const DAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 const MODALIDADES = ['fixo', 'wellhub', 'avulso'];
@@ -50,6 +56,7 @@ export function StudentsModule() {
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [classes, setClasses] = useState<ClassRow[]>([]);
   const [slots, setSlots] = useState<SlotRow[]>([]);
+  const [evaluations, setEvaluations] = useState<EvalRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
@@ -57,6 +64,8 @@ export function StudentsModule() {
   const [fModal, setFModal] = useState<string>('all');
   /** Por padrao a lista mostra so quem esta matriculado. */
   const [fSituacao, setFSituacao] = useState<'ativos' | 'inativos' | 'todos'>('ativos');
+  /** Avaliação no trimestre corrente — pronta ou pendente. */
+  const [fAval, setFAval] = useState<'all' | 'avaliado' | 'pendente'>('all');
 
   const [editing, setEditing] = useState<StudentRow | null>(null);
   /**
@@ -84,18 +93,23 @@ export function StudentsModule() {
       }
       return out;
     };
-    const [st, cl, sl] = await Promise.all([
+    const [st, cl, sl, ev] = await Promise.all([
       page('students', '*'),
       page('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
       page('class_slots', 'id, class_id, cap_color, student_id'),
+      page('evaluations', 'student_id, date'),
     ]);
     setStudents((st as StudentRow[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     setClasses(cl as ClassRow[]);
     setSlots(sl as SlotRow[]);
+    setEvaluations((ev as EvalRow[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setLoading(false);
   };
 
   const classById = new Map(classes.map(c => [c.id, c]));
+  const ultimaAval = (sid: string) => evaluations.find(e => e.student_id === sid);
+  const avaliadoAgora = (sid: string) =>
+    evaluations.some(e => e.student_id === sid && trimestre(e.date) === TRIMESTRE_ATUAL);
 
   const aulasDe = (studentId: string) =>
     slots
@@ -246,6 +260,8 @@ export function StudentsModule() {
     const ativo = s.ativo !== false;
     if (fSituacao === 'ativos' && !ativo) return false;
     if (fSituacao === 'inativos' && ativo) return false;
+    if (fAval === 'avaliado' && !avaliadoAgora(s.id)) return false;
+    if (fAval === 'pendente' && avaliadoAgora(s.id)) return false;
     if (busca) {
       const alvo = `${s.name} ${s.guardian_name || ''} ${s.phone || ''}`.toLowerCase();
       if (!alvo.includes(busca)) return false;
@@ -287,10 +303,16 @@ export function StudentsModule() {
               <option value="inativos">Matrícula cancelada</option>
               <option value="todos">Todos</option>
             </Select>
+            <Select value={fAval} onChange={e => setFAval(e.target.value as typeof fAval)} className="w-full md:w-auto py-2.5">
+              <option value="all">Avaliação: todos</option>
+              <option value="avaliado">Avaliação pronta</option>
+              <option value="pendente">Avaliação pendente</option>
+            </Select>
           </div>
           <FilterFooter>
             <p className="text-xs font-bold text-ink-muted">
               {lista.length} de {students.length} aluno(s){semTurma > 0 && <span className="text-warning-ink"> · {semTurma} sem turma</span>}
+              <span className="text-ink-subtle"> · trimestre {TRIMESTRE_ATUAL}</span>
             </p>
           </FilterFooter>
         </FilterBar>
@@ -309,11 +331,12 @@ export function StudentsModule() {
                     <TH>Responsável</TH>
                     <TH>WhatsApp</TH>
                     <TH>Turmas</TH>
+                    <TH>Avaliação</TH>
                     <TH align="right">Ações</TH>
                   </THead>
                   <tbody>
                     {lista.length === 0 ? (
-                      <TEmpty colSpan={6}>Nenhum aluno encontrado.</TEmpty>
+                      <TEmpty colSpan={7}>Nenhum aluno encontrado.</TEmpty>
                     ) : lista.map(s => {
                       const aulas = aulasDe(s.id);
                       const info = levels[s.level];
@@ -345,6 +368,9 @@ export function StudentsModule() {
                                 ))}
                               </div>
                             )}
+                          </TD>
+                          <TD>
+                            <SeloAvaliacao avaliado={avaliadoAgora(s.id)} ultima={ultimaAval(s.id)} />
                           </TD>
                           <TD align="right">
                             <Button size="sm" variant="secondary" onClick={() => abrirFicha(s)}>
@@ -378,6 +404,7 @@ export function StudentsModule() {
                           {aulas.length === 0
                             ? <Badge tone="warning">sem turma</Badge>
                             : aulas.map(a => <Badge key={a.slot.id}>{a.cls!.day_of_week.slice(0, 3)} {hhmm(a.cls!.start_time)}</Badge>)}
+                          <SeloAvaliacao avaliado={avaliadoAgora(s.id)} ultima={ultimaAval(s.id)} />
                         </>
                       }
                       fields={[

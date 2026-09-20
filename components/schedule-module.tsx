@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CapLevel, levels, capLevelOrder } from '@/types';
+import { CapLevel, levels, capLevelOrder, CAPACIDADE_TOUCA, NIVEL_UNICO, GRUPO_VERDE_MAIS } from '@/types';
 import { cn } from '@/lib/utils';
 import { lecionaEm, rotuloProfessor } from '@/lib/professor';
 import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle } from '@/components/ui';
@@ -43,6 +43,21 @@ const DAY_KEY_SHORT: Record<string, string> = { seg: 'Seg', ter: 'Ter', qua: 'Qu
 
 const CAP_OPTIONS = capLevelOrder.map(key => ({ key, label: levels[key].label, bg: levels[key].bgClass }));
 const emptySlots = () => capLevelOrder.reduce((acc, k) => ({ ...acc, [k]: 0 }), {} as Record<CapLevel, number>);
+
+/**
+ * Teto que `nivel` ainda pode alcançar, dado o que já está preenchido nos
+ * outros campos do formulário. Amarela/Laranja/Vermelha travam em 0 assim
+ * que outra das três tiver vaga (turma de nível único); Verde em diante
+ * dividem um teto único de 9 (ver CAPACIDADE_TOUCA em types/index.ts).
+ */
+function tetoVagas(nivel: CapLevel, slots: Record<CapLevel, number>): number {
+  if (NIVEL_UNICO.includes(nivel)) {
+    const outroAtivo = NIVEL_UNICO.some(k => k !== nivel && (slots[k] || 0) > 0);
+    return outroAtivo ? 0 : CAPACIDADE_TOUCA[nivel];
+  }
+  const usadoPelosOutros = GRUPO_VERDE_MAIS.reduce((s, k) => s + (k === nivel ? 0 : (slots[k] || 0)), 0);
+  return Math.max(0, CAPACIDADE_TOUCA[nivel] - usadoPelosOutros);
+}
 
 // Verifica se a janela [start,end] cabe em algum turno do professor naquele dia
 function windowFits(schedule: ProfLite['schedule'], dayKey: string, start: string, end: string): { ok: boolean; hours: string } {
@@ -158,6 +173,20 @@ export function ScheduleModule() {
 
     const totalSlots = Object.values(form.slots).reduce((a, b) => a + b, 0);
     if (totalSlots === 0) return alert('Adicione pelo menos 1 vaga de aluno para essa turma.');
+
+    const niveisUnicoAtivos = NIVEL_UNICO.filter(k => form.slots[k] > 0);
+    if (niveisUnicoAtivos.length > 1) {
+      return alert('Amarela, Laranja e Vermelha são turmas de nível único — escolha só uma dessas toucas.');
+    }
+    for (const k of NIVEL_UNICO) {
+      if (form.slots[k] > CAPACIDADE_TOUCA[k]) {
+        return alert(`Touca ${levels[k].label} pode ter no máximo ${CAPACIDADE_TOUCA[k]} vagas por turma.`);
+      }
+    }
+    const somaVerdeMais = GRUPO_VERDE_MAIS.reduce((s, k) => s + form.slots[k], 0);
+    if (somaVerdeMais > 9) {
+      return alert('Verde em diante pode ter no máximo 9 vagas por turma, somando todas as toucas dessa faixa.');
+    }
 
     setIsSubmitting(true);
     try {
@@ -421,9 +450,12 @@ export function ScheduleModule() {
         size="md"
         title="Nova turma / horário"
         footer={
-          <Button form="classForm" type="submit" disabled={isSubmitting} block size="lg">
-            {isSubmitting ? 'Criando turmas...' : form.days_of_week.length > 1 ? `Criar ${form.days_of_week.length} turmas` : 'Criar turma'}
-          </Button>
+          <>
+            <Button variant="secondary" size="lg" className="flex-1" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button form="classForm" type="submit" disabled={isSubmitting} size="lg" className="flex-1">
+              {isSubmitting ? 'Criando turmas...' : form.days_of_week.length > 1 ? `Criar ${form.days_of_week.length} turmas` : 'Criar turma'}
+            </Button>
+          </>
         }
       >
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
@@ -518,21 +550,54 @@ export function ScheduleModule() {
                   <div>
                     <h3 className="text-lg font-black text-ink mb-1">Vagas por touca</h3>
                     <p className="text-xs text-ink-muted mb-4">
-                      Amarela / Laranja / Vermelha: turma de um nível só. Verde em diante: pode misturar níveis na mesma turma.
+                      Amarela (4) / Laranja (5) / Vermelha (6): turma de um nível só, no limite de vagas da touca.
+                      Verde em diante: pode misturar níveis na mesma turma, dividindo um teto único de 9 vagas.
                     </p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {CAP_OPTIONS.map(opt => (
-                        <div key={opt.key} className={cn('flex flex-col p-3 rounded-xl border transition-colors', form.slots[opt.key] > 0 ? 'bg-info-soft border-indigo-200' : 'bg-surface border-line')}>
-                          <label className="text-sm font-bold text-ink mb-2 flex items-center gap-2">
-                            <div className={cn('w-3 h-3 rounded-full shadow-sm', opt.bg)} /> {opt.label}
-                          </label>
-                          <div className="flex items-center bg-surface-sunken rounded-lg p-1">
-                            <button type="button" onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: Math.max(0, form.slots[opt.key] - 1) } })} className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-danger">-</button>
-                            <span className="flex-1 text-center font-black text-ink">{form.slots[opt.key]}</span>
-                            <button type="button" onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: form.slots[opt.key] + 1 } })} className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-green-500">+</button>
+                      {CAP_OPTIONS.map(opt => {
+                        const atual = form.slots[opt.key];
+                        const teto = tetoVagas(opt.key, form.slots);
+                        const travado = teto === 0 && atual === 0;
+                        const noLimite = atual >= teto;
+                        return (
+                          <div
+                            key={opt.key}
+                            className={cn(
+                              'flex flex-col p-3 rounded-xl border transition-colors',
+                              atual > 0 ? 'bg-info-soft border-indigo-200' : 'bg-surface border-line',
+                              travado && 'opacity-50'
+                            )}
+                          >
+                            <label className="text-sm font-bold text-ink mb-2 flex items-center gap-2">
+                              <div className={cn('w-3 h-3 rounded-full shadow-sm', opt.bg)} /> {opt.label}
+                              <span className="ml-auto text-[10px] font-bold text-ink-subtle">máx {CAPACIDADE_TOUCA[opt.key]}</span>
+                            </label>
+                            <div className="flex items-center bg-surface-sunken rounded-lg p-1">
+                              <button
+                                type="button"
+                                onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: Math.max(0, atual - 1) } })}
+                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-danger"
+                              >
+                                -
+                              </button>
+                              <span className="flex-1 text-center font-black text-ink">{atual}</span>
+                              <button
+                                type="button"
+                                disabled={noLimite}
+                                onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: atual + 1 } })}
+                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-green-500 disabled:opacity-30 disabled:hover:text-ink-muted disabled:cursor-not-allowed"
+                              >
+                                +
+                              </button>
+                            </div>
+                            {travado && (
+                              <p className="text-[10px] font-bold text-warning-ink mt-1.5">
+                                {NIVEL_UNICO.includes(opt.key) ? 'turma já é de outro nível único' : 'grupo verde+ cheio (9/9)'}
+                              </p>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 </form>

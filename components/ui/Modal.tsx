@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,10 +38,10 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  return (
+  const conteudo = (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -97,4 +98,14 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
       )}
     </AnimatePresence>
   );
+
+  /**
+   * Precisa ir direto pro <body> (portal). O <main> da página tem
+   * `position: relative`, o que cria um contexto de empilhamento próprio —
+   * preso lá dentro, nenhum z-index do modal consegue ficar acima de um
+   * irmão do <main> (como a barra de navegação do celular). Renderizando
+   * fora dessa árvore, o modal disputa camada direto com o resto da página.
+   */
+  if (typeof document === 'undefined') return null;
+  return createPortal(conteudo, document.body);
 }

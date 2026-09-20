@@ -4,11 +4,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, ClipboardCheck, ClipboardList,
-  GraduationCap, LayoutDashboard, TrendingDown, TrendingUp, Users, Wrench,
+  FileDown, GraduationCap, LayoutDashboard, TrendingDown, TrendingUp, Users, Wrench,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { capLevelOrder, levels, type CapLevel } from '@/types';
-import { Badge, Button, Card, EmptyState, ErrorState, Loading, PageHeader, PageShell } from '@/components/ui';
+import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
+import { gerarRelatorioAlunosPDF } from '@/lib/relatorio-pdf';
+import { Badge, Button, Card, EmptyState, ErrorState, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 /* ============================================================
@@ -20,7 +22,7 @@ import { cn } from '@/lib/utils';
    honesto em vez de um gráfico de enfeite.
    ============================================================ */
 
-type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null; ativo: boolean | null };
+type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null; ativo: boolean | null; guardian_name: string | null; phone: string | null };
 type Aval = { id: string; student_id: string; date: string; level: CapLevel; approved: boolean };
 type Turma = { id: string; day_of_week: string; start_time: string; teacher_name: string };
 type Vaga = { class_id: string; student_id: string | null };
@@ -60,12 +62,17 @@ interface CartaoProps {
   /** Só aparece quando existe base de comparação real. */
   tendencia?: { texto: string; sentido: 'sobe' | 'desce' | 'igual' };
   destaque?: 'neutro' | 'atencao';
+  /** Quando presente, o cartão inteiro vira atalho para a aba correspondente. */
+  aoClicar?: () => void;
 }
 
-function Cartao({ icone: Icone, titulo, valor, contexto, tendencia, destaque = 'neutro' }: CartaoProps) {
+function Cartao({ icone: Icone, titulo, valor, contexto, tendencia, destaque = 'neutro', aoClicar }: CartaoProps) {
   const Seta = tendencia?.sentido === 'desce' ? TrendingDown : TrendingUp;
   return (
-    <Card className="flex flex-col gap-1.5">
+    <Card
+      onClick={aoClicar}
+      className={cn('flex flex-col gap-1.5', aoClicar && 'cursor-pointer transition-colors hover:border-brand/40 active:bg-surface-sunken')}
+    >
       <div className="flex items-center gap-1.5 text-ink-subtle">
         <Icone className={cn('w-4 h-4 shrink-0', destaque === 'atencao' && 'text-warning')} />
         <span className="text-mini font-bold uppercase tracking-wider truncate">{titulo}</span>
@@ -117,12 +124,20 @@ export function DashboardModule() {
   } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
+  // ----- filtros do relatório em PDF -----
+  const [relatorioAberto, setRelatorioAberto] = useState(false);
+  const [fAval, setFAval] = useState<'todos' | 'avaliado' | 'pendente'>('todos');
+  const [fTouca, setFTouca] = useState<'todas' | CapLevel>('todas');
+  const [fDia, setFDia] = useState('todos');
+  const [fHorario, setFHorario] = useState('todos');
+  const [fModalidade, setFModalidade] = useState('todas');
+
   useEffect(() => {
     let vivo = true;
     (async () => {
       try {
         const [alunos, avals, turmas, vagas, equipe, limpeza, manut] = await Promise.all([
-          buscarTudo<Aluno>('students', 'id,name,level,modalidade,ativo'),
+          buscarTudo<Aluno>('students', 'id,name,level,modalidade,ativo,guardian_name,phone'),
           buscarTudo<Aval>('evaluations', 'id,student_id,date,level,approved'),
           buscarTudo<Turma>('classes', 'id,day_of_week,start_time,teacher_name'),
           buscarTudo<Vaga>('class_slots', 'class_id,student_id'),
@@ -288,6 +303,55 @@ export function DashboardModule() {
   const hojeExtenso = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
   const tetoMes = Math.max(1, ...resumo.meses.map(x => x.total));
 
+  /* ----- 5. relatório de alunos em PDF ----- */
+  const aulasDoAluno = (id: string) =>
+    resumo.vagas
+      .filter(v => v.student_id === id)
+      .map(v => resumo.turmas.find(t => t.id === v.class_id))
+      .filter((t): t is Turma => !!t)
+      .sort((a, b) => DIAS.indexOf(a.day_of_week) - DIAS.indexOf(b.day_of_week) || a.start_time.localeCompare(b.start_time));
+
+  const diasDisponiveis = [...new Set(resumo.turmas.map(t => t.day_of_week))].sort((a, b) => DIAS.indexOf(a) - DIAS.indexOf(b));
+  const horariosDisponiveis = [...new Set(resumo.turmas.map(t => t.start_time.slice(0, 5)))].sort();
+
+  // "avaliado" aqui é no trimestre corrente — mesma regra usada na Avaliação e nos Alunos
+  const avaliadoNoTrimestre = (id: string) => resumo.avals.some(a => a.student_id === id && trimestre(a.date) === TRIMESTRE_ATUAL);
+
+  const gerarRelatorio = () => {
+    const linhas = resumo.alunos
+      .filter(a => fTouca === 'todas' || a.level === fTouca)
+      .filter(a => fModalidade === 'todas' || (a.modalidade || 'fixo') === fModalidade)
+      .filter(a => {
+        if (fAval === 'todos') return true;
+        const ok = avaliadoNoTrimestre(a.id);
+        return fAval === 'avaliado' ? ok : !ok;
+      })
+      .filter(a => {
+        if (fDia === 'todos' && fHorario === 'todos') return true;
+        return aulasDoAluno(a.id).some(t =>
+          (fDia === 'todos' || t.day_of_week === fDia) && (fHorario === 'todos' || t.start_time.slice(0, 5) === fHorario)
+        );
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+      .map(a => ({
+        nome: a.name,
+        touca: levels[a.level]?.label || a.level,
+        aulas: aulasDoAluno(a.id).map(t => `${t.day_of_week.split('-')[0]} ${t.start_time.slice(0, 5)}`).join(' / ') || 'sem turma',
+        responsavel: a.guardian_name || '—',
+        situacao: (avaliadoNoTrimestre(a.id) ? 'Avaliado' : 'Pendente') as 'Avaliado' | 'Pendente',
+      }));
+
+    const partes: string[] = [];
+    if (fAval !== 'todos') partes.push(`Avaliação: ${fAval === 'avaliado' ? 'pronta' : 'pendente'} (trimestre ${TRIMESTRE_ATUAL})`);
+    if (fTouca !== 'todas') partes.push(`Touca: ${levels[fTouca].label}`);
+    if (fDia !== 'todos') partes.push(`Dia: ${fDia.split('-')[0]}`);
+    if (fHorario !== 'todos') partes.push(`Horário: ${fHorario}`);
+    if (fModalidade !== 'todas') partes.push(`Modalidade: ${fModalidade}`);
+
+    gerarRelatorioAlunosPDF(linhas, partes.join(' · '));
+    setRelatorioAberto(false);
+  };
+
   return (
     <PageShell>
       <PageHeader
@@ -303,6 +367,11 @@ export function DashboardModule() {
             </span>
           </span>
         }
+        action={
+          <Button variant="secondary" onClick={() => setRelatorioAberto(true)}>
+            <FileDown className="w-4 h-4" /> Gerar relatório
+          </Button>
+        }
       />
 
       {/* ---------- 1. RESUMO GERAL ---------- */}
@@ -313,6 +382,7 @@ export function DashboardModule() {
             titulo="Alunos"
             valor={num(resumo.totalAlunos)}
             contexto={`${num(resumo.comTurma)} em turma · ${num(resumo.semTurma)} sem turma`}
+            aoClicar={() => irPara('students')}
           />
           <Cartao
             icone={ClipboardList}
@@ -324,6 +394,7 @@ export function DashboardModule() {
                 : `de ${num(resumo.totalAlunos)} alunos no total`
             }
             destaque={resumo.pendentes > 0 ? 'atencao' : 'neutro'}
+            aoClicar={() => irPara('swimming')}
           />
           <Cartao
             icone={ClipboardCheck}
@@ -335,12 +406,14 @@ export function DashboardModule() {
                 : `${num(resumo.noMes)} neste mês · ${resumo.taxaAprovacao}% de aprovação`
             }
             tendencia={resumo.tendencia}
+            aoClicar={() => irPara('swimming')}
           />
           <Cartao
             icone={CalendarDays}
             titulo="Ocupação das turmas"
             valor={`${resumo.ocupacao}%`}
             contexto={`${num(resumo.ocupadas)} de ${num(resumo.vagas.length)} vagas · ${num(resumo.turmas.length)} turmas`}
+            aoClicar={() => irPara('schedule')}
           />
         </div>
       </Secao>
@@ -360,7 +433,11 @@ export function DashboardModule() {
             {alertas.map(a => {
               const Icone = a.icone;
               return (
-                <Card key={a.titulo} className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <Card
+                  key={a.titulo}
+                  onClick={() => irPara(a.aba)}
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 cursor-pointer transition-colors hover:border-brand/40 active:bg-surface-sunken"
+                >
                   <span
                     className={cn(
                       'w-9 h-9 rounded-control flex items-center justify-center shrink-0',
@@ -377,7 +454,7 @@ export function DashboardModule() {
                     <p className="text-xs text-ink-muted mt-0.5 leading-snug">{a.detalhe}</p>
                   </div>
 
-                  <Button variant="secondary" size="sm" onClick={() => irPara(a.aba)} className="sm:shrink-0">
+                  <Button variant="secondary" size="sm" className="sm:shrink-0 pointer-events-none">
                     {a.acao}
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
@@ -407,12 +484,16 @@ export function DashboardModule() {
             ) : (
               <div className="flex items-end justify-between gap-2 h-40">
                 {resumo.meses.map(m => (
-                  <div key={m.chave} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                  <div key={m.chave} className="flex-1 flex flex-col items-center gap-1.5 min-w-0 h-full">
                     <span className="text-mini font-black text-ink tabular-nums">{m.total || ''}</span>
-                    <div
-                      className={cn('w-full rounded-t-md transition-all', m.total ? 'bg-brand' : 'bg-line')}
-                      style={{ height: `${Math.max(4, (m.total / tetoMes) * 100)}%` }}
-                    />
+                    {/* a barra precisa de um pai com altura definida pra "height: X%" valer
+                        alguma coisa — sem isso ela sempre resolvia pra 0 e sumia. */}
+                    <div className="w-full flex-1 flex items-end">
+                      <div
+                        className={cn('w-full rounded-t-md transition-all', m.total ? 'bg-brand' : 'bg-line')}
+                        style={{ height: `${Math.max(4, (m.total / tetoMes) * 100)}%` }}
+                      />
+                    </div>
                     <span className="text-mini font-bold text-ink-subtle uppercase truncate w-full text-center">
                       {m.rotulo}
                     </span>
@@ -504,6 +585,71 @@ export function DashboardModule() {
         <AlertTriangle className="w-3 h-3 shrink-0" />
         Todos os números vêm direto do banco. Áreas sem dado suficiente ficam vazias de propósito.
       </p>
+
+      <Modal
+        open={relatorioAberto}
+        onClose={() => setRelatorioAberto(false)}
+        size="md"
+        title="Gerar relatório de alunos"
+        footer={
+          <>
+            <Button variant="secondary" size="lg" className="flex-1" onClick={() => setRelatorioAberto(false)}>Cancelar</Button>
+            <Button size="lg" className="flex-1" onClick={gerarRelatorio}>
+              <FileDown className="w-4 h-4" /> Baixar PDF
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-ink-muted">
+            Escolha os filtros — deixe em "Todos" o que não quiser restringir. O PDF sai só com os alunos que passarem por todos eles.
+          </p>
+
+          <div>
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Avaliação (trimestre {TRIMESTRE_ATUAL})</label>
+            <Select value={fAval} onChange={e => setFAval(e.target.value as typeof fAval)} className="mt-1">
+              <option value="todos">Todos</option>
+              <option value="avaliado">Avaliação pronta</option>
+              <option value="pendente">Avaliação pendente</option>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Touca</label>
+            <Select value={fTouca} onChange={e => setFTouca(e.target.value as typeof fTouca)} className="mt-1">
+              <option value="todas">Todas</option>
+              {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].label}</option>)}
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Dia</label>
+              <Select value={fDia} onChange={e => setFDia(e.target.value)} className="mt-1">
+                <option value="todos">Todos</option>
+                {diasDisponiveis.map(d => <option key={d} value={d}>{d.split('-')[0]}</option>)}
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Horário</label>
+              <Select value={fHorario} onChange={e => setFHorario(e.target.value)} className="mt-1">
+                <option value="todos">Todos</option>
+                {horariosDisponiveis.map(h => <option key={h} value={h}>{h}</option>)}
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Modalidade</label>
+            <Select value={fModalidade} onChange={e => setFModalidade(e.target.value)} className="mt-1">
+              <option value="todas">Todas</option>
+              <option value="fixo">Fixo</option>
+              <option value="wellhub">Wellhub</option>
+              <option value="avulso">Avulso</option>
+            </Select>
+          </div>
+        </div>
+      </Modal>
     </PageShell>
   );
 }

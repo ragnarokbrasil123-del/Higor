@@ -49,3 +49,25 @@ export const levels: Record<CapLevel, LevelInfo> = {
   darkBlue:  { name: 'Azul Escuro',             label: 'Azul Escuro', colorClass: 'text-blue-700',   bgClass: 'bg-blue-700' },
   black:     { name: 'Preta',                   label: 'Preta',       colorClass: 'text-gray-900',   bgClass: 'bg-gray-900' },
 };
+
+/**
+ * Capacidade máxima de alunos por turma, por touca — regra do dono da escola.
+ * Amarela/Laranja/Vermelha são turmas de nível único: o número vale para a
+ * turma inteira. Verde em diante pode misturar níveis na mesma turma; nesse
+ * caso as 4 toucas dividem um teto único de 9 vagas por turma.
+ */
+export const CAPACIDADE_TOUCA: Record<CapLevel, number> = {
+  yellow: 4,
+  orange: 5,
+  red: 6,
+  green: 9,
+  lightBlue: 9,
+  darkBlue: 9,
+  black: 9,
+};
+
+/** Toucas que só podem ocupar uma turma sozinhas — não misturam entre si. */
+export const NIVEL_UNICO: CapLevel[] = ['yellow', 'orange', 'red'];
+
+/** Toucas que dividem o mesmo teto de vagas dentro de uma turma (ver CAPACIDADE_TOUCA). */
+export const GRUPO_VERDE_MAIS: CapLevel[] = ['green', 'lightBlue', 'darkBlue', 'black'];

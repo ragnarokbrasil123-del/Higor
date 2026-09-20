@@ -69,9 +69,12 @@
   --text-mini--line-height: 1rem;
 }
 
-body {
+html, body {
   background-color: var(--color-canvas);
   color: var(--color-ink);
+  /* trava o gesto nativo de "arrastar da borda para voltar" do navegador
+     mobile — sem isso, a tela some/desliza junto do dedo por cima do app. */
+  overscroll-behavior-x: none;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

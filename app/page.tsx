@@ -16,7 +16,7 @@ import { AccessModule } from '@/components/access-module';
 import { InstallPrompt } from '@/components/install-prompt';
 import { MinhaSemana } from '@/components/minha-semana';
 import { HidroModule } from '@/components/hidro-module';
-import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves } from 'lucide-react';
+import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { MobileNav } from '@/components/ui';
@@ -125,8 +125,39 @@ export default function Page() {
   const [user, setUser] = useState<UserState>(null);
   const [activeTab, setActiveTab] = useState<Tab>('swimming');
   const [isLoaded, setIsLoaded] = useState(false);
+  /** Quantas trocas de aba já empilhadas no histórico do navegador nesta sessão de tela — controla se a seta de voltar aparece. */
+  const [navDepth, setNavDepth] = useState(0);
+
+  /** Troca de aba "oficial": só muda o estado — quem mexe no histórico é o efeito abaixo. */
+  const irPara = (tab: Tab) => setActiveTab(tab);
+
+  /**
+   * Mantém o histórico do navegador em sincronia com a aba ativa, sempre que
+   * ela mudar — mas SÓ como efeito (depois do render), nunca direto dentro
+   * do clique. Mexer no histórico no meio de um evento de clique colidia com
+   * o roteador interno do Next.js ("Cannot update a component while
+   * rendering a different component"): o Next também escuta pushState/
+   * popstate, e as duas coisas competindo no mesmo instante confundiam o
+   * React. Aqui, sempre um passo depois, não tem mais conflito.
+   *
+   * A checagem contra `history.state` (em vez de um contador cru) faz o
+   * efeito ser idempotente: se ele rodar duas vezes para a mesma troca —
+   * o StrictMode do React faz isso de propósito em desenvolvimento — a
+   * segunda vez já encontra o histórico atualizado e não empilha de novo.
+   * Isso também cobre o "voltar": quando o popstate já trocou a aba, o
+   * histórico do navegador já bate com `activeTab`, então nada é empilhado.
+   */
+  useEffect(() => {
+    if (!isLoaded) return;
+    const estado = window.history.state as { olimpoTab?: Tab; olimpoDepth?: number } | null;
+    if (estado?.olimpoTab === activeTab) return;
+    const novaProfundidade = (estado?.olimpoDepth ?? 0) + 1;
+    window.history.pushState({ olimpoTab: activeTab, olimpoDepth: novaProfundidade }, '', window.location.pathname);
+    setNavDepth(novaProfundidade);
+  }, [activeTab, isLoaded]);
 
   useEffect(() => {
+    let tabInicial: Tab = 'swimming';
     const savedUser = localStorage.getItem('olimpo_session');
     if (savedUser) {
       const sessao = JSON.parse(savedUser);
@@ -141,21 +172,38 @@ export default function Page() {
       } else {
         setUser(sessao);
         // admin abre no Painel; professor continua caindo direto na Avaliação
-        if (sessao?.role === 'admin') setActiveTab('dashboard');
+        if (sessao?.role === 'admin') tabInicial = 'dashboard';
       }
     }
+    setActiveTab(tabInicial);
+    // base do histórico: é para aqui que o botão de voltar do celular cai
+    // quando não sobra mais nenhuma troca de aba nossa para desfazer.
+    window.history.replaceState({ olimpoTab: tabInicial, olimpoDepth: 0 }, '', window.location.pathname);
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('PWA Error', err));
     }
-    
+
     // MÁGICA DE TELETRANSPORTE: Permite que outros módulos troquem a aba
-    const handleJump = (e: any) => setActiveTab(e.detail);
+    const handleJump = (e: any) => irPara(e.detail);
     window.addEventListener('jumpToTab', handleJump);
-    
+
+    // botão/gesto de voltar do celular (ou do navegador): lê a aba que
+    // ficou guardada naquela entrada do histórico e volta para ela.
+    const handlePopState = (e: PopStateEvent) => {
+      const tab = e.state?.olimpoTab as Tab | undefined;
+      const depth = (e.state?.olimpoDepth as number | undefined) ?? 0;
+      if (tab) setActiveTab(tab);
+      setNavDepth(depth);
+    };
+    window.addEventListener('popstate', handlePopState);
+
     setIsLoaded(true);
-    
-    return () => window.removeEventListener('jumpToTab', handleJump);
+
+    return () => {
+      window.removeEventListener('jumpToTab', handleJump);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   if (!isLoaded) return null;
@@ -165,7 +213,7 @@ export default function Page() {
       const session = { role, data };
       localStorage.setItem('olimpo_session', JSON.stringify(session));
       setUser(session);
-      if (role === 'admin') setActiveTab('dashboard');
+      if (role === 'admin') irPara('dashboard');
     }} />;
   }
 
@@ -232,6 +280,13 @@ export default function Page() {
 
       <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
+          {/* só aparece quando existe uma troca de aba nossa para desfazer —
+              mesmo botão que o gesto/tecla de voltar do celular já usa. */}
+          {navDepth > 0 && (
+            <button onClick={() => window.history.back()} aria-label="Voltar" className="p-2 -ml-1 text-slate-300 hover:text-white transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          )}
           <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain" />
           <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-amber-500">Olimpo</span></span>
         </div>
@@ -261,7 +316,7 @@ export default function Page() {
 
         <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 space-y-1">
           {isAdmin && (
-            <button onClick={() => setActiveTab('dashboard')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'dashboard' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('dashboard')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'dashboard' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <LayoutDashboard className="w-5 h-5" />
               <span className="font-bold text-sm">Painel</span>
             </button>
@@ -269,68 +324,68 @@ export default function Page() {
 
           {/* matricular aluno e importar planilha e trabalho de secretaria */}
           {isAdmin && (
-            <button onClick={() => setActiveTab('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <UserPlus className="w-5 h-5" />
               <span className="font-bold text-sm">Cadastro Alunos</span>
             </button>
           )}
 
           {isAdmin && (
-            <button onClick={() => setActiveTab('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <Users className="w-5 h-5" />
               <span className="font-bold text-sm">Alunos</span>
             </button>
           )}
 
-          <button onClick={() => setActiveTab('swimming')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+          <button onClick={() => irPara('swimming')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
             <Droplets className="w-5 h-5" />
             <span className="font-bold text-sm">Avaliação Natação</span>
           </button>
 
           {isStaff && (
-            <button onClick={() => setActiveTab('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <Sparkles className="w-5 h-5" />
               <span className="font-bold text-sm">Avulsos & Wellhub</span>
             </button>
           )}
 
           {isAdmin && (
-            <button onClick={() => setActiveTab('sabado')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'sabado' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('sabado')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'sabado' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <CalendarClock className="w-5 h-5" />
               <span className="font-bold text-sm">Avaliação Sábado</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => setActiveTab('hidro')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'hidro' ? "bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('hidro')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'hidro' ? "bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <Waves className="w-5 h-5" />
               <span className="font-bold text-sm">Hidro</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => setActiveTab('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <ClipboardList className="w-5 h-5" />
               <span className="font-bold text-sm">Checklist Limpeza</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => setActiveTab('maintenance')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('maintenance')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <Wrench className="w-5 h-5" />
               <span className="font-bold text-sm">Manutenção</span>
             </button>
           )}
 
           {isAdmin && (
-            <button onClick={() => setActiveTab('professors')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'professors' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('professors')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'professors' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <GraduationCap className="w-5 h-5" />
               <span className="font-bold text-sm">Professores</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => setActiveTab('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <CalendarDays className="w-5 h-5" />
               {/* o professor consulta a propria agenda; so o admin edita a grade */}
               <span className="font-bold text-sm">{isAdmin ? 'Grade de Horários' : 'Minha semana'}</span>
@@ -338,7 +393,7 @@ export default function Page() {
           )}
 
           {isMaster && (
-            <button onClick={() => setActiveTab('acessos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'acessos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('acessos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'acessos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
               <ShieldCheck className="w-5 h-5" />
               <span className="font-bold text-sm">Acessos</span>
             </button>
@@ -365,7 +420,7 @@ export default function Page() {
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
         {activeTab === 'acessos' && isMaster && <AccessModule meuNome={user.data?.username || user.data?.name || ''} />}
-        {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => setActiveTab('swimming')} />}
+        {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => irPara('swimming')} />}
         {activeTab === 'students' && isAdmin && <StudentsModule />}
         {activeTab === 'swimming' && <SwimmingModule />}
         {activeTab === 'avulsos' && isStaff && <SwimmingModule escopo="sem-turma" />}
@@ -397,7 +452,7 @@ export default function Page() {
           ...(isMaster ? [{ key: 'acessos', label: 'Acessos', icon: ShieldCheck }] : []),
         ]}
         active={activeTab}
-        onSelect={(k) => setActiveTab(k as Tab)}
+        onSelect={(k) => irPara(k as Tab)}
       />
     </div>
   );

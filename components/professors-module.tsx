@@ -477,9 +477,12 @@ export function ProfessorsModule() {
           </h2>
         }
         footer={
-          <Button form="professorForm" type="submit" disabled={saving} block size="lg">
-            <Save className="w-5 h-5" /> {saving ? 'Salvando...' : form.id ? 'Salvar alterações' : 'Cadastrar professor'}
-          </Button>
+          <>
+            <Button variant="secondary" size="lg" className="flex-1" onClick={() => setModalOpen(false)}>Cancelar</Button>
+            <Button form="professorForm" type="submit" disabled={saving} size="lg" className="flex-1">
+              <Save className="w-5 h-5" /> {saving ? 'Salvando...' : form.id ? 'Salvar alterações' : 'Cadastrar professor'}
+            </Button>
+          </>
         }
       >
         <div className="space-y-6">
@@ -584,8 +587,8 @@ export function ProfessorsModule() {
                         <p className="font-bold text-ink">{currentProfessor.username}</p>
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => { setShowAccessForm(true); setAccessUser(currentProfessor.username || ''); setAccessPass(currentProfessor.password || ''); }} className="px-3 py-2 text-xs font-bold bg-surface border border-line rounded-lg hover:bg-surface-sunken transition-colors">Alterar</button>
-                        <button type="button" onClick={removeAccess} className="px-3 py-2 text-xs font-bold text-danger-ink bg-surface border border-red-200 rounded-lg hover:bg-danger-soft transition-colors">Remover</button>
+                        <Button type="button" variant="secondary" size="sm" onClick={() => { setShowAccessForm(true); setAccessUser(currentProfessor.username || ''); setAccessPass(currentProfessor.password || ''); }}>Alterar</Button>
+                        <Button type="button" variant="danger" size="sm" onClick={removeAccess}>Remover</Button>
                       </div>
                     </div>
                   ) : showAccessForm ? (
@@ -595,16 +598,16 @@ export function ProfessorsModule() {
                         <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
                       </div>
                       <div className="flex gap-2">
-                        <button type="button" disabled={accessBusy} onClick={saveAccess} className="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg disabled:opacity-50 active:scale-95 transition-transform">
+                        <Button type="button" size="sm" disabled={accessBusy} onClick={saveAccess}>
                           {accessBusy ? 'Salvando...' : 'Salvar acesso'}
-                        </button>
-                        <button type="button" onClick={() => setShowAccessForm(false)} className="px-4 py-2 text-xs font-bold text-ink-muted">Cancelar</button>
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setShowAccessForm(false)}>Cancelar</Button>
                       </div>
                     </div>
                   ) : (
-                    <button type="button" onClick={() => setShowAccessForm(true)} className="px-4 py-2.5 bg-surface border border-line rounded-xl text-sm font-bold text-ink hover:border-indigo-300 hover:text-info flex items-center gap-2 transition-colors">
+                    <Button type="button" variant="secondary" onClick={() => setShowAccessForm(true)}>
                       <Key className="w-4 h-4" /> Criar login de acesso
-                    </button>
+                    </Button>
                   )}
                 </div>
         </div>

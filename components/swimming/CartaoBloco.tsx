@@ -28,34 +28,40 @@ interface CartaoBlocoProps {
 export function CartaoBloco({ etiqueta, subtitulo, alunos, pendentes, onAvaliar, rotuloCompleto, children }: CartaoBlocoProps) {
   return (
     <div className="bg-surface rounded-card border border-line shadow-raised overflow-hidden">
-      <div className="p-4 flex flex-wrap items-center gap-3 border-b border-slate-50">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-sm shrink-0">
-          {etiqueta}
-        </div>
+      {/* linha própria pros selos de touca: com muitas toucas (ex. Wellhub,
+          que mistura até 4) eles brigavam por espaço com o contador/botão
+          na mesma linha e chegavam a sobrepor um ao outro. */}
+      <div className="p-4 space-y-2 border-b border-slate-50">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-sm shrink-0">
+            {etiqueta}
+          </div>
 
-        <div className="flex-1 min-w-0">
-          {subtitulo}
-          <ChipsTouca alunos={alunos} />
-        </div>
+          <div className="flex-1 min-w-0">
+            {subtitulo}
+          </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs font-bold text-ink-muted flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" />
-            {alunos.length}
-          </span>
-
-          {pendentes > 0 && (
-            <Button size="sm" onClick={onAvaliar}>
-              <ListChecks className="w-4 h-4" /> Avaliar {pendentes}
-            </Button>
-          )}
-
-          {alunos.length > 0 && pendentes === 0 && (
-            <span className="px-3 py-2 bg-success-soft text-success-ink rounded-xl text-xs font-black flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4" /> {rotuloCompleto}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs font-bold text-ink-muted flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              {alunos.length}
             </span>
-          )}
+
+            {pendentes > 0 && (
+              <Button size="sm" onClick={onAvaliar}>
+                <ListChecks className="w-4 h-4" /> Avaliar {pendentes}
+              </Button>
+            )}
+
+            {alunos.length > 0 && pendentes === 0 && (
+              <span className="px-3 py-2 bg-success-soft text-success-ink rounded-xl text-xs font-black flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" /> {rotuloCompleto}
+              </span>
+            )}
+          </div>
         </div>
+
+        <ChipsTouca alunos={alunos} />
       </div>
 
       {children}

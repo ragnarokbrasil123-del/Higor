@@ -38,18 +38,46 @@ const DAY_CANON: Record<string, string> = {
   'sexta-feira': 'Sexta-feira', sexta: 'Sexta-feira', sex: 'Sexta-feira', '6': 'Sexta-feira', '6a': 'Sexta-feira',
   sabado: 'Sábado', sab: 'Sábado', '7': 'Sábado',
 };
-function parseDays(raw: string): string[] {
-  if (!raw) return [];
-  return raw
-    .split(/[/,;&]| e /i)
-    .map(p => DAY_CANON[stripAccents(p.toLowerCase().trim())])
-    .filter(Boolean) as string[];
-}
 function parseTime(raw: string): string {
   if (!raw) return '';
   const m = stripAccents(raw.toLowerCase()).match(/(\d{1,2})[:h.]?(\d{2})?/);
   if (!m) return '';
   return `${m[1].padStart(2, '0')}:${(m[2] || '00').padStart(2, '0')}`;
+}
+const splitCells = (raw: string): string[] => (raw || '').split(/[/,;&]| e /i).map(p => p.trim()).filter(Boolean);
+
+/** "Segunda 08:00 / Quarta 15:00" — para a prévia da importação. */
+const formatarDiasHorarios = (pares: DiaHorario[]): string =>
+  pares.length ? pares.map(dh => `${dh.day.split('-')[0]}${dh.time ? ' ' + dh.time : ''}`).join(' / ') : '—';
+
+interface DiaHorario { day: string; time: string }
+
+/**
+ * Junta dia(s) e horário(s) de uma linha da planilha.
+ * - Um horário só (ou nenhum): vale para todos os dias da célula "dia".
+ * - Vários horários: pareiam por posição com os dias, na mesma ordem
+ *   (dia "Segunda-feira/Quarta-feira" + horario "08:00/15:00" vira
+ *   Segunda às 08:00, Quarta às 15:00). Se a quantidade não bater, sinaliza.
+ */
+function parseDiasHorarios(rawDay: string, rawTime: string): { pares: DiaHorario[]; contagemDivergente: boolean; diaInvalido: boolean } {
+  const diasBrutos = splitCells(rawDay);
+  const horariosBrutos = splitCells(rawTime);
+  if (diasBrutos.length === 0) return { pares: [], contagemDivergente: false, diaInvalido: false };
+
+  if (horariosBrutos.length > 1 && horariosBrutos.length !== diasBrutos.length) {
+    return { pares: [], contagemDivergente: true, diaInvalido: false };
+  }
+
+  let diaInvalido = false;
+  const pares: DiaHorario[] = [];
+  diasBrutos.forEach((d, i) => {
+    const day = DAY_CANON[stripAccents(d.toLowerCase())];
+    if (!day) { diaInvalido = true; return; }
+    const timeRaw = horariosBrutos.length > 1 ? horariosBrutos[i] : horariosBrutos[0];
+    pares.push({ day, time: parseTime(timeRaw || '') });
+  });
+
+  return { pares, contagemDivergente: false, diaInvalido };
 }
 function splitDelimited(text: string): string[][] {
   const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
@@ -76,8 +104,7 @@ interface BulkRow {
   guardian: string;
   phone: string;
   password: string;
-  days: string[];
-  time: string;
+  diasHorarios: DiaHorario[];
   issues: string[];
   skip: boolean;
 }
@@ -156,7 +183,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     const csv =
       'nome;idade;touca;dia;horario;responsavel;telefone;senha\n' +
       'Ana Clara Souza;7;Laranja;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;1234\n' +
-      'Pedro Henrique Lima;9;Verde;Terça-feira;15:30;Joao Lima;11988887777;\n';
+      'Pedro Henrique Lima;9;Verde;Terça-feira;15:30;Joao Lima;11988887777;\n' +
+      'Bernardo Oliveira;10;Azul Claro;Segunda-feira/Quarta-feira;08:00/15:00;Camila Oliveira;11944443333;\n';
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -211,10 +239,11 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       const { level, guessed } = parseLevelSmart(col(raw, 'level'));
       if (guessed) issues.push(`touca incerta → assumido "${levels[level].label}"`);
 
-      const days = parseDays(col(raw, 'day'));
-      const time = parseTime(col(raw, 'time'));
       const rawDay = col(raw, 'day');
-      if (rawDay && days.length === 0) issues.push('dia não reconhecido');
+      const rawTime = col(raw, 'time');
+      const { pares: diasHorarios, contagemDivergente, diaInvalido } = parseDiasHorarios(rawDay, rawTime);
+      if (diaInvalido) issues.push('dia não reconhecido');
+      if (contagemDivergente) issues.push('quantidade de horários não bate com a quantidade de dias');
 
       const phone = col(raw, 'phone').replace(/\D/g, '');
       let password = col(raw, 'password').trim();
@@ -223,12 +252,16 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
         issues.push(`sem senha → gerada "${password}"`);
       }
 
-      if (days.length && time) {
-        const hasSlot = days.some(day => {
-          const cls = classes.find(c => c.day_of_week === day && String(c.start_time).slice(0, 5) === time);
-          return cls && availableSlots.some(s => s.class_id === cls.id && s.cap_color === level);
+      if (diasHorarios.length > 0) {
+        const semHorario = diasHorarios.filter(dh => !dh.time);
+        if (semHorario.length) issues.push(`sem horário para ${semHorario.map(dh => dh.day.split('-')[0]).join('/')}`);
+
+        const semVaga = diasHorarios.filter(dh => {
+          if (!dh.time) return false;
+          const cls = classes.find(c => c.day_of_week === dh.day && String(c.start_time).slice(0, 5) === dh.time);
+          return !(cls && availableSlots.some(s => s.class_id === cls.id && s.cap_color === level));
         });
-        if (!hasSlot) issues.push('sem vaga livre na grade p/ esse dia/horário/touca');
+        if (semVaga.length) issues.push(`sem vaga livre p/ ${semVaga.map(dh => `${dh.day.split('-')[0]} ${dh.time}`).join(', ')}`);
       } else if (!skip) {
         issues.push('sem turma — entra só no cadastro');
       }
@@ -241,8 +274,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
         guardian: col(raw, 'guardian'),
         phone,
         password,
-        days,
-        time,
+        diasHorarios,
         issues,
         skip,
       });
@@ -270,9 +302,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       if (error || !student) { failed++; continue; }
       created++;
 
-      for (const day of r.days) {
-        if (!r.time) continue;
-        const cls = classes.find(c => c.day_of_week === day && String(c.start_time).slice(0, 5) === r.time);
+      for (const dh of r.diasHorarios) {
+        if (!dh.time) continue;
+        const cls = classes.find(c => c.day_of_week === dh.day && String(c.start_time).slice(0, 5) === dh.time);
         if (!cls) continue;
         const slot = availableSlots.find(s => s.class_id === cls.id && s.cap_color === r.level && !s.student_id && !usedSlots.has(s.id));
         if (slot) {
@@ -378,6 +410,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
                   <b> nome, idade, touca, dia, horario, responsavel, telefone, senha</b>. Só <b>nome</b> é obrigatório.
                   Vários dias na mesma célula: separe por <code className="bg-white/60 px-1 rounded">/</code>.
+                  Horário diferente por dia? Separe do mesmo jeito, na mesma ordem dos dias — ex.: dia{' '}
+                  <code className="bg-white/60 px-1 rounded">Segunda-feira/Quarta-feira</code> e horário{' '}
+                  <code className="bg-white/60 px-1 rounded">08:00/15:00</code>.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
                   <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
@@ -448,8 +483,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                   <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
                                 </TD>
                                 <TD className="text-xs font-medium text-ink-muted">
-                                  {r.days.length ? r.days.map(d => d.split('-')[0]).join(' / ') : '—'}
-                                  {r.time ? ` · ${r.time}` : ''}
+                                  {formatarDiasHorarios(r.diasHorarios)}
                                 </TD>
                                 <TD>
                                   {r.issues.length === 0 ? (
@@ -480,7 +514,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                             </span>
                           }
                           fields={[
-                            { label: 'Dia / Hora', value: `${r.days.length ? r.days.map(d => d.split('-')[0]).join(' / ') : '—'}${r.time ? ' · ' + r.time : ''}` },
+                            { label: 'Dia / Hora', value: formatarDiasHorarios(r.diasHorarios) },
                           ]}
                         >
                           {r.issues.length === 0 ? (
