@@ -38,10 +38,34 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
+  /**
+   * No celular, o teclado cobre o rodapé (botão Salvar) se o modal continuar
+   * medindo pela altura "de layout" — ela não encolhe quando o teclado abre.
+   * Sincronizando com o visualViewport, o modal encolhe junto com o teclado
+   * e o rodapé continua visível acima dele.
+   */
+  const [viewport, setViewport] = React.useState<{ height: number; top: number } | null>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!vv) return;
+    const ajustar = () => setViewport({ height: vv.height, top: vv.offsetTop });
+    ajustar();
+    vv.addEventListener('resize', ajustar);
+    vv.addEventListener('scroll', ajustar);
+    return () => {
+      vv.removeEventListener('resize', ajustar);
+      vv.removeEventListener('scroll', ajustar);
+    };
+  }, [open]);
+
   const conteudo = (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+        <div
+          className="fixed inset-x-0 top-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
+          style={viewport ? { height: viewport.height, transform: `translateY(${viewport.top}px)` } : { bottom: 0 }}
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -60,9 +84,10 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
             className={cn(
               'relative bg-surface w-full shadow-overlay flex flex-col overflow-hidden',
               // celular: folha inferior colada embaixo, ocupando quase toda a altura
-              'rounded-t-panel max-h-[92dvh] pb-[env(safe-area-inset-bottom)]',
+              // (% em vez de dvh/vh: assim acompanha o encolhimento do wrapper quando o teclado abre)
+              'rounded-t-panel max-h-[92%] pb-[env(safe-area-inset-bottom)]',
               // tablet para cima: diálogo centralizado
-              'sm:rounded-panel sm:max-h-[90vh] sm:pb-0',
+              'sm:rounded-panel sm:max-h-[90%] sm:pb-0',
               LARGURA[size]
             )}
           >
