@@ -11,6 +11,16 @@ import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD,
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
 
+/** fixo (padrão), wellhub (aceita "gympass" como sinônimo comum) ou avulso. */
+function parseModalidadeSmart(raw: string): { modalidade: string; guessed: boolean } {
+  const k = stripAccents((raw || '').toLowerCase().trim());
+  if (!k) return { modalidade: 'fixo', guessed: false };
+  if (k.includes('wellhub') || k.includes('gympass') || k.includes('gym pass')) return { modalidade: 'wellhub', guessed: false };
+  if (k.includes('avuls')) return { modalidade: 'avulso', guessed: false };
+  if (k.includes('fix')) return { modalidade: 'fixo', guessed: false };
+  return { modalidade: 'fixo', guessed: true };
+}
+
 function parseLevelSmart(raw: string): { level: CapLevel; guessed: boolean } {
   const k = stripAccents((raw || '').toLowerCase().trim());
   const exact: Record<string, CapLevel> = {
@@ -90,10 +100,15 @@ const HEADER_MAP: Record<string, string> = {
   nome: 'name', aluno: 'name', 'nome do aluno': 'name', crianca: 'name',
   idade: 'age', anos: 'age',
   touca: 'level', nivel: 'level', cor: 'level', categoria: 'level',
+  modalidade: 'modalidade', tipo: 'modalidade',
   dia: 'day', dias: 'day', 'dia da semana': 'day',
   horario: 'time', hora: 'time', 'horario da aula': 'time',
   responsavel: 'guardian', 'nome do responsavel': 'guardian', mae: 'guardian', pai: 'guardian',
   telefone: 'phone', whatsapp: 'phone', celular: 'phone', fone: 'phone', contato: 'phone',
+  endereco: 'endereco', 'rua/numero': 'endereco',
+  observacoes: 'observacoes', observacao: 'observacoes', obs: 'observacoes',
+  // senha não é mais pedida no modelo (a senha do responsável já é sabida:
+  // 4 últimos dígitos do telefone) — mas se alguém ainda mandar, continua valendo.
   senha: 'password', password: 'password',
 };
 
@@ -101,9 +116,12 @@ interface BulkRow {
   name: string;
   age: number;
   level: CapLevel;
+  modalidade: string;
   guardian: string;
   phone: string;
   password: string;
+  endereco: string;
+  observacoes: string;
   diasHorarios: DiaHorario[];
   issues: string[];
   skip: boolean;
@@ -181,10 +199,11 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   // ---- Importação em massa ----
   const downloadTemplate = () => {
     const csv =
-      'nome;idade;touca;dia;horario;responsavel;telefone;senha\n' +
-      'Ana Clara Souza;7;Laranja;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;1234\n' +
-      'Pedro Henrique Lima;9;Verde;Terça-feira;15:30;Joao Lima;11988887777;\n' +
-      'Bernardo Oliveira;10;Azul Claro;Segunda-feira/Quarta-feira;08:00/15:00;Camila Oliveira;11944443333;\n';
+      'nome;idade;touca;modalidade;dia;horario;responsavel;telefone;endereco;observacoes\n' +
+      'Ana Clara Souza;7;Laranja;fixo;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;;\n' +
+      'Pedro Henrique Lima;9;Verde;wellhub;Terça-feira;15:30;Joao Lima;11988887777;;\n' +
+      'Bernardo Oliveira;10;Azul Claro;fixo;Segunda-feira/Quarta-feira;08:00/15:00;Camila Oliveira;11944443333;Rua das Flores 123;Alérgico a poeira\n' +
+      'Sofia Ribeiro;12;Amarela;avulso;;;Renata Ribeiro;11955554444;;\n';
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -239,6 +258,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       const { level, guessed } = parseLevelSmart(col(raw, 'level'));
       if (guessed) issues.push(`touca incerta → assumido "${levels[level].label}"`);
 
+      const { modalidade, guessed: modalidadeIncerta } = parseModalidadeSmart(col(raw, 'modalidade'));
+      if (modalidadeIncerta) issues.push(`modalidade incerta → assumido "fixo"`);
+
       const rawDay = col(raw, 'day');
       const rawTime = col(raw, 'time');
       const { pares: diasHorarios, contagemDivergente, diaInvalido } = parseDiasHorarios(rawDay, rawTime);
@@ -246,11 +268,10 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       if (contagemDivergente) issues.push('quantidade de horários não bate com a quantidade de dias');
 
       const phone = col(raw, 'phone').replace(/\D/g, '');
-      let password = col(raw, 'password').trim();
-      if (!password) {
-        password = phone.slice(-4) || '1234';
-        issues.push(`sem senha → gerada "${password}"`);
-      }
+      // senha não vem mais na planilha — gera sozinha (4 últimos dígitos do
+      // telefone, a mesma regra que o responsável já usa pra entrar no portal).
+      // Não é mais um "aviso": é o caminho normal agora.
+      const password = col(raw, 'password').trim() || phone.slice(-4) || '1234';
 
       if (diasHorarios.length > 0) {
         const semHorario = diasHorarios.filter(dh => !dh.time);
@@ -271,9 +292,12 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
         name: nm,
         age: Number.isFinite(ageNum) ? ageNum : 0,
         level,
+        modalidade,
         guardian: col(raw, 'guardian'),
         phone,
         password,
+        endereco: col(raw, 'endereco'),
+        observacoes: col(raw, 'observacoes'),
         diasHorarios,
         issues,
         skip,
@@ -295,7 +319,11 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     for (const r of toCreate) {
       const { data: student, error } = await supabase
         .from('students')
-        .insert([{ name: r.name, age: r.age, level: r.level, guardian_name: r.guardian, phone: r.phone, password: r.password }])
+        .insert([{
+          name: r.name, age: r.age, level: r.level, modalidade: r.modalidade,
+          guardian_name: r.guardian, phone: r.phone, password: r.password,
+          endereco: r.endereco || null, observacoes: r.observacoes || null,
+        }])
         .select()
         .single();
 
@@ -408,7 +436,10 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                 <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
                 <p className="text-sm text-amber-800">
                   Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
-                  <b> nome, idade, touca, dia, horario, responsavel, telefone, senha</b>. Só <b>nome</b> é obrigatório.
+                  <b> nome, idade, touca, modalidade, dia, horario, responsavel, telefone, endereco, observacoes</b>.
+                  Só <b>nome</b> é obrigatório — o resto pode ficar em branco.
+                  <b> Não precisa de senha</b>: o sistema já gera sozinho, com os 4 últimos dígitos do telefone.
+                  <b> Modalidade</b> aceita fixo, wellhub (ou "gympass") e avulso — sem preencher, entra como fixo.
                   Vários dias na mesma célula: separe por <code className="bg-white/60 px-1 rounded">/</code>.
                   Horário diferente por dia? Separe do mesmo jeito, na mesma ordem dos dias — ex.: dia{' '}
                   <code className="bg-white/60 px-1 rounded">Segunda-feira/Quarta-feira</code> e horário{' '}
@@ -443,7 +474,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
                   spellCheck={false}
-                  placeholder={'nome;idade;touca;dia;horario;responsavel;telefone;senha\nAna Clara Souza;7;Laranja;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;1234'}
+                  placeholder={'nome;idade;touca;modalidade;dia;horario;responsavel;telefone;endereco;observacoes\nAna Clara Souza;7;Laranja;fixo;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;;'}
                   className="w-full h-44 p-4 bg-surface-sunken border border-line rounded-2xl text-xs md:text-sm font-mono text-ink outline-none focus:ring-2 focus:ring-amber-500/20 resize-y"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -480,7 +511,12 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                   <p className="text-xs text-ink-muted">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
                                 </TD>
                                 <TD>
-                                  <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
+                                  <div className="flex flex-wrap gap-1">
+                                    <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
+                                    {r.modalidade !== 'fixo' && (
+                                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
+                                    )}
+                                  </div>
                                 </TD>
                                 <TD className="text-xs font-medium text-ink-muted">
                                   {formatarDiasHorarios(r.diasHorarios)}
@@ -509,9 +545,14 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                           title={r.name}
                           subtitle={`${r.age || '?'} anos${r.guardian ? ' · ' + r.guardian : ''}`}
                           badges={
-                            <span className={cn('px-2 py-1 rounded-badge text-micro font-bold uppercase text-white', levels[r.level].bgClass)}>
-                              {levels[r.level].label}
-                            </span>
+                            <>
+                              <span className={cn('px-2 py-1 rounded-badge text-micro font-bold uppercase text-white', levels[r.level].bgClass)}>
+                                {levels[r.level].label}
+                              </span>
+                              {r.modalidade !== 'fixo' && (
+                                <span className="px-2 py-1 rounded-badge text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
+                              )}
+                            </>
                           }
                           fields={[
                             { label: 'Dia / Hora', value: formatarDiasHorarios(r.diasHorarios) },
