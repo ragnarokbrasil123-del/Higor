@@ -11,7 +11,6 @@ import { supabase } from '@/lib/supabase';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
-import { SeloAvaliacao } from '@/components/swimming/SeloAvaliacao';
 import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
 
 interface StudentRow {
@@ -46,11 +45,26 @@ interface SlotRow {
 interface EvalRow {
   student_id: string;
   date: string;
+  approved: boolean;
 }
 
 const DAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 const MODALIDADES = ['fixo', 'wellhub', 'avulso'];
 const hhmm = (t: string) => String(t || '').slice(0, 5);
+
+/**
+ * Selo de avaliação com o resultado do trimestre — não só "avaliado/pendente"
+ * (como o SeloAvaliacao da Avaliação de Natação), mas separando quem passou
+ * de quem ainda está em treinamento, pra dar pra ver isso direto na lista,
+ * sem precisar abrir a ficha ou baixar um PDF.
+ */
+function SeloAvaliacaoDetalhado({ ultima }: { ultima?: { date: string; approved: boolean } }) {
+  if (!ultima) return <Badge tone="neutral">pendente</Badge>;
+  const data = new Date(ultima.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  return ultima.approved
+    ? <Badge tone="success">✓ Aprovado {data}</Badge>
+    : <Badge tone="warning">Treinando {data}</Badge>;
+}
 
 export function StudentsModule() {
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -64,8 +78,8 @@ export function StudentsModule() {
   const [fModal, setFModal] = useState<string>('all');
   /** Por padrao a lista mostra so quem esta matriculado. */
   const [fSituacao, setFSituacao] = useState<'ativos' | 'inativos' | 'todos'>('ativos');
-  /** Avaliação no trimestre corrente — pronta ou pendente. */
-  const [fAval, setFAval] = useState<'all' | 'avaliado' | 'pendente'>('all');
+  /** Avaliação no trimestre corrente — pendente, aprovado ou em treinamento. */
+  const [fAval, setFAval] = useState<'all' | 'pendente' | 'aprovado' | 'treinamento'>('all');
 
   const [editing, setEditing] = useState<StudentRow | null>(null);
   /**
@@ -97,7 +111,7 @@ export function StudentsModule() {
       page('students', '*'),
       page('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
       page('class_slots', 'id, class_id, cap_color, student_id'),
-      page('evaluations', 'student_id, date'),
+      page('evaluations', 'student_id, date, approved'),
     ]);
     setStudents((st as StudentRow[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     setClasses(cl as ClassRow[]);
@@ -107,9 +121,11 @@ export function StudentsModule() {
   };
 
   const classById = new Map(classes.map(c => [c.id, c]));
-  const ultimaAval = (sid: string) => evaluations.find(e => e.student_id === sid);
   const avaliadoAgora = (sid: string) =>
     evaluations.some(e => e.student_id === sid && trimestre(e.date) === TRIMESTRE_ATUAL);
+  /** A avaliação mais recente DESTE trimestre — pra saber o resultado (aprovado ou em treinamento). */
+  const ultimaAvalNoTrimestre = (sid: string) =>
+    evaluations.find(e => e.student_id === sid && trimestre(e.date) === TRIMESTRE_ATUAL);
 
   const aulasDe = (studentId: string) =>
     slots
@@ -260,8 +276,12 @@ export function StudentsModule() {
     const ativo = s.ativo !== false;
     if (fSituacao === 'ativos' && !ativo) return false;
     if (fSituacao === 'inativos' && ativo) return false;
-    if (fAval === 'avaliado' && !avaliadoAgora(s.id)) return false;
     if (fAval === 'pendente' && avaliadoAgora(s.id)) return false;
+    if (fAval === 'aprovado' && !ultimaAvalNoTrimestre(s.id)?.approved) return false;
+    if (fAval === 'treinamento') {
+      const ultima = ultimaAvalNoTrimestre(s.id);
+      if (!ultima || ultima.approved) return false;
+    }
     if (busca) {
       const alvo = `${s.name} ${s.guardian_name || ''} ${s.phone || ''}`.toLowerCase();
       if (!alvo.includes(busca)) return false;
@@ -305,8 +325,9 @@ export function StudentsModule() {
             </Select>
             <Select value={fAval} onChange={e => setFAval(e.target.value as typeof fAval)} className="w-full md:w-auto py-2.5">
               <option value="all">Avaliação: todos</option>
-              <option value="avaliado">Avaliação pronta</option>
               <option value="pendente">Avaliação pendente</option>
+              <option value="aprovado">Aprovado</option>
+              <option value="treinamento">Em treinamento</option>
             </Select>
           </div>
           <FilterFooter>
@@ -370,7 +391,7 @@ export function StudentsModule() {
                             )}
                           </TD>
                           <TD>
-                            <SeloAvaliacao avaliado={avaliadoAgora(s.id)} ultima={ultimaAval(s.id)} />
+                            <SeloAvaliacaoDetalhado ultima={ultimaAvalNoTrimestre(s.id)} />
                           </TD>
                           <TD align="right">
                             <Button size="sm" variant="secondary" onClick={() => abrirFicha(s)}>
@@ -404,7 +425,7 @@ export function StudentsModule() {
                           {aulas.length === 0
                             ? <Badge tone="warning">sem turma</Badge>
                             : aulas.map(a => <Badge key={a.slot.id}>{a.cls!.day_of_week.slice(0, 3)} {hhmm(a.cls!.start_time)}</Badge>)}
-                          <SeloAvaliacao avaliado={avaliadoAgora(s.id)} ultima={ultimaAval(s.id)} />
+                          <SeloAvaliacaoDetalhado ultima={ultimaAvalNoTrimestre(s.id)} />
                         </>
                       }
                       fields={[
