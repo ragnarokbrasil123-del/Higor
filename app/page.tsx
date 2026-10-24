@@ -19,6 +19,8 @@ import { HidroModule } from '@/components/hidro-module';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { ativarAvisos } from '@/lib/push';
+import { logoutServidor } from '@/lib/equipe';
 import { MobileNav } from '@/components/ui';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
 
@@ -222,8 +224,9 @@ export default function Page() {
       students={Array.isArray(user.data) ? user.data : [user.data]}
       onLogout={() => {
         localStorage.removeItem('olimpo_session');
+        logoutServidor();
         setUser(null);
-      }} 
+      }}
     />;
   }
 
@@ -233,41 +236,36 @@ export default function Page() {
   const isTeacher = user.role === 'teacher';
   const isStaff = isAdmin || isTeacher; 
 
+  /**
+   * Sair de verdade.
+   *
+   * Limpar o `localStorage` só esvazia a INTERFACE. Quem autoriza as
+   * rotas é o cookie de sessão, que é HttpOnly — o JavaScript da página
+   * não consegue apagá-lo, só o servidor. Sem a chamada abaixo, "sair"
+   * deixaria a sessão viva por 30 dias: no aparelho da recepção, a
+   * pessoa seguinte continuaria autorizada a ler a ficha dos alunos.
+   */
   const handleLogout = () => {
     localStorage.removeItem('olimpo_session');
+    logoutServidor();
     setUser(null);
   };
 
+  /**
+   * Registra ESTE aparelho para receber os chamados de limpeza e manutenção.
+   *
+   * Tinha aqui uma segunda cópia de toda a inscrição — com a chave VAPID
+   * escrita à mão e sem gravar a coluna `tipo`, que é o que separa aparelho
+   * de admin de aparelho de responsável. Agora usa o mesmo caminho do
+   * portal dos pais (lib/push.ts), que já grava o `tipo` e não duplica
+   * aparelho já inscrito.
+   */
   const activateNotifications = async () => {
     try {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        alert('O seu navegador não suporta notificações nativas.');
-        return;
-      }
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') return alert('Você precisa Clicar em PERMITIR no aviso!');
-      
-      const registration = await navigator.serviceWorker.ready;
-      const urlBase64ToUint8Array = (base64String: string) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-        return outputArray;
-      };
-
-      const publicVapidKey = "BJx64L626N6Y5tY_D7goVf4l-PO2vpgax3PXFSDN59avftuq8_hWN3Neor_yff2j4GVwWhdWMKC1luKocmhClrg";
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-      });
-
-      const { error } = await supabase.from('push_subscriptions').insert([{ subscription }]);
-      if (error) alert('Erro ao salvar aparelho. A tabela existe?');
-      else alert('🔔 FEITO! Aparelho Registrado na Nuvem!');
+      await ativarAvisos('', 'admin');
+      alert('🔔 Pronto! Este aparelho vai receber os chamados.');
     } catch (err: any) {
-      alert('Erro técnico ao ativar: ' + err.message);
+      alert(err?.message || 'Não consegui ativar os avisos neste aparelho.');
     }
   };
 

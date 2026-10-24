@@ -4,8 +4,16 @@ import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle, Check, Copy, KeyRound, RotateCcw, ShieldCheck, Trash2, UserPlus,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+// aliases porque esta tela já tem funções locais com os mesmos nomes —
+// sem eles, `novoCodigo(c.id)` chamaria a própria função local
+import {
+  convidar as pedirConvite,
+  lerEquipe,
+  novoCodigo as pedirCodigoNovo,
+  reativar as reativarAcesso,
+  revogar as revogarAcesso,
+} from '@/lib/equipe';
 import {
   Badge, Button, Card, EmptyState, IconButton, Input, Label, Loading,
   Modal, PageHeader, PageShell, Select,
@@ -52,9 +60,11 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
   const [papel, setPapel] = useState<'teacher' | 'admin'>('teacher');
 
   const carregar = async () => {
-    const { data, error } = await supabase.from('app_users').select('*').order('name');
-    if (error) { setErro(error.message); return; }
-    setContas((data ?? []) as Conta[]);
+    try {
+      setContas(await lerEquipe() as Conta[]);
+    } catch (e: any) {
+      setErro(e?.message || 'Não consegui carregar as contas.');
+    }
   };
 
   useEffect(() => { carregar(); }, []);
@@ -72,23 +82,22 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
     if (!nomeFinal) return alert('Informe o nome da pessoa.');
 
     setSalvando(true);
-    const convite = {
-      status: 'convidado',
-      convite_codigo: gerarCodigoConvite(),
-      convite_expira_em: validadeConvite(),
-      role: papel,
-      active: true,
-    };
-
-    // pessoa que já existe (os professores vieram da planilha) só recebe o
-    // convite na linha dela — criar outra duplicaria o professor na Grade
-    const { error } = alvo === 'novo'
-      ? await supabase.from('app_users').insert([{ ...convite, name: nomeFinal }])
-      : await supabase.from('app_users').update(convite).eq('id', alvo);
+    // O CÓDIGO é gerado no servidor, não aqui: se o navegador escolhesse o
+    // código, daria para cravar um previsível e resgatá-lo depois.
+    // A pessoa que já existe (os professores vieram da planilha) só recebe o
+    // convite na linha dela — criar outra duplicaria o professor na Grade.
+    try {
+      await pedirConvite({
+        id: alvo === 'novo' ? undefined : alvo,
+        name: nomeFinal,
+        role: papel,
+      });
+    } catch (e: any) {
+      setSalvando(false);
+      return alert('Erro ao convidar: ' + (e?.message || ''));
+    }
 
     setSalvando(false);
-    if (error) return alert('Erro ao convidar: ' + error.message);
-
     setConvidando(false);
     setNome(''); setAlvo('novo'); setPapel('teacher');
     carregar();
@@ -96,30 +105,33 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
 
   const novoCodigo = async (c: Conta) => {
     if (!confirm(`Gerar um código novo para ${c.name}? O código anterior deixa de funcionar.`)) return;
-    const { error } = await supabase
-      .from('app_users')
-      .update({ convite_codigo: gerarCodigoConvite(), convite_expira_em: validadeConvite(), status: 'convidado' })
-      .eq('id', c.id);
-    if (error) return alert('Erro: ' + error.message);
+    try {
+      await pedirCodigoNovo(c.id);
+    } catch (e: any) {
+      return alert('Erro: ' + (e?.message || ''));
+    }
     carregar();
   };
 
   const revogar = async (c: Conta) => {
     if (!confirm(`Cortar o acesso de ${c.name || c.username}? A pessoa deixa de entrar imediatamente.`)) return;
-    const { error } = await supabase
-      .from('app_users')
-      .update({ status: 'revogado', convite_codigo: null, convite_expira_em: null })
-      .eq('id', c.id);
-    if (error) return alert('Erro: ' + error.message);
+    try {
+      await revogarAcesso(c.id);
+    } catch (e: any) {
+      return alert('Erro: ' + (e?.message || ''));
+    }
     carregar();
   };
 
   const reativar = async (c: Conta) => {
-    const { error } = await supabase
-      .from('app_users')
-      .update({ status: 'aprovado', liberado_em: new Date().toISOString(), liberado_por: meuNome })
-      .eq('id', c.id);
-    if (error) return alert('Erro: ' + error.message);
+    try {
+      // `liberado_por` é preenchido pelo servidor a partir da sessão, não
+      // por `meuNome` vindo da tela — senão daria para registrar a
+      // liberação no nome de outra pessoa.
+      await reativarAcesso(c.id, meuNome);
+    } catch (e: any) {
+      return alert('Erro: ' + (e?.message || ''));
+    }
     carregar();
   };
 

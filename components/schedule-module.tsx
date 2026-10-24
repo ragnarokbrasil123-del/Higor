@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { paginado } from '@/lib/paginado';
+import { lerAlunos } from '@/lib/alunos';
+import { lerEquipe } from '@/lib/equipe';
 import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder, CAPACIDADE_TOUCA, NIVEL_UNICO, GRUPO_VERDE_MAIS } from '@/types';
@@ -135,34 +138,33 @@ export function ScheduleModule() {
     // professor vê só as próprias turmas — filtrado aqui, e não no banco,
     // porque no sábado teacher_name é a dupla "A / B"
     const tName = sess && sess.role !== 'admin' ? (sess.data?.name || sess.data?.username) : null;
-    const { data: todas } = await supabase.from('classes').select('*').order('start_time', { ascending: true });
-    const clsData = tName ? (todas ?? []).filter(c => lecionaEm(c.teacher_name, tName)) : todas;
-    const { data: slotData } = await supabase.from('class_slots').select('*');
-    const { data: stuData } = await supabase.from('students').select('id, name');
 
-    if (stuData) {
-      const map: Record<string, string> = {};
-      stuData.forEach(s => { map[s.id] = s.name; });
-      setStudentsMap(map);
-    }
+    // `class_slots` passa de 1000 linhas: sem paginar, o corte do PostgREST
+    // escondia vagas e as turmas apareciam com menos aluno do que têm.
+    const [todas, slotData, stuData] = await Promise.all([
+      paginado<any>('classes', '*', 'start_time'),
+      paginado<any>('class_slots', '*'),
+      lerAlunos('nomes'),
+    ]);
 
-    if (clsData) {
-      setClasses(clsData.map(c => ({
-        ...c,
-        class_slots: slotData?.filter(s => s.class_id === c.id) || [],
-      })));
-    }
+    const clsData = tName ? todas.filter(c => lecionaEm(c.teacher_name, tName)) : todas;
+
+    const map: Record<string, string> = {};
+    stuData.forEach(s => { map[s.id] = s.name; });
+    setStudentsMap(map);
+
+    setClasses(clsData.map(c => ({
+      ...c,
+      class_slots: slotData.filter(s => s.class_id === c.id),
+    })));
   };
 
   const loadProfessors = async () => {
-    const { data, error } = await supabase
-      .from('app_users')
-      .select('id, name, username, active, schedule')
-      .eq('role', 'teacher')
-      .order('name', { ascending: true });
-    if (error) { console.error('Erro ao carregar professores:', error); return; }
-    if (data) {
+    try {
+      const data = await lerEquipe('teacher');
       setProfessors((data as ProfLite[]).filter(p => (p.active ?? true) && (p.name || p.username)));
+    } catch (e) {
+      console.error('Erro ao carregar professores:', e);
     }
   };
 

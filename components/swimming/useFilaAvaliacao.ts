@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { atualizarAlunos } from '@/lib/alunos';
+import { lancarAvaliacao } from '@/lib/avaliacoes';
 import { capLevelOrder, levels, type CapLevel } from '@/types';
 import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { TRIMESTRE_ATUAL, draftKey, trimestre, type Aluno } from './constantes';
@@ -153,15 +155,22 @@ export function useFilaAvaliacao({ view, alunoPorId, grupos, avaliadoAgora, reca
       if (marcados === 0) return alert('Marque pelo menos um critério, ou use "Pular".');
       setSalvando(true);
       const aprovado = passou === criterios.length && criterios.length > 0;
-      const { error } = await supabase.from('evaluations').insert([{
-        student_id: alunoAtual.id,
-        date: new Date().toISOString(),
-        level: alunoAtual.level,
-        scores,
-        notes,
-        approved: aprovado,
-      }]);
-      if (error) { setSalvando(false); return alert('Erro ao salvar: ' + error.message); }
+      try {
+        // a autoria (`avaliador_*`) é preenchida no servidor a partir da
+        // sessão assinada — não vai no corpo, para o navegador não poder
+        // assinar a avaliação com o nome de outra pessoa
+        await lancarAvaliacao({
+          student_id: alunoAtual.id,
+          date: new Date().toISOString(),
+          level: alunoAtual.level,
+          scores,
+          notes,
+          approved: aprovado,
+        });
+      } catch (e: any) {
+        setSalvando(false);
+        return alert('Erro ao salvar: ' + (e?.message || ''));
+      }
 
       // A regra de promoção não muda: passou em todos -> sobe uma touca.
       let novaTouca: string | undefined;
@@ -169,7 +178,10 @@ export function useFilaAvaliacao({ view, alunoPorId, grupos, avaliadoAgora, reca
         const i = capLevelOrder.indexOf(alunoAtual.level);
         if (i >= 0 && i < capLevelOrder.length - 1) {
           const proxima = capLevelOrder[i + 1];
-          await supabase.from('students').update({ level: proxima }).eq('id', alunoAtual.id);
+          // `level` é o ÚNICO campo que o papel de professor pode escrever
+          // (ver CAMPOS_PROFESSOR em lib/alunos-colunas.ts): a promoção é
+          // consequência da avaliação, e nada além dela.
+          await atualizarAlunos(alunoAtual.id, { level: proxima });
           novaTouca = levels[proxima].label;
         }
       }

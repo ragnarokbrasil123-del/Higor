@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { InstallPrompt } from '@/components/install-prompt';
+import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO, normalizarCodigo } from '@/lib/acesso';
+import { buscarFilhos, MENSAGEM_FALHA } from '@/lib/login-responsavel';
 import {
-  LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO,
-  contaLiberada, conviteExpirado, normalizarCodigo,
-} from '@/lib/acesso';
+  conferirCodigo, criarAcesso, loginEquipe,
+  MENSAGEM_CONVITE, MENSAGEM_LOGIN,
+} from '@/lib/equipe';
 
 interface LoginModuleProps {
   onLogin: (role: 'admin' | 'teacher' | 'client', data: any) => void;
@@ -29,7 +30,9 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
   // Convite: primeiro confere o código, depois a pessoa cria o acesso
   const [codigo, setCodigo] = useState('');
-  const [convidado, setConvidado] = useState<{ id: string; name: string | null; role: string } | null>(null);
+  // sem `id`: o passo 2 do convite reenvia o CÓDIGO e o servidor resolve de
+  // quem é. Guardar um id aqui permitiria pedir acesso para outra conta.
+  const [convidado, setConvidado] = useState<{ name: string | null; role: string } | null>(null);
   const [novoUsuario, setNovoUsuario] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
   const [repeteSenha, setRepeteSenha] = useState('');
@@ -48,19 +51,16 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
     e.preventDefault();
     setLoading(true); setError('');
 
-    const { data, error: dbError } = await supabase
-      .from('app_users')
-      .select('id, name, role, status, convite_codigo, convite_expira_em')
-      .eq('convite_codigo', normalizarCodigo(codigo))
-      .maybeSingle();
+    const r = await conferirCodigo(codigo);
 
     setLoading(false);
 
-    if (dbError || !data) return setError('Código não encontrado. Confira as letras e tente de novo.');
-    if (data.status !== 'convidado') return setError('Este convite já foi usado.');
-    if (conviteExpirado(data.convite_expira_em)) return setError('Este convite venceu. Peça um código novo à administração.');
+    if (!r.ok) return setError(MENSAGEM_CONVITE[r.motivo]);
 
-    setConvidado({ id: data.id, name: data.name, role: data.role });
+    // o id não vem mais do cliente: o passo 2 reenvia o CÓDIGO, e é o
+    // servidor que resolve de quem é. Confiar num id daqui permitiria
+    // pedir "crie acesso para o id do admin" sem convite nenhum.
+    setConvidado({ name: r.convidado.name, role: r.convidado.role });
   };
 
   /** Passo 2 do convite: define usuário e senha e libera a conta. */
@@ -75,65 +75,37 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
     setLoading(true); setError('');
 
-    // usuário é como a pessoa entra: não pode repetir
-    const { data: existe } = await supabase
-      .from('app_users').select('id').eq('username', usuario).maybeSingle();
-
-    if (existe && existe.id !== convidado.id) {
-      setLoading(false);
-      return setError('Este usuário já está em uso. Escolha outro.');
-    }
-
-    const { data, error: dbError } = await supabase
-      .from('app_users')
-      .update({
-        username: usuario,
-        password: novaSenha,
-        status: 'aprovado',
-        convite_codigo: null,
-        convite_expira_em: null,
-        liberado_em: new Date().toISOString(),
-      })
-      .eq('id', convidado.id)
-      .eq('status', 'convidado') // trava: se alguém já usou o convite, não sobrescreve
-      .select()
-      .single();
+    const r = await criarAcesso(codigo, usuario, novaSenha);
 
     setLoading(false);
 
-    if (dbError || !data) return setError('Não deu para criar o acesso. Tente de novo.');
+    if (!r.ok) return setError(MENSAGEM_CONVITE[r.motivo]);
 
-    if (data.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
+    if (r.usuario.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
       setError('Acesso criado! Mas a entrada de professores ainda não foi liberada pela administração.');
       setConvidado(null);
       return;
     }
-    onLogin(data.role as 'admin' | 'teacher', data);
+    onLogin(r.usuario.role as 'admin' | 'teacher', r.usuario);
   };
 
   const handleTeamLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError('');
     
-    const { data, error: dbError } = await supabase
-      .from('app_users')
-      .select('*')
-      .eq('username', username.toLowerCase().trim())
-      .eq('password', password)
-      .single();
+    const r = await loginEquipe(username, password);
 
     setLoading(false);
 
-    if (dbError || !data) {
-      setError('Acesso negado. Verifique usuário e senha.');
-    } else if (!contaLiberada(data)) {
-      // convite ainda não usado, acesso cortado pelo master, ou conta inativa
-      setError('Esta conta não está liberada. Fale com a administração.');
-    } else if (data.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
+    if (!r.ok) {
+      // 'bloqueada' cobre convite não usado, acesso cortado pelo master
+      // e conta inativa — a conferência vive em contaLiberada()
+      setError(MENSAGEM_LOGIN[r.motivo]);
+    } else if (r.usuario.role === 'teacher' && !LOGIN_PROFESSOR_LIBERADO) {
       // trava geral: nenhum professor entra por enquanto
       setError('O acesso de professor ainda não foi liberado. Fale com a administração.');
     } else {
-      onLogin(data.role as 'admin' | 'teacher', data);
+      onLogin(r.usuario.role as 'admin' | 'teacher', r.usuario);
     }
   };
 
@@ -154,21 +126,18 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
       setLoading(false);
       return;
     }
-    
-    // Busca TODOS os filhos daquele telefone (irmãos usam o mesmo login)
-    const { data, error: dbError } = await supabase
-      .from('students')
-      .select('*, evaluations(*)')
-      .ilike('phone', `%${cleanPhone}%`)
-      .eq('password', clientPassword)
-      .order('name');
+
+    // Busca TODOS os filhos daquele telefone (irmãos usam o mesmo login).
+    // A regra de casamento vive em lib/login-responsavel.ts — o portal
+    // usa a mesma, senão uma correção aqui deixaria o outro lado aberto.
+    const r = await buscarFilhos(cleanPhone, clientPassword);
 
     setLoading(false);
 
-    if (dbError || !data || data.length === 0) {
-      setError('Telefone ou Senha incorretos. Tente novamente.');
+    if (!r.ok) {
+      setError(MENSAGEM_FALHA[r.motivo]);
     } else {
-      onLogin('client', data);
+      onLogin('client', r.filhos);
     }
   };
 

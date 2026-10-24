@@ -10,6 +10,8 @@ import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
+import { paginado } from '@/lib/paginado';
+import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
 
@@ -97,21 +99,13 @@ export function StudentsModule() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const page = async (table: string, cols: string) => {
-      const out: any[] = [];
-      for (let from = 0; ; from += 1000) {
-        const { data } = await supabase.from(table).select(cols).range(from, from + 999);
-        if (!data?.length) break;
-        out.push(...data);
-        if (data.length < 1000) break;
-      }
-      return out;
-    };
+    // `completo` é o único escopo que traz endereço e observações de saúde,
+    // e a rota só o entrega para o papel admin (ver /api/alunos).
     const [st, cl, sl, ev] = await Promise.all([
-      page('students', '*'),
-      page('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
-      page('class_slots', 'id, class_id, cap_color, student_id'),
-      page('evaluations', 'student_id, date, approved'),
+      lerAlunos('completo'),
+      paginado<any>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
+      paginado<any>('class_slots', 'id, class_id, cap_color, student_id'),
+      paginado<any>('evaluations', 'student_id, date, approved'),
     ]);
     setStudents((st as StudentRow[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     setClasses(cl as ClassRow[]);
@@ -162,19 +156,23 @@ export function StudentsModule() {
     if (!editing) return;
     if (!editing.name.trim()) return alert('O nome é obrigatório.');
     setSaving(true);
-    const { error } = await supabase.from('students').update({
-      name: editing.name.trim(),
-      age: editing.age === null || String(editing.age) === '' ? null : Number(editing.age),
-      level: editing.level,
-      guardian_name: editing.guardian_name,
-      phone: (editing.phone || '').replace(/\D/g, ''),
-      password: editing.password,
-      modalidade: editing.modalidade || 'fixo',
-      endereco: editing.endereco,
-      observacoes: editing.observacoes,
-    }).eq('id', editing.id);
+    try {
+      await atualizarAlunos(editing.id, {
+        name: editing.name.trim(),
+        age: editing.age === null || String(editing.age) === '' ? null : Number(editing.age),
+        level: editing.level,
+        guardian_name: editing.guardian_name,
+        phone: (editing.phone || '').replace(/\D/g, ''),
+        password: editing.password,
+        modalidade: editing.modalidade || 'fixo',
+        endereco: editing.endereco,
+        observacoes: editing.observacoes,
+      });
+    } catch (e: any) {
+      setSaving(false);
+      return alert('Erro ao salvar: ' + (e?.message || ''));
+    }
     setSaving(false);
-    if (error) return alert('Erro ao salvar: ' + error.message);
     await fetchAll();
     setEditing(null);
     setOriginal(null);
@@ -196,13 +194,15 @@ export function StudentsModule() {
     if (motivo === null) return; // clicou em cancelar no diálogo
 
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
-    const { error } = await supabase.from('students').update({
-      ativo: false,
-      inativo_em: new Date().toISOString(),
-      inativo_motivo: motivo.trim() || null,
-    }).eq('id', s.id);
-
-    if (error) return alert('Erro ao cancelar: ' + error.message);
+    try {
+      await atualizarAlunos(s.id, {
+        ativo: false,
+        inativo_em: new Date().toISOString(),
+        inativo_motivo: motivo.trim() || null,
+      });
+    } catch (e: any) {
+      return alert('Erro ao cancelar: ' + (e?.message || ''));
+    }
     setEditing(null);
     setOriginal(null);
     fetchAll();
@@ -210,12 +210,11 @@ export function StudentsModule() {
 
   /** Volta a matrícula. A turma precisa ser escolhida de novo. */
   const reativarMatricula = async (s: StudentRow) => {
-    const { error } = await supabase.from('students').update({
-      ativo: true,
-      inativo_em: null,
-      inativo_motivo: null,
-    }).eq('id', s.id);
-    if (error) return alert('Erro ao reativar: ' + error.message);
+    try {
+      await atualizarAlunos(s.id, { ativo: true, inativo_em: null, inativo_motivo: null });
+    } catch (e: any) {
+      return alert('Erro ao reativar: ' + (e?.message || ''));
+    }
     setEditing(e => (e ? { ...e, ativo: true, inativo_em: null, inativo_motivo: null } : e));
     setOriginal(o => (o ? { ...o, ativo: true, inativo_em: null, inativo_motivo: null } : o));
     fetchAll();
@@ -235,8 +234,11 @@ export function StudentsModule() {
     )) return;
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
     await supabase.from('evaluations').delete().eq('student_id', s.id);
-    const { error } = await supabase.from('students').delete().eq('id', s.id);
-    if (error) return alert('Erro ao excluir: ' + error.message);
+    try {
+      await apagarAluno(s.id);
+    } catch (e: any) {
+      return alert('Erro ao excluir: ' + (e?.message || ''));
+    }
     setEditing(null);
     setOriginal(null);
     fetchAll();

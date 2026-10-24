@@ -3,13 +3,29 @@ import { NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/supabase';
+import { supabaseAdmin, temServiceRole } from '@/lib/supabase-admin';
 
-// TODO(segurança): mover a chave VAPID privada para variável de ambiente antes de abrir o repositório.
-webpush.setVapidDetails(
-  'mailto:contato@clubeolimpo.com',
-  'BJx64L626N6Y5tY_D7goVf4l-PO2vpgax3PXFSDN59avftuq8_hWN3Neor_yff2j4GVwWhdWMKC1luKocmhClrg',
-  'Hwrxh7oRzI_kxtcjXYLlPDgKMvHH3kmWmOaJ0Hofv8U'
-);
+/**
+ * Chaves VAPID — vêm do ambiente, nunca do código.
+ *
+ * A privada ficava escrita aqui. Como o repositório é público, quem a
+ * copiou pode enviar push ASSINADO COMO O CLUBE para os responsáveis
+ * inscritos: golpe com a marca da escola, chegando como notificação do
+ * app. Por isso não basta mover daqui — o par tem de ser GERADO DE NOVO
+ * (veja o README de operação), senão a chave antiga continua valendo.
+ *
+ * A pública também vem do ambiente para não haver duas fontes: se o
+ * navegador se inscrever com uma pública e o servidor assinar com outra
+ * privada, o push falha silenciosamente em todos os aparelhos.
+ */
+const VAPID_PUBLIC = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:contato@clubeolimpo.com';
+
+const vapidOk = Boolean(VAPID_PUBLIC && VAPID_PRIVATE);
+if (vapidOk) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
+}
 
 /**
  * POST /api/push
@@ -18,7 +34,20 @@ webpush.setVapidDetails(
  */
 export async function POST(req: Request) {
   try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Sem chave configurada não há como assinar: avisa em vez de estourar
+    // em toda chamada. A avaliação em si já foi salva quando chegamos aqui,
+    // então o certo é não derrubar o fluxo do professor por causa do aviso.
+    if (!vapidOk) {
+      console.error('[push] VAPID_PRIVATE_KEY / NEXT_PUBLIC_VAPID_PUBLIC_KEY não configuradas.');
+      return NextResponse.json({ success: false, sent: 0, motivo: 'push não configurado' });
+    }
+
+    // Esta rota é servidor: usa a service_role quando houver, senão a
+    // publishable. Depois do RLS a publishable não lê mais `students`, e
+    // sem isto o aviso ao responsável pararia de sair.
+    const supabase = temServiceRole()
+      ? supabaseAdmin()
+      : createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const body = await req.json().catch(() => ({} as any));
 
     let alvos: any[] = [];

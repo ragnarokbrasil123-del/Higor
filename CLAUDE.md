@@ -56,10 +56,10 @@ O `client` é array porque **irmãos compartilham telefone e senha** — 25 fam�
 
 **Controle de acesso** (`lib/acesso.ts`) — duas camadas independentes:
 
-1. **Travas gerais** — `LOGIN_PROFESSOR_LIBERADO` e `LOGIN_RESPONSAVEL_LIBERADO`. Ambas em `false` hoje: **só o admin entra**. Trocar para `true` reabre; nada mais depende delas. Além de recusar o login, derrubam sessão antiga do papel bloqueado na abertura do app.
+1. **Travas gerais** — `LOGIN_PROFESSOR_LIBERADO` e `LOGIN_RESPONSAVEL_LIBERADO`. **Ambas em `true` hoje: professor e responsável entram.** Trocar para `false` fecha o papel; nada mais depende delas. Além de recusar o login, derrubam sessão antiga do papel bloqueado na abertura do app.
 2. **Convite + aprovação** — não existe auto-cadastro. O **admin master** (`is_master`, hoje só `souza.higor@gmail.com`) convida pela aba Acessos; o app gera um código `XXXX-XXXX` válido por 14 dias; a pessoa usa em "Tenho um convite" na tela de login e define usuário e senha. `status` vira `aprovado`. O código é queimado no uso (`update ... .eq('status','convidado')` impede reuso).
 
-Convidar alguém que **já existe** (os 12 professores da planilha) preenche a linha existente — não cria professor duplicado na Grade.
+Convidar alguém que **já existe** (os professores que vieram da planilha) preenche a linha existente — não cria professor duplicado na Grade.
 
 > ⚠️ Isso é controle de **interface**, não de banco. Sem RLS, a chave publishable lê `app_users` inteira — códigos de convite e senhas em texto puro inclusive. Organiza quem entra; não impede quem sabe usar a API.
 
@@ -135,8 +135,9 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 
 - **429 alunos** — 392 fixo, 24 wellhub, 13 avulso. **386 com turma**, **43 sem**.
 - Toucas: vermelha 139 · laranja 99 · verde 99 · amarela 61 · azul claro 22 · azul escuro 9 · preta 0.
-- **278 turmas** (eram 312; o sábado foi juntado por dupla em 11/09/2026). Por dia: Seg 48 · Ter 52 · Qua 51 · Qui 43 · Sex 50 · **Sáb 34**. Backup pré-junção em `backups/sabado-antes-da-juncao-2026-09-11.json`.
-- **12 professores**, mas **só 1 tem login** (`leticia`). 3 admins: `admin`, `rony`, `souza.higor@gmail.com`.
+- **273 turmas** e **1407 vagas, 628 ocupadas** (conferido no banco em 24/10/2026; antes eram 312 turmas e 1303 vagas — o sábado foi juntado por dupla em 11/09/2026 e a grade mexeu depois). Por dia: Seg 48 · Ter 51 · Qua 50 · Qui 42 · Sex 48 · **Sáb 34**. Backup pré-junção em `backups/sabado-antes-da-juncao-2026-09-11.json`.
+- **10 professores ativos** (todos com login) + 2 inativos. **ANDERSON e CAIO saíram da equipe em 24/10/2026** (`active=false`, `status='revogado'`); a ficha e as turmas deles foram preservadas. 3 admins: `admin`, `rony` (revogado), `souza.higor@gmail.com`.
+- ⚠️ **61 turmas de semana (121 alunos) estão sem professor definido** — eram do Anderson (23) e do Caio (38). No sábado nada se perdeu: as turmas são duplas e o parceiro que ficou continua enxergando. Pela grade de sábado, Isabella parece ter assumido o posto do Caio e Livia o do Anderson, mas **isso não foi confirmado pelo dono**.
 - **0 avaliações** — o recurso nunca chegou a ser usado em produção.
 
 ---
@@ -148,7 +149,13 @@ O **gerador de observação** (`gerarObservacao`) é local, sem API: monta a fra
 - **Professor da turma**: `lib/professor.ts`. Dias de semana = um nome; sábado = dupla `"A / B"`. `lecionaEm(teacher_name, nome)` para filtrar, `professoresDe` para listar pessoas, `rotuloProfessor` para exibir ("LETÍCIA / DOUGLAS").
 - **Trimestre**: rótulo `2026-T3`, calculado por `Math.floor(mês / 3) + 1`. "Avaliado" significa que existe avaliação no trimestre corrente.
 - **PDF do boletim**: `lib/boletim-pdf.ts`, compartilhado entre professor e responsável.
-- `cn()` (clsx + tailwind-merge) é **redefinido localmente em cada módulo** — é o padrão atual do projeto, não é bug.
+- `cn()` (clsx + tailwind-merge) vem de **`lib/utils.ts`**, fonte única importada por 26 arquivos. (Já foi copiado em cada módulo; não volte a copiar.)
+- **Consulta paginada**: `paginado(tabela, colunas, ordem?)` em **`lib/paginado.ts`** — fonte única do laço de 1000 linhas. Quatro módulos ainda têm cópias locais (`dashboard`, `minha-semana`, `students`, e o `page()` interno de alguns); migrar quando mexer neles.
+- **Busca da ficha do responsável**: `lib/login-responsavel.ts`, usada pelo login **e** pelo portal. Casa o telefone pelo **final** (`%digitos`), nunca por pedaço no meio, e **recusa o login se o resultado cair em mais de um telefone** — irmãos compartilham o mesmo número, então dois números é família diferente. Não mexa só num dos dois lados.
+- **`students` e `app_users` NÃO são acessadas por componente.** Todo acesso passa por `lib/alunos.ts` e `lib/equipe.ts`, que chamam as rotas em `app/api/`. Um `supabase.from('students')` novo num componente **reabre a exposição** e quebra quando o RLS estiver ligado. As outras tabelas (`classes`, `class_slots`, `evaluations`, `*_tasks`) seguem indo direto.
+- **Colunas mínimas por finalidade**: `lib/alunos-colunas.ts` declara o que cada escopo traz e o que cada papel pode escrever. Isso não é estilo, é a regra do telefone: a tela do professor não pode **receber** o contato, não basta não desenhar.
+- **Autorização é o cookie, não o `localStorage`.** `olimpo_session` serve só para a interface escolher abas. Quem autoriza é o cookie HttpOnly assinado (`lib/sessao-servidor.ts`), emitido pelas rotas de login. Nunca confie em `role` vindo do cliente numa rota.
+- **Fallback temporário**: sem `SUPABASE_SERVICE_ROLE_KEY` + `SESSION_SECRET`, as rotas devolvem 503 e `lib/alunos.ts`/`lib/equipe.ts` caem na chave publishable, avisando no console. É ponte para o deploy — **enquanto puder acontecer, o RLS não pode ser ligado.**
 - Troca de aba disparada por outro módulo: `window.dispatchEvent(new CustomEvent('jumpToTab', { detail: 'swimming' }))` + `localStorage['olympus_jump_eval']` com o id do aluno.
 - Telefone é sempre gravado **só com dígitos** — o login do responsável busca por dígitos.
 
@@ -171,16 +178,21 @@ Importados de `Informações para criação do app.xlsx` (3 abas: alunos fixos, 
 
 ### Bloqueios operacionais
 
-1. **11 dos 12 professores não têm login.** Sem isso, nada da aba de avaliação chega até eles.
-2. **2 alunos "fixo" sem turma** — os dois Bernardo, touca Verde, pedidos para quinta 8h30, mas nesse horário só existem turmas Laranja e Vermelha. Aparecem num grupo próprio, com aviso, na aba Avulsos & Wellhub.
+1. **Definir quem assumiu as 61 turmas do Anderson e do Caio** (121 alunos). Hoje aquelas turmas existem com os alunos nas vagas, mas com o nome de quem saiu em `classes.teacher_name` — nenhum professor ativo as enxerga.
+2. **A grade nova da planilha (aba 1) não foi aplicada.** Em 24/10/2026 só o expediente (`app_users.schedule`) e o nome da Letícia foram atualizados. A grade de dia/horário/touca da planilha difere da do banco e aplicá-la remaneja matrícula — é projeto à parte, com backup antes.
+3. **2 alunos "fixo" sem turma** — os dois Bernardo, touca Verde, pedidos para quinta 8h30, mas nesse horário só existem turmas Laranja e Vermelha. Aparecem num grupo próprio, com aviso, na aba Avulsos & Wellhub.
 
 > **Deploy:** `origin` é `github.com/ragnarokbrasil123-del/Higor.git` e o Vercel reconstrói sozinho a cada push no `main`. A autenticação já está resolvida: `gh` CLI logado como `ragnarokbrasil123-del` e `gh auth setup-git` ligando essa credencial ao Git — `git push` funciona direto, sem pedir senha.
 
 ### Dívida técnica
 
-- **Segurança**: senhas em texto puro; **sem RLS** no Supabase (a chave publishable lê tudo). Chave **VAPID privada** fixa em `app/api/push/route.ts`.
-- `lib/utils.ts` é uma cópia acidental de `lib/supabase.ts` — não é importado por ninguém.
-- `hooks/use-mobile.ts` está órfão. `components/install-prompt.tsx` só é usado pelo portal dos pais.
+- **Segurança / LGPD**: senhas em texto puro e **sem RLS** no Supabase — a chave publishable lê a base inteira, incluindo `students.observacoes`, que guarda **alergia e restrição alimentar (dado sensível de saúde, LGPD Art. 11) de menores**. Este é o risco nº 1 do projeto e **não é só dívida técnica, é exposição**. Ver `LGPD.md` e `sql/2026-10-24-lgpd.sql`.
+- As chaves **VAPID** saíram do código para o ambiente (`.env.example`). A privada antiga ficou em repositório público: **considere-a vazada e gere um par novo**.
+- `hooks/use-mobile.ts` está órfão. `components/install-prompt.tsx` é usado em 3 lugares (`page`, `login-module`, `client-portal`).
+- Dependências que nenhum arquivo importa: `@google/genai`, `@hookform/resolvers`, `class-variance-authority`, `firebase-tools`, `tw-animate-css`, `@tailwindcss/typography`.
+- Resíduos do AI Studio: `package.json` ainda se chama `ai-studio-applet`; `README.md` fala de `GEMINI_API_KEY`; `metadata.json` descreve outro produto. Nada disso é este projeto.
+- `public/icon-maskable-*.png` existem mas o `manifest.json` não os declara — no Android o ícone sai com moldura branca.
+- O eslint **não** está limpo (padrões antigos de `useEffect` e `<img>`), e o `next.config.ts` tem `ignoreDuringBuilds: true`. O gate real é `npx tsc --noEmit`, que passa.
 - Fotos dos checklists são base64 dentro do Postgres (incha o banco e o payload do realtime) — deveriam ir para o Supabase Storage.
 - `GlobalNotifier` está inline dentro de `app/page.tsx` e usa sons hotlinkados de `soundjay.com`.
 - `public/cartao-pais.html` é o material impresso para os pais, servido como estático fora do React: folha 1 com dois cartões de balcão, folha 2 com um cartaz de parede. O endereço fica numa constante só no script, injetada no QR e no texto — se divergirem, o QR leva a um lugar e a URL escrita a outro.

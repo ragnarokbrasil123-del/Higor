@@ -5,6 +5,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, Plus, Trash2, Edit2, X, Save, Key, Clock, UserCheck, UserX, Copy, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import {
+  apagarConta, atualizarAtivo, definirLogin, lerEquipe,
+  removerLogin, salvarProfessor, semearProfessores,
+} from '@/lib/equipe';
 import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle } from '@/components/ui';
 
 type Shift = { start: string; end: string };
@@ -68,19 +72,44 @@ function normalizeWeek(raw: any): WeekSchedule {
   return base;
 }
 
+/**
+ * Lista inicial da equipe, conforme "Horarios prof natação atualizado .xlsx"
+ * (24/10/2026). Anderson e Caio saíram e por isso não estão aqui.
+ *
+ * Um dia de semana por professor, exceto:
+ *  - ANDRÉ, que só trabalha sábado (único com `sab` ligado — nos demais o
+ *    sábado é escala de dupla que alterna, e horário semanal fixo não
+ *    representa isso);
+ *  - FLÁVIA, que não trabalha terça;
+ *  - LIVIA, que tem horário diferente por dia.
+ *
+ * ⚠️ O botão que usa esta lista INSERE, não reconcilia: apertá-lo com a
+ * equipe já cadastrada cria todo mundo de novo, duplicado. Serve para
+ * popular uma base vazia.
+ */
 const INITIAL_PROFESSORS: { name: string; schedule: WeekSchedule }[] = [
-  { name: 'ANDERSON GUIMARÃES DOS SANTOS', schedule: buildWeek([{ start: '13:00', end: '17:30' }]) },
-  { name: 'ANDRÉ LUIZ PAIVA DA SILVA', schedule: buildWeek([{ start: '07:30', end: '14:15' }], ['sab']) },
-  { name: 'CAIO CEZAR ANASTÁCIO DE AVILA', schedule: buildWeek([{ start: '07:45', end: '11:30' }, { start: '14:30', end: '18:15' }]) },
-  { name: 'DOUGLAS GOMES DE ARAÚJO', schedule: buildWeek([{ start: '16:00', end: '22:00' }]) },
-  { name: 'FLÁVIA REIS LIMA', schedule: buildWeek([{ start: '17:30', end: '21:15' }]) },
-  { name: 'ISABELLA KATHELYN GONÇALVES ROCHA', schedule: buildWeek([{ start: '13:00', end: '18:15' }]) },
-  { name: 'LETÍCIA TOLEDO DO ESPIRITO SANTOS', schedule: buildWeek([{ start: '07:00', end: '11:30' }]) },
-  { name: 'LIVIA RODRIGUES SOUZA', schedule: buildWeek([{ start: '16:00', end: '20:30' }]) },
-  { name: 'LUIZ GABRIEL RAMOS DOS SANTOS', schedule: buildWeek([{ start: '07:00', end: '12:15' }]) },
-  { name: 'PAULA GABRIELLE GONÇALVES DA SILVA GAMA', schedule: buildWeek([{ start: '07:00', end: '12:15' }]) },
-  { name: 'RENÊ GAMA TEIXEIRA', schedule: buildWeek([{ start: '16:45', end: '21:15' }]) },
+  { name: 'ANDRÉ LUIZ PAIVA DA SILVA', schedule: buildWeek([{ start: '07:15', end: '14:15' }], ['sab']) },
+  { name: 'DOUGLAS GOMES DE ARAÚJO', schedule: buildWeek([{ start: '13:00', end: '17:30' }]) },
   { name: 'EDUARDO DOS SANTOS DA SILVA', schedule: buildWeek([{ start: '17:30', end: '21:15' }]) },
+  // sem terça
+  { name: 'FLÁVIA REIS LIMA', schedule: buildWeek([{ start: '17:30', end: '21:15' }], ['seg', 'qua', 'qui', 'sex']) },
+  { name: 'ISABELLA KATHELYN GONÇALVES ROCHA', schedule: buildWeek([{ start: '13:00', end: '17:30' }]) },
+  { name: 'LETÍCIA TOLEDO DO ESPIRITO SANTOS', schedule: buildWeek([{ start: '07:00', end: '11:30' }]) },
+  // horário por dia: seg 15:15-20:30 · ter e sex 14:30-19:45 · qua e qui 14:30-20:30
+  {
+    name: 'LIVIA RODRIGUES SOUZA',
+    schedule: {
+      seg: { enabled: true, shifts: [{ start: '15:15', end: '20:30' }] },
+      ter: { enabled: true, shifts: [{ start: '14:30', end: '19:45' }] },
+      qua: { enabled: true, shifts: [{ start: '14:30', end: '20:30' }] },
+      qui: { enabled: true, shifts: [{ start: '14:30', end: '20:30' }] },
+      sex: { enabled: true, shifts: [{ start: '14:30', end: '19:45' }] },
+      sab: emptyDay(false),
+    },
+  },
+  { name: 'LUIZ GABRIEL RAMOS DOS SANTOS', schedule: buildWeek([{ start: '08:30', end: '12:15' }]) },
+  { name: 'PAULA GABRIELLE GONÇALVES DA SILVA GAMA', schedule: buildWeek([{ start: '07:45', end: '11:30' }]) },
+  { name: 'RENÊ GAMA TEIXEIRA', schedule: buildWeek([{ start: '16:45', end: '21:15' }]) },
 ];
 
 function fmtShifts(day: DaySchedule): string {
@@ -152,12 +181,11 @@ export function ProfessorsModule() {
 
   const fetchProfessors = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('app_users')
-      .select('*')
-      .eq('role', 'teacher')
-      .order('name', { ascending: true });
-    if (data) setProfessors(data as Professor[]);
+    try {
+      setProfessors(await lerEquipe('teacher') as Professor[]);
+    } catch (e: any) {
+      alert(e?.message || 'Não consegui carregar os professores.');
+    }
     setLoading(false);
   };
 
@@ -179,28 +207,41 @@ export function ProfessorsModule() {
     e.preventDefault();
     if (!form.name.trim()) return alert('Digite o nome do professor.');
     setSaving(true);
-    const payload = { name: form.name.trim(), active: form.active, schedule: form.schedule };
-    const { error } = form.id
-      ? await supabase.from('app_users').update(payload).eq('id', form.id)
-      : await supabase.from('app_users').insert([{ ...payload, role: 'teacher' }]);
+    try {
+      await salvarProfessor({
+        id: form.id ?? undefined,
+        name: form.name.trim(),
+        active: form.active,
+        schedule: form.schedule,
+      });
+    } catch (e: any) {
+      setSaving(false);
+      return alert('Erro ao salvar: ' + (e?.message || ''));
+    }
     setSaving(false);
-    if (error) return alert('Erro ao salvar: ' + error.message);
     setModalOpen(false);
     fetchProfessors();
   };
 
   const handleDelete = async (p: Professor) => {
     if (!confirm(`Excluir o professor ${p.name || p.username || ''}? Essa ação não pode ser desfeita.`)) return;
-    const { error } = await supabase.from('app_users').delete().eq('id', p.id);
-    if (error) return alert('Erro ao excluir: ' + error.message);
+    try {
+      await apagarConta(p.id);
+    } catch (e: any) {
+      return alert('Erro ao excluir: ' + (e?.message || ''));
+    }
     setProfessors(professors.filter(x => x.id !== p.id));
   };
 
   const toggleActive = async (p: Professor) => {
     const next = !(p.active ?? true);
     setProfessors(professors.map(x => x.id === p.id ? { ...x, active: next } : x));
-    const { error } = await supabase.from('app_users').update({ active: next }).eq('id', p.id);
-    if (error) { alert('Erro ao atualizar status: ' + error.message); fetchProfessors(); }
+    try {
+      await atualizarAtivo(p.id, next);
+    } catch (e: any) {
+      alert('Erro ao atualizar status: ' + (e?.message || ''));
+      fetchProfessors();
+    }
   };
 
   const saveAccess = async () => {
@@ -208,14 +249,13 @@ export function ProfessorsModule() {
     const u = accessUser.toLowerCase().trim();
     if (!u || !accessPass.trim()) return alert('Preencha usuário e senha.');
     setAccessBusy(true);
-    const { error } = await supabase.from('app_users')
-      .update({ username: u, password: accessPass.trim() })
-      .eq('id', form.id);
-    setAccessBusy(false);
-    if (error) {
-      if (error.message.includes('duplicate')) return alert('Esse nome de usuário já está em uso por outra pessoa.');
-      return alert('Erro ao salvar acesso: ' + error.message);
+    try {
+      await definirLogin(form.id, u, accessPass.trim());
+    } catch (e: any) {
+      setAccessBusy(false);
+      return alert('Erro ao salvar acesso: ' + (e?.message || ''));
     }
+    setAccessBusy(false);
     setShowAccessForm(false); setAccessUser(''); setAccessPass('');
     fetchProfessors();
   };
@@ -223,20 +263,24 @@ export function ProfessorsModule() {
   const removeAccess = async () => {
     if (!form.id) return;
     if (!confirm('Remover o login deste professor? Ele não conseguirá mais entrar no sistema.')) return;
-    const { error } = await supabase.from('app_users')
-      .update({ username: null, password: null })
-      .eq('id', form.id);
-    if (error) return alert('Erro: ' + error.message);
+    try {
+      await removerLogin(form.id);
+    } catch (e: any) {
+      return alert('Erro: ' + (e?.message || ''));
+    }
     fetchProfessors();
   };
 
   const seedInitial = async () => {
-    if (!confirm('Cadastrar os 12 professores da lista inicial com os horários?')) return;
+    if (!confirm(`Cadastrar os ${INITIAL_PROFESSORS.length} professores da lista inicial com os horários?`)) return;
     setSeeding(true);
-    const rows = INITIAL_PROFESSORS.map(p => ({ name: p.name, role: 'teacher', active: true, schedule: p.schedule }));
-    const { error } = await supabase.from('app_users').insert(rows);
+    try {
+      await semearProfessores(INITIAL_PROFESSORS.map(p => ({ name: p.name, schedule: p.schedule })));
+    } catch (e: any) {
+      setSeeding(false);
+      return alert('Erro ao importar: ' + (e?.message || ''));
+    }
     setSeeding(false);
-    if (error) return alert('Erro ao importar: ' + error.message);
     fetchProfessors();
   };
 
@@ -312,7 +356,7 @@ export function ProfessorsModule() {
             description="Adicione um por um, ou importe a lista inicial de uma vez."
             action={
               <Button variant="dark" size="lg" onClick={seedInitial} disabled={seeding}>
-                <Copy className="w-5 h-5 text-brand" /> {seeding ? 'Importando...' : 'Importar lista inicial (12 professores)'}
+                <Copy className="w-5 h-5 text-brand" /> {seeding ? 'Importando...' : `Importar lista inicial (${INITIAL_PROFESSORS.length} professores)`}
               </Button>
             }
           />

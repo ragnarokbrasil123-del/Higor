@@ -10,12 +10,19 @@ import { InstallPrompt } from '@/components/install-prompt';
 import { CaminhoTouca } from '@/components/caminho-touca';
 import { periodoTrimestre } from '@/lib/trimestre';
 import { supabase } from '@/lib/supabase';
+import { recarregarFilhos } from '@/lib/login-responsavel';
+import { ConsentimentoPortal } from '@/components/consentimento-portal';
+import { avisoPronto, VERSAO_AVISO } from '@/lib/aviso-privacidade';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/ui';
 
-/** O login guarda a linha inteira de students, senha inclusive. */
-type AlunoLogado = Student & { password?: string | null };
+/** O que o login traz da linha de students (ver COLUNAS_PORTAL). */
+type AlunoLogado = Student & {
+  password?: string | null;
+  consentimento_em?: string | null;
+  consentimento_versao?: string | null;
+};
 
 interface ClientPortalProps {
   students: Student[];
@@ -45,6 +52,12 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
   const [avisosOn, setAvisosOn] = useState<boolean | null>(null);
   const [ativando, setAtivando] = useState(false);
   /**
+   * Destrava a tela na hora do aceite, sem esperar o `recarregar`.
+   * Sem isto o pai toca em "Li e concordo" e continua vendo o aviso até
+   * a rede responder — parece que o botão não funcionou.
+   */
+  const [aceitouAgora, setAceitouAgora] = useState(false);
+  /**
    * No iPhone o push só funciona com o app na Tela de Início. Aberto no
    * Safari comum, o botão "Ativar avisos" só levaria a um erro — então
    * mostramos a instrução de instalar em vez do botão.
@@ -58,19 +71,14 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     setIosSemInstalar(ios && !instalado);
   }, []);
 
-  /** Rebusca a ficha dos filhos — mesma consulta que o login faz. */
+  /** Rebusca a ficha dos filhos — mesma regra de casamento que o login. */
   const recarregar = React.useCallback(async () => {
     const base = ((students || []).filter(Boolean) as AlunoLogado[])[0];
     const tel = String(base?.phone || '').replace(/\D/g, '');
     if (!tel || !base?.password) return;
 
     setAtualizando(true);
-    const { data } = await supabase
-      .from('students')
-      .select('*, evaluations(*)')
-      .ilike('phone', `%${tel}%`)
-      .eq('password', base.password)
-      .order('name');
+    const data = await recarregarFilhos(tel, base.password);
     setAtualizando(false);
 
     if (data?.length) {
@@ -140,6 +148,41 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         <p className="text-ink-muted font-bold">Nenhum aluno encontrado nesta conta.</p>
         <button onClick={onLogout} className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold">Sair</button>
       </div>
+    );
+  }
+
+  /**
+   * Aceite do aviso de privacidade (LGPD Art. 14, §1º).
+   *
+   * Compara a VERSÃO, e não só a presença da data: quando o texto do
+   * aviso muda, quem aceitou o texto antigo precisa ver o novo — um
+   * consentimento é para o que a pessoa leu, não para sempre.
+   *
+   * Vale por família: basta um filho pendente para a tela aparecer, e
+   * o aceite grava em todos de uma vez.
+   *
+   * `undefined` x `null` importa aqui, e não é preciosismo:
+   *   - `undefined` = a coluna não veio na resposta, ou seja, o SQL de
+   *     consentimento ainda não rodou. Mostrar a tela seria uma cilada:
+   *     o pai tocaria em "Li e concordo", o UPDATE falharia por coluna
+   *     inexistente e ele ficaria presto na tela, sem ver o filho.
+   *   - `null` = a coluna existe e ninguém consentiu ainda. Aí sim.
+   */
+  const colunasDeConsentimentoExistem = filhos.some(f => f.consentimento_em !== undefined);
+
+  const faltaConsentir =
+    // sem razão social e CNPJ preenchidos, o aviso não identifica o
+    // controlador e não deve ser mostrado a ninguém (ver avisoPronto)
+    avisoPronto() &&
+    colunasDeConsentimentoExistem &&
+    filhos.some(f => !f.consentimento_em || f.consentimento_versao !== VERSAO_AVISO);
+
+  if (faltaConsentir && !aceitouAgora) {
+    return (
+      <ConsentimentoPortal
+        filhos={filhos}
+        aoAceitar={() => { setAceitouAgora(true); recarregar(); }}
+      />
     );
   }
 

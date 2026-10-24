@@ -2,16 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Student } from '@/types';
+import { paginado } from '@/lib/paginado';
+import { lerAlunos } from '@/lib/alunos';
+import { apagarAvaliacao as removerAvaliacao } from '@/lib/avaliacoes';
 import type { Aluno, ClassRow, SlotRow } from './constantes';
 import { lecionaEm } from '@/lib/professor';
 
 /**
  * Carga inicial da Avaliação de Natação e a trava de permissão do professor.
  *
- * Movido do SwimmingModule sem alterar consulta, ordenação ou sequência de
- * chamadas — inclusive o `recarregarAvaliacoes`, que continua sem paginação
- * exatamente como estava.
+ * Os alunos vêm do escopo `avaliacao` (`lib/alunos-colunas.ts`): só id,
+ * nome, touca, situação e modalidade. Antes era `select('*')` — a tela
+ * nunca mostrou telefone, endereço nem as observações de saúde, mas o `*`
+ * trazia tudo isso para o navegador DO PROFESSOR, visível na aba Rede do
+ * DevTools. A regra da casa é que o professor não tem o contato dos pais;
+ * não basta não desenhar na tela, o dado não pode descer até ali. Agora é
+ * o servidor que decide, não o componente.
  */
 export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) {
   const [students, setStudents] = useState<Aluno[]>([]);
@@ -24,25 +30,15 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
 
   const fetchData = async () => {
     setLoading(true);
-    const page = async (t: string, cols: string) => {
-      const out: any[] = [];
-      for (let from = 0; ; from += 1000) {
-        const { data } = await supabase.from(t).select(cols).range(from, from + 999);
-        if (!data?.length) break;
-        out.push(...data);
-        if (data.length < 1000) break;
-      }
-      return out;
-    };
 
     const sess = JSON.parse(localStorage.getItem('olimpo_session') || 'null');
     setCurrentUser(sess);
 
     const [std, evl, cls, slt] = await Promise.all([
-      page('students', '*'),
-      page('evaluations', '*'),
-      page('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
-      page('class_slots', 'id, class_id, cap_color, student_id'),
+      lerAlunos('avaliacao'),
+      paginado<any>('evaluations', '*'),
+      paginado<any>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
+      paginado<any>('class_slots', 'id, class_id, cap_color, student_id'),
     ]);
 
     // matricula cancelada some da avaliacao. Sem isto, como cancelar libera a
@@ -78,17 +74,33 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
 
   useEffect(() => { fetchData(); }, []);
 
+  /**
+   * Relê depois de salvar uma avaliação.
+   *
+   * Agora pagina. Antes não paginava: `evaluations` está em zero hoje, mas
+   * são ~429 alunos × 4 trimestres por ano — passa de 1000 linhas no
+   * primeiro ano de uso, e o corte do PostgREST não dá erro, só devolve
+   * menos. O histórico começaria a sumir da tela sem ninguém notar.
+   */
   const recarregarAvaliacoes = async () => {
-    const { data: evl } = await supabase.from('evaluations').select('*');
-    const { data: std } = await supabase.from('students').select('*');
-    if (evl) setEvaluations((evl as any[]).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    if (std) setStudents((std as any[]).filter(a => a.ativo !== false).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
-    return evl || [];
+    const [evl, std] = await Promise.all([
+      paginado<any>('evaluations', '*'),
+      lerAlunos('avaliacao'),
+    ]);
+    setEvaluations(evl.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    setStudents((std as Aluno[]).filter(a => (a as any).ativo !== false).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
+    return evl;
   };
 
   const apagarAvaliacao = async (id: string) => {
     if (!confirm('Apagar permanentemente esta avaliação do histórico?')) return;
-    await supabase.from('evaluations').delete().eq('id', id);
+    try {
+      // a rota registra no audit_log DE QUEM era a avaliação antes de
+      // apagar: senão apagar a avaliação apagaria o rastro de quem errou
+      await removerAvaliacao(id);
+    } catch (e: any) {
+      return alert('Erro ao apagar: ' + (e?.message || ''));
+    }
     recarregarAvaliacoes();
   };
 

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
+import { paginado } from '@/lib/paginado';
+import { criarAlunos, lerAlunos } from '@/lib/alunos';
 import { cn } from '@/lib/utils';
 import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR } from '@/components/ui';
 
@@ -166,17 +168,23 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   }, []);
 
   const fetchScheduleData = async () => {
-    const { data: clsData } = await supabase.from('classes').select('*').order('start_time');
-    const { data: slotData } = await supabase.from('class_slots').select('*');
-    if (clsData && slotData) {
-      setClasses(clsData);
-      setAvailableSlots(slotData.filter(s => !s.student_id || s.student_id === ''));
-    }
+    // `class_slots` tem mais de 1000 linhas: sem paginar, as vagas livres
+    // que sobram do corte do PostgREST simplesmente não apareciam aqui —
+    // matrícula no balcão via "sem vaga" num horário que tinha vaga.
+    const [clsData, slotData] = await Promise.all([
+      paginado<any>('classes', '*', 'start_time'),
+      paginado<any>('class_slots', '*'),
+    ]);
+    setClasses(clsData);
+    setAvailableSlots(slotData.filter(s => !s.student_id || s.student_id === ''));
   };
 
   const fetchAllStudents = async () => {
-    const { data } = await supabase.from('students').select('*').order('name');
-    if (data) setAllStudents(data);
+    // Só o nome: esta lista existe apenas para detectar duplicata na
+    // importação. Antes era `select('*')`, que trazia telefone, endereço
+    // e as observações de saúde dos 429 alunos para o navegador sem
+    // nenhuma tela precisar disso.
+    setAllStudents(await lerAlunos('nomes'));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,12 +192,16 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     if (!name || !password) return;
     setLoading(true);
 
-    const { error } = await supabase.from('students').insert([
-      { name, age: age === '' ? null : parseInt(age), level, guardian_name: guardianName, phone: phone.replace(/\D/g, ''), password }
-    ]);
+    try {
+      await criarAlunos([
+        { name, age: age === '' ? null : parseInt(age), level, guardian_name: guardianName, phone, password },
+      ]);
+    } catch (e: any) {
+      setLoading(false);
+      return alert('Erro ao salvar no banco: ' + (e?.message || ''));
+    }
 
     setLoading(false);
-    if (error) return alert('Erro ao salvar no banco: ' + error.message);
 
     setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword('');
     fetchAllStudents();
@@ -317,17 +329,21 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     const usedSlots = new Set<string>();
 
     for (const r of toCreate) {
-      const { data: student, error } = await supabase
-        .from('students')
-        .insert([{
+      let student: { id: string } | undefined;
+      try {
+        // uma linha por vez, de propósito: a alocação de vaga abaixo precisa
+        // do id recém-criado, e uma falha isolada não derruba a importação
+        const criados = await criarAlunos([{
           name: r.name, age: r.age, level: r.level, modalidade: r.modalidade,
           guardian_name: r.guardian, phone: r.phone, password: r.password,
           endereco: r.endereco || null, observacoes: r.observacoes || null,
-        }])
-        .select()
-        .single();
+        }]);
+        student = criados[0];
+      } catch {
+        student = undefined;
+      }
 
-      if (error || !student) { failed++; continue; }
+      if (!student) { failed++; continue; }
       created++;
 
       for (const dh of r.diasHorarios) {

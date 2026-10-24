@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Badge, Card, EmptyState, ErrorState, Loading, PageHeader, PageShell } from '@/components/ui';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { lecionaEm } from '@/lib/professor';
+import { lerAlunos } from '@/lib/alunos';
 
 /* ============================================================
    Minha Semana — a agenda do professor, só leitura.
@@ -51,7 +52,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
         const [turmas, vagas, alunos, avals] = await Promise.all([
           paginado<Turma>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
           paginado<Vaga>('class_slots', 'class_id, student_id'),
-          paginado<Aluno>('students', 'id, name, level'),
+          lerAlunos('basico') as Promise<Aluno[]>,
           paginado<any>('evaluations', 'student_id, date'),
         ]);
         if (vivo) setDados({ turmas, vagas, alunos, avals });

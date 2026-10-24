@@ -1,7 +1,15 @@
 import { supabase } from '@/lib/supabase';
 
-export const VAPID_PUBLIC_KEY =
-  'BJx64L626N6Y5tY_D7goVf4l-PO2vpgax3PXFSDN59avftuq8_hWN3Neor_yff2j4GVwWhdWMKC1luKocmhClrg';
+/**
+ * Chave VAPID pública — fonte única do lado do cliente.
+ *
+ * Esta pode ser pública (é ela que o navegador usa para se inscrever); a
+ * PRIVADA é que não podia estar no código, e saiu para o ambiente em
+ * app/api/push/route.ts. As duas têm de ser do MESMO par: inscrição feita
+ * com uma pública e assinatura com outra privada falha em silêncio, em
+ * todos os aparelhos ao mesmo tempo.
+ */
+export const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -39,6 +47,10 @@ export async function ativarAvisos(phone: string, tipo: 'responsavel' | 'admin' 
         ? 'No iPhone os avisos só funcionam depois de adicionar o app à Tela de Início (botão Compartilhar → Adicionar à Tela de Início).'
         : 'Este navegador não suporta avisos. Tente pelo Google Chrome.'
     );
+  }
+
+  if (!VAPID_PUBLIC_KEY) {
+    throw new Error('Os avisos ainda não estão configurados no servidor. Fale com a administração.');
   }
 
   const permissao = await Notification.requestPermission();

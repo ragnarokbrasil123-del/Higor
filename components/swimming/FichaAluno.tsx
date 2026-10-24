@@ -75,6 +75,27 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                       )}
                     </div>
                   </div>
+                  {/*
+                    Quem lançou. Fica na ficha e não só no banco porque o
+                    objetivo é prático: ao ver uma touca ou um critério
+                    estranho, saber na hora com quem conversar.
+
+                    O "·" com aviso aparece quando `avaliador_verificado` é
+                    false — autoria autodeclarada pelo aparelho, do período
+                    em que o servidor ainda não conferia a sessão. Mostrar
+                    igual ao resto esconderia que ali o nome é mais fraco.
+                  */}
+                  {ev.avaliador_nome ? (
+                    <p className="text-xs text-ink-subtle mb-3">
+                      Avaliado por <span className="font-bold text-ink-muted">{ev.avaliador_nome}</span>
+                      {ev.avaliador_verificado === false && (
+                        <span title="Autoria informada pelo aparelho, não conferida pelo servidor"> · não verificada</span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-ink-subtle mb-3">Avaliação anterior ao registro de autoria.</p>
+                  )}
+
                   {ev.notes && <p className="text-sm italic text-ink-muted bg-surface border border-line rounded-xl p-3 mb-3">"{ev.notes}"</p>}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                     {(EVALUATION_CRITERIA[ev.level as CapLevel] || []).map(c => {
