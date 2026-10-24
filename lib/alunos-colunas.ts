@@ -22,15 +22,25 @@ export const COLUNAS_NOMES = 'id, name';
 /** Agenda do professor: precisa da touca para montar a turma. */
 export const COLUNAS_BASICO = 'id, name, level';
 
+/**
+ * Painel do admin: igual ao de avaliação, mais o nome do responsável,
+ * que a lista de pendências exibe.
+ *
+ * NÃO traz telefone. O Painel declarava `phone` no tipo mas nunca o
+ * usava em tela — era dado de contato descendo para o navegador à toa.
+ */
+export const COLUNAS_PAINEL = 'id, name, level, ativo, modalidade, guardian_name';
+
 /** Ficha completa — **somente admin**. Inclui endereço e dado de saúde. */
 export const COLUNAS_COMPLETO = '*';
 
-export type EscopoAluno = 'avaliacao' | 'nomes' | 'basico' | 'completo';
+export type EscopoAluno = 'avaliacao' | 'nomes' | 'basico' | 'painel' | 'completo';
 
 export const COLUNAS_POR_ESCOPO: Record<EscopoAluno, string> = {
   avaliacao: COLUNAS_AVALIACAO,
   nomes: COLUNAS_NOMES,
   basico: COLUNAS_BASICO,
+  painel: COLUNAS_PAINEL,
   completo: COLUNAS_COMPLETO,
 };
 

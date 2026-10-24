@@ -36,7 +36,14 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-const ESCOPOS: EscopoAluno[] = ['avaliacao', 'nomes', 'basico', 'completo'];
+const ESCOPOS: EscopoAluno[] = ['avaliacao', 'nomes', 'basico', 'painel', 'completo'];
+
+/**
+ * Escopos que carregam dado de terceiro ou sensível, e por isso são só
+ * do admin: `completo` (endereço e saúde) e `painel` (nome do
+ * responsável). Os demais são da equipe toda.
+ */
+const SO_ADMIN: EscopoAluno[] = ['completo', 'painel'];
 
 export async function GET(req: Request) {
   const escopoBruto = new URL(req.url).searchParams.get('escopo') || 'avaliacao';
@@ -45,8 +52,7 @@ export async function GET(req: Request) {
   }
   const escopo = escopoBruto as EscopoAluno;
 
-  // a ficha completa tem endereço e dado de saúde: só admin
-  const g = exigir(req, escopo === 'completo' ? ehAdmin : ehEquipe);
+  const g = exigir(req, SO_ADMIN.includes(escopo) ? ehAdmin : ehEquipe);
   if (!g.ok) return g.resposta;
 
   try {

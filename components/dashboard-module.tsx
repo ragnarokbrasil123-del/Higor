@@ -12,6 +12,8 @@ import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { gerarRelatorioAlunosPDF } from '@/lib/relatorio-pdf';
 import { Badge, Button, Card, EmptyState, ErrorState, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
 import { cn } from '@/lib/utils';
+import { lerAlunos } from '@/lib/alunos';
+import { lerEquipe } from '@/lib/equipe';
 
 /* ============================================================
    Painel — visão geral da escola.
@@ -22,7 +24,9 @@ import { cn } from '@/lib/utils';
    honesto em vez de um gráfico de enfeite.
    ============================================================ */
 
-type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null; ativo: boolean | null; guardian_name: string | null; phone: string | null };
+// sem `phone`: estava declarado e nunca usado em tela — era contato
+// descendo para o navegador à toa (ver COLUNAS_PAINEL)
+type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null; ativo: boolean | null; guardian_name: string | null };
 type Aval = { id: string; student_id: string; date: string; level: CapLevel; approved: boolean };
 type Turma = { id: string; day_of_week: string; start_time: string; teacher_name: string };
 type Vaga = { class_id: string; student_id: string | null };
@@ -136,12 +140,15 @@ export function DashboardModule() {
     let vivo = true;
     (async () => {
       try {
+        // `students` e `app_users` passam pelas rotas de servidor: são as
+        // duas tabelas com RLS, e a chave publishable não as lê mais.
+        // As outras seguem direto daqui, que é o esperado.
         const [alunos, avals, turmas, vagas, equipe, limpeza, manut] = await Promise.all([
-          buscarTudo<Aluno>('students', 'id,name,level,modalidade,ativo,guardian_name,phone'),
+          lerAlunos('painel') as Promise<Aluno[]>,
           buscarTudo<Aval>('evaluations', 'id,student_id,date,level,approved'),
           buscarTudo<Turma>('classes', 'id,day_of_week,start_time,teacher_name'),
           buscarTudo<Vaga>('class_slots', 'class_id,student_id'),
-          buscarTudo<Equipe>('app_users', 'name,username,role,active'),
+          lerEquipe() as Promise<Equipe[]>,
           buscarTudo<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
           buscarTudo<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),
         ]);
