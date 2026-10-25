@@ -9,7 +9,11 @@ import {
   apagarConta, atualizarAtivo, definirLogin, lerEquipe,
   removerLogin, salvarProfessor, semearProfessores,
 } from '@/lib/equipe';
-import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle , avisarErro, avisar, confirmar } from '@/components/ui';
+import {
+  Badge, Button, DataTable, EmptyState, EsqueletoLista, Input, Modal, PageHeader, PageShell,
+  ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle,
+  avisar, avisarErro, confirmar,
+} from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -352,7 +356,7 @@ export function ProfessorsModule() {
         )}
 
         {loading ? (
-          <Loading label="Carregando professores..." />
+          <EsqueletoLista linhas={6} />
         ) : professors.length === 0 ? (
           <EmptyState
             icon={<GraduationCap className="w-14 h-14" />}

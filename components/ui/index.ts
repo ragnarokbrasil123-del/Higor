@@ -4,6 +4,7 @@ export { Card, Badge, Chip, EmptyState, Loading, ErrorState } from './Surface';
 export { PageShell, PageHeader, FilterBar, ChipRow, FilterFooter } from './Page';
 export { Modal } from './Modal';
 export { Avisos, avisar, avisarErro, confirmar, perguntar } from './Avisos';
+export { Esqueleto, EsqueletoLista, EsqueletoCartoes } from './Esqueleto';
 export { DateNav } from './DateNav';
 export { DataTable, THead, TH, TR, TD, TEmpty } from './DataTable';
 export { MobileNav } from './MobileNav';

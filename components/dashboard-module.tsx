@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { capLevelOrder, levels, type CapLevel } from '@/types';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { gerarRelatorioAlunosPDF } from '@/lib/relatorio-pdf';
-import { Badge, Button, Card, EmptyState, ErrorState, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, ErrorState, Loading, Modal, PageHeader, PageShell, Select , EsqueletoCartoes } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { lerAlunos } from '@/lib/alunos';
 import { lerEquipe } from '@/lib/equipe';
@@ -264,7 +264,10 @@ export function DashboardModule() {
   if (!resumo) {
     return (
       <PageShell>
-        <Loading label="Somando os números da escola..." full />
+        {/* o esqueleto tem o formato dos quatro números que vêm, então
+            a tela não dá salto quando o dado chega */}
+        <PageHeader icon={LayoutDashboard} title="Painel" description="Somando os números da escola..." />
+        <EsqueletoCartoes />
       </PageShell>
     );
   }

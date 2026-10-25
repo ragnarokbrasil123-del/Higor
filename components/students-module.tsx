@@ -13,7 +13,7 @@ import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
-import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar , EsqueletoLista } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -353,7 +353,7 @@ export function StudentsModule() {
 
         {/* lista */}
         {loading ? (
-          <Loading label="Carregando alunos..." />
+          <EsqueletoLista linhas={8} />
         ) : (
           <div className="bg-surface rounded-panel border border-line shadow-raised overflow-hidden">
             <ResponsiveTable
