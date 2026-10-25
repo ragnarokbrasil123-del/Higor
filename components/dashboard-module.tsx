@@ -1,6 +1,7 @@
 'use client';
 
 import { lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
+import { paginado } from '@/lib/paginado';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -34,19 +35,6 @@ type Vaga = { class_id: string; student_id: string | null };
 type Equipe = { name: string; username: string | null; role: string; active: boolean | null };
 type Tarefa = { id: string; title: string; completed: boolean; date: string; created_at: string };
 
-/** O PostgREST devolve no máximo 1000 linhas por vez — class_slots tem 1303. */
-async function buscarTudo<T>(tabela: string, colunas: string): Promise<T[]> {
-  const linhas: T[] = [];
-  for (let de = 0; ; de += 1000) {
-    const { data, error } = await supabase.from(tabela).select(colunas).range(de, de + 999);
-    if (error) throw new Error(`${tabela}: ${error.message}`);
-    const lote = (data ?? []) as unknown as T[];
-    if (!lote.length) break;
-    linhas.push(...lote);
-    if (lote.length < 1000) break;
-  }
-  return linhas;
-}
 
 const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
@@ -150,8 +138,8 @@ export function DashboardModule() {
           lerTurmas() as Promise<Turma[]>,
           lerVagas() as Promise<Vaga[]>,
           lerEquipe() as Promise<Equipe[]>,
-          buscarTudo<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
-          buscarTudo<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),
+          paginado<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
+          paginado<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),
         ]);
         // matricula cancelada nao entra em nenhuma conta do painel
         if (vivo) setDados({ alunos: alunos.filter(a => a.ativo !== false), avals, turmas, vagas, equipe, limpeza, manut });
