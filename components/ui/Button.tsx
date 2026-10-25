@@ -3,11 +3,11 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark' | 'sucesso';
 type Size = 'sm' | 'md' | 'lg';
 
 const VARIANTE: Record<Variant, string> = {
-  /** Ação principal da tela. Âmbar é a ÚNICA cor de ação do app. */
+  /** Ação principal da tela. A cor da marca é a ÚNICA cor de ação. */
   primary: 'bg-brand text-brand-ink font-black hover:bg-brand-hover shadow-raised',
   /** Ação secundária, ao lado de uma primária. */
   secondary: 'bg-surface text-ink font-bold border border-line hover:bg-surface-sunken',
@@ -17,6 +17,13 @@ const VARIANTE: Record<Variant, string> = {
   danger: 'bg-surface text-danger-ink font-bold border border-danger/25 hover:bg-danger-soft',
   /** Confirmação de fluxo (salvar e avançar) — contraste alto, sem competir com a marca. */
   dark: 'bg-surface-raised text-ink-inverse font-black hover:opacity-90 shadow-raised',
+  /**
+   * Verde de aprovação. Existe por UM caso: "marcar todos como Passou"
+   * na avaliação, onde o verde já significa aprovado nos critérios
+   * logo abaixo — usar a cor da marca ali diria outra coisa.
+   * Não use como ação principal genérica.
+   */
+  sucesso: 'bg-success text-white font-black hover:bg-success-ink shadow-raised',
 };
 
 const TAMANHO: Record<Size, string> = {
