@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
@@ -157,7 +158,17 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
 
       <div className="relative z-10 w-full max-w-md p-6">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center mb-10">
-          <img src="/logo.png" alt="Clube Olimpo" className="w-44 h-44 object-contain mb-4 drop-shadow-2xl" />
+          {/* `priority`: é o maior elemento desta tela, ou seja, o que o
+              navegador usa para medir o LCP. Sem isso ele entra na fila
+              comum e o app aparenta demorar mais do que demora. */}
+          <Image
+            src="/logo.png"
+            alt="Clube Olimpo"
+            width={176}
+            height={176}
+            priority
+            className="w-44 h-44 object-contain mb-4 drop-shadow-2xl"
+          />
           <h1 className="text-white text-2xl font-bold tracking-widest uppercase">Portal de Acesso</h1>
         </motion.div>
 

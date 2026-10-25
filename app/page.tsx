@@ -1,21 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { SwimmingModule } from '@/components/swimming/SwimmingModule';
-import { ChecklistModule } from '@/components/checklist-module';
-import { MaintenanceModule } from '@/components/maintenance-module';
-import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
-import { ClientPortal } from '@/components/client-portal';
-import { ProfessorsModule } from '@/components/professors-module';
-import { StudentsModule } from '@/components/students-module';
-import { ScheduleModule } from '@/components/schedule-module';
-import { DashboardModule } from '@/components/dashboard-module';
-import { AccessModule } from '@/components/access-module';
 import { InstallPrompt } from '@/components/install-prompt';
-import { MinhaSemana } from '@/components/minha-semana';
-import { HidroModule } from '@/components/hidro-module';
+import { Loading } from '@/components/ui';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -23,6 +14,78 @@ import { ativarAvisos } from '@/lib/push';
 import { logoutServidor } from '@/lib/equipe';
 import { MobileNav } from '@/components/ui';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
+
+/* ============================================================
+   Cada aba é carregada SÓ quando aberta.
+
+   Antes as 13 abas eram importadas no topo e entravam todas no
+   pacote inicial: o professor que só avalia baixava Painel, Grade,
+   Cadastro, Acessos, Hidro e Checklist junto. Medido com Lighthouse
+   em 25/10: 415 KB de JavaScript, dos quais 146 KB nunca executados,
+   e 1.230 ms de thread principal travada.
+
+   `ssr: false` porque todas dependem do `localStorage` e do Supabase
+   no navegador — renderizar no servidor não adiantaria nada.
+
+   O `LoginModule` fica estático de propósito: é a primeira tela de
+   quem não está logado, e adiar o carregamento dela só atrasaria o
+   que a pessoa veio fazer.
+   ============================================================ */
+
+const carregando = () => (
+  <div className="flex-1 flex items-center justify-center p-8">
+    <Loading />
+  </div>
+);
+
+const SwimmingModule = dynamic(
+  () => import('@/components/swimming/SwimmingModule').then(m => m.SwimmingModule),
+  { ssr: false, loading: carregando }
+);
+const ChecklistModule = dynamic(
+  () => import('@/components/checklist-module').then(m => m.ChecklistModule),
+  { ssr: false, loading: carregando }
+);
+const MaintenanceModule = dynamic(
+  () => import('@/components/maintenance-module').then(m => m.MaintenanceModule),
+  { ssr: false, loading: carregando }
+);
+const RegistrationModule = dynamic(
+  () => import('@/components/registration-module').then(m => m.RegistrationModule),
+  { ssr: false, loading: carregando }
+);
+const ClientPortal = dynamic(
+  () => import('@/components/client-portal').then(m => m.ClientPortal),
+  { ssr: false, loading: carregando }
+);
+const ProfessorsModule = dynamic(
+  () => import('@/components/professors-module').then(m => m.ProfessorsModule),
+  { ssr: false, loading: carregando }
+);
+const StudentsModule = dynamic(
+  () => import('@/components/students-module').then(m => m.StudentsModule),
+  { ssr: false, loading: carregando }
+);
+const ScheduleModule = dynamic(
+  () => import('@/components/schedule-module').then(m => m.ScheduleModule),
+  { ssr: false, loading: carregando }
+);
+const DashboardModule = dynamic(
+  () => import('@/components/dashboard-module').then(m => m.DashboardModule),
+  { ssr: false, loading: carregando }
+);
+const AccessModule = dynamic(
+  () => import('@/components/access-module').then(m => m.AccessModule),
+  { ssr: false, loading: carregando }
+);
+const MinhaSemana = dynamic(
+  () => import('@/components/minha-semana').then(m => m.MinhaSemana),
+  { ssr: false, loading: carregando }
+);
+const HidroModule = dynamic(
+  () => import('@/components/hidro-module').then(m => m.HidroModule),
+  { ssr: false, loading: carregando }
+);
 
 type Tab = 'dashboard' | 'acessos' | 'hidro' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
@@ -285,7 +348,7 @@ export default function Page() {
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain" />
+          <Image src="/logo.png" alt="Logo" width={36} height={36} className="w-9 h-9 object-contain" />
           <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-amber-500">Olimpo</span></span>
         </div>
         
@@ -305,7 +368,7 @@ export default function Page() {
       <header className="hidden md:flex bg-slate-950 text-white shrink-0 w-60 lg:w-72 flex-col z-20 shadow-2xl relative">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-            <img src="/logo.png" alt="Logo Clube Olimpo" className="w-full h-full object-contain" />
+            <Image src="/logo.png" alt="Logo Clube Olimpo" width={40} height={40} className="w-full h-full object-contain" />
           </div>
           <span className="font-bold text-lg tracking-tight uppercase">
             Clube <span className="text-amber-500">Olimpo</span>

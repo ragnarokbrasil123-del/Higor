@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import { LogOut, Droplets, Award, Calendar, Check, X as XIcon, FileText, Clock, User, BellRing, BellOff } from 'lucide-react';
 import { levels, Student, CapLevel } from '@/types';
@@ -198,7 +199,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
       <div className="bg-black pt-[max(3rem,calc(env(safe-area-inset-top)+1.5rem))] pb-6 px-5 sm:px-6 shadow-xl relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="flex justify-between items-start relative z-10">
-          <img src="/logo.png" alt="Clube Olimpo" className="h-11 w-11 object-contain" />
+          <Image src="/logo.png" alt="Clube Olimpo" width={44} height={44} className="h-11 w-11 object-contain" />
           <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
             Sair <LogOut className="w-4 h-4" />
           </button>

@@ -1,7 +1,14 @@
-import { jsPDF } from 'jspdf';
 import { CapLevel, levels } from '@/types';
 import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { carregarLogoBase64 } from '@/lib/pdf-logo';
+
+/*
+ * O `jspdf` é carregado SOB DEMANDA, dentro da função.
+ *
+ * Importado no topo, ele entrava no pacote inicial e todo mundo baixava o
+ * gerador de PDF ao abrir o app — inclusive o professor que nunca toca no
+ * botão. A função já era `async`, então nenhum ponto de chamada muda.
+ */
 
 interface AvaliacaoPDF {
   date: string;
@@ -13,6 +20,7 @@ interface AvaliacaoPDF {
 
 /** Gera e baixa o boletim trimestral em PDF. Usado pela Avaliação e pelo Portal dos Pais. */
 export async function gerarBoletimPDF(evaluation: AvaliacaoPDF, alunoNome: string) {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const isApproved = !!evaluation.approved;
 

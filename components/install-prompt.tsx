@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, X, Share, PlusSquare, Smartphone } from 'lucide-react';
@@ -84,7 +85,7 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
     return (
       <div className="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center md:hidden">
         <div className="w-24 h-24 mb-8 flex items-center justify-center">
-          <img src="/logo.png" className="w-full h-full object-contain" alt="Logo" />
+          <Image src="/logo.png" alt="Logo" width={96} height={96} className="w-full h-full object-contain" />
         </div>
         
         <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Instale o App</h2>
@@ -128,7 +129,7 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
     >
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 flex items-center justify-center">
-          <img src="/logo.png" className="w-full h-full object-contain" alt="Logo" />
+          <Image src="/logo.png" alt="Logo" width={40} height={40} className="w-full h-full object-contain" />
         </div>
         <div>
           <p className="text-white font-bold text-sm leading-tight">Clube Olimpo App</p>

@@ -1,5 +1,6 @@
-import { jsPDF } from 'jspdf';
 import { carregarLogoBase64 } from '@/lib/pdf-logo';
+
+/* `jspdf` carregado sob demanda — ver a nota em lib/boletim-pdf.ts. */
 
 export interface LinhaRelatorio {
   nome: string;
@@ -23,6 +24,7 @@ const truncar = (s: string, max: number) => (s.length > max ? s.slice(0, max - 1
  * descritos no topo — usado pelo botão "Gerar relatório" do Painel.
  */
 export async function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFiltros: string) {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const COLS = [
     { titulo: 'Aluno', x: 12, max: 32 },
