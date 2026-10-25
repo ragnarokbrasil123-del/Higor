@@ -10,6 +10,7 @@ import { Badge, Card, EmptyState, ErrorState, Loading, PageHeader, PageShell } f
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { lecionaEm } from '@/lib/professor';
 import { lerAlunos } from '@/lib/alunos';
+import { BadgeTouca } from '@/components/ui';
 
 /* ============================================================
    Minha Semana — a agenda do professor, só leitura.
@@ -179,9 +180,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
                     </span>
                     <div className="flex flex-wrap gap-1 ml-auto">
                       {t.toucas.map(k => (
-                        <span key={k} className={cn('text-micro font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[k].bgClass)}>
-                          {levels[k].label}
-                        </span>
+                        <BadgeTouca key={k} nivel={k} />
                       ))}
                     </div>
                     <Badge tone={t.pendentes > 0 ? 'warning' : 'success'}>

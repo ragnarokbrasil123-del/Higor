@@ -6,6 +6,7 @@ import { levels, type CapLevel } from '@/types';
 import { EVALUATION_CRITERIA } from '@/lib/evaluation-criteria';
 import { gerarBoletimPDF } from '@/lib/boletim-pdf';
 import { cn } from '@/lib/utils';
+import { BadgeTouca, textoSobreTouca } from '@/components/ui';
 import type { Aluno } from './constantes';
 
 interface FichaAlunoProps {
@@ -32,7 +33,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
         </button>
 
         <div className="bg-surface rounded-panel border border-line shadow-raised p-5 flex items-center gap-4">
-          <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center text-white font-black text-2xl shrink-0', info?.bgClass)}>
+          <div className={cn('w-16 h-16 rounded-card flex items-center justify-center font-titulo font-bold text-2xl shrink-0', info?.bgClass, textoSobreTouca(aluno.level as CapLevel))}>
             {aluno.name.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
@@ -58,10 +59,8 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                 <div key={ev.id} className="bg-surface-sunken border border-line rounded-2xl p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <div>
-                      <p className="font-black text-ink">{new Date(ev.date).toLocaleDateString('pt-BR')}</p>
-                      <span className={cn('text-micro font-bold uppercase px-2 py-0.5 rounded text-white', levels[ev.level as CapLevel]?.bgClass)}>
-                        Touca {levels[ev.level as CapLevel]?.name}
-                      </span>
+                      <p className="numero font-black text-ink">{new Date(ev.date).toLocaleDateString('pt-BR')}</p>
+                      <BadgeTouca nivel={ev.level as CapLevel} completo className="mt-0.5" />
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={cn('px-3 py-1.5 rounded-lg text-xs font-black', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>

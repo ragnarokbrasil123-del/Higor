@@ -5,11 +5,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, CheckCircle2, ChevronRight, MessageCircle, Sparkles, X } from 'lucide-react';
 import { levels, type CapLevel } from '@/types';
 import { cn } from '@/lib/utils';
-import { AnelProgresso, BadgeTouca, Button, IconButton, Modal, Textarea } from '@/components/ui';
+import { AnelProgresso, BadgeTouca, Button, IconButton, Modal, Textarea, textoSobreTouca } from '@/components/ui';
 import type { Aluno } from './constantes';
-
-/** As duas toucas escuras pedem texto branco na inicial do aluno. */
-const TOUCA_ESCURA: CapLevel[] = ['darkBlue', 'black'];
 import type { useFilaAvaliacao } from './useFilaAvaliacao';
 
 interface TelaAvaliacaoProps {
@@ -74,7 +71,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
             <IconButton onClick={pedirSaida} aria-label="Sair da avaliação" className="bg-surface-sunken shrink-0">
               <ArrowLeft className="w-5 h-5 text-ink-muted" />
             </IconButton>
-            <div className={cn('w-11 h-11 rounded-control flex items-center justify-center font-black shrink-0', info?.bgClass, TOUCA_ESCURA.includes(alunoAtual.level) ? 'text-white' : 'text-[#0b1b2b]')}>
+            <div className={cn('w-11 h-11 rounded-control flex items-center justify-center font-black shrink-0', info?.bgClass, textoSobreTouca(alunoAtual.level))}>
               {alunoAtual.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">

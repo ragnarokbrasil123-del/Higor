@@ -27,6 +27,22 @@ import { cn } from '@/lib/utils';
 /** As duas toucas escuras pedem texto branco; as cinco claras, tinta. */
 const TEXTO_BRANCO: CapLevel[] = ['darkBlue', 'black'];
 
+/**
+ * Classe de texto que fica legível SOBRE a cor daquela touca.
+ *
+ * Existe porque o app usava `text-white` sobre a touca em 12 lugares,
+ * e cinco das sete toucas reprovam assim:
+ *   amarela 1,53:1 · verde 2,28:1 · azul claro 2,14:1
+ *   laranja 2,80:1 · vermelha 3,76:1
+ * Com a tinta no lugar do branco, as cinco passam em AA.
+ *
+ * A tinta vai literal (`#0b1b2b`) e não por token: este texto fica
+ * sobre a COR DA TOUCA, que é a mesma nos dois temas — se usasse
+ * `text-ink`, no tema escuro viraria texto claro sobre touca clara.
+ */
+export const textoSobreTouca = (nivel: CapLevel) =>
+  TEXTO_BRANCO.includes(nivel) ? 'text-white' : 'text-[#0b1b2b]';
+
 interface BadgeToucaProps {
   nivel: CapLevel;
   /** `cheio` pinta o fundo; `discreto` usa só um ponto colorido. */
@@ -62,7 +78,7 @@ export function BadgeTouca({ nivel, variante = 'cheio', completo = false, classN
       className={cn(
         'inline-flex items-center rounded-badge px-2.5 py-1 text-mini font-black uppercase tracking-wide',
         info.bgClass,
-        TEXTO_BRANCO.includes(nivel) ? 'text-white' : 'text-[#0b1b2b]',
+        textoSobreTouca(nivel),
         className
       )}
     >

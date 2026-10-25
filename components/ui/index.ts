@@ -6,7 +6,7 @@ export { Modal } from './Modal';
 export { Avisos, avisar, avisarErro, confirmar, perguntar } from './Avisos';
 export { Esqueleto, EsqueletoLista, EsqueletoCartoes } from './Esqueleto';
 export { ItemNav } from './ItemNav';
-export { BadgeTouca } from './BadgeTouca';
+export { BadgeTouca, textoSobreTouca } from './BadgeTouca';
 export { BarraProgresso, AnelProgresso } from './Progresso';
 export { FolhaInferior } from './FolhaInferior';
 export { JornadaToucas } from './JornadaToucas';

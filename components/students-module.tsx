@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
+import { BadgeTouca, textoSobreTouca } from '@/components/ui';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar , EsqueletoLista } from '@/components/ui';
 
@@ -341,9 +342,7 @@ export function StudentsModule() {
                             </p>
                           </TD>
                           <TD>
-                            <Badge uppercase className={cn('text-white', info?.bgClass || 'bg-ink-subtle')}>
-                              {info?.label || s.level}
-                            </Badge>
+                            <BadgeTouca nivel={s.level} />
                           </TD>
                           <TD className="text-sm font-medium text-ink-muted">{s.guardian_name || '—'}</TD>
                           <TD className="text-sm font-medium text-ink-subtle">{s.phone || '—'}</TD>
@@ -386,9 +385,7 @@ export function StudentsModule() {
                       subtitle={s.age ? `${s.age} anos` : undefined}
                       badges={
                         <>
-                          <Badge uppercase className={cn('text-white', info?.bgClass || 'bg-ink-subtle')}>
-                            {info?.label || s.level}
-                          </Badge>
+                          <BadgeTouca nivel={s.level} />
                           {s.modalidade && s.modalidade !== 'fixo' && <Badge tone="info" uppercase>{s.modalidade}</Badge>}
                           {aulas.length === 0
                             ? <Badge tone="warning">sem turma</Badge>
@@ -417,7 +414,7 @@ export function StudentsModule() {
         size="xl"
         title={
           <div className="flex items-center gap-3 min-w-0">
-            <div className={cn('w-11 h-11 rounded-card flex items-center justify-center text-white font-black shrink-0', levels[editing.level]?.bgClass || 'bg-ink-subtle')}>
+            <div className={cn('w-11 h-11 rounded-card flex items-center justify-center font-titulo font-bold shrink-0', levels[editing.level]?.bgClass || 'bg-ink-subtle', textoSobreTouca(editing.level))}>
               {editing.name.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">

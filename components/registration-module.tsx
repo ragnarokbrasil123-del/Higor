@@ -7,6 +7,7 @@ import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCirc
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { criarAlunos, lerAlunos } from '@/lib/alunos';
+import { BadgeTouca } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR , avisarErro, avisar } from '@/components/ui';
 
@@ -418,7 +419,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                 </TD>
                                 <TD>
                                   <div className="flex flex-wrap gap-1">
-                                    <span className={cn('px-2 py-1 rounded text-micro font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
+                                    <BadgeTouca nivel={r.level} />
                                     {r.modalidade !== 'fixo' && (
                                       <span className="px-2 py-1 rounded text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
                                     )}
@@ -452,9 +453,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                           subtitle={`${r.age || '?'} anos${r.guardian ? ' · ' + r.guardian : ''}`}
                           badges={
                             <>
-                              <span className={cn('px-2 py-1 rounded-badge text-micro font-bold uppercase text-white', levels[r.level].bgClass)}>
-                                {levels[r.level].label}
-                              </span>
+                              <BadgeTouca nivel={r.level} />
                               {r.modalidade !== 'fixo' && (
                                 <span className="px-2 py-1 rounded-badge text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
                               )}

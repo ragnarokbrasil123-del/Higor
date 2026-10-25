@@ -16,7 +16,10 @@ import { ConsentimentoPortal } from '@/components/consentimento-portal';
 import { avisoPronto, VERSAO_AVISO } from '@/lib/aviso-privacidade';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
-import { EmptyState , avisar } from '@/components/ui';
+import { BadgeTouca, EmptyState, JornadaToucas, avisar } from '@/components/ui';
+
+/** As duas toucas escuras pedem texto branco na inicial do aluno. */
+const TOUCA_ESCURA: CapLevel[] = ['darkBlue', 'black'];
 
 /** O que o login traz da linha de students (ver COLUNAS_PORTAL). */
 type AlunoLogado = Student & {
@@ -220,12 +223,21 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         )}
 
         <div className="mt-6 flex items-center gap-4 relative z-10">
-          <div className={cn('w-20 h-20 rounded-3xl flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white/20', nivel.bgClass)}>
+          <div className={cn(
+            'w-20 h-20 rounded-panel flex items-center justify-center font-titulo font-bold text-3xl shadow-overlay border-2 border-white/20',
+            nivel.bgClass,
+            TOUCA_ESCURA.includes(student.level as CapLevel) ? 'text-white' : 'text-[#0b1b2b]'
+          )}>
             {student.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight break-words">{student.name}</h1>
-            <p className="text-ink-subtle text-sm mt-1">Dossiê do Aluno</p>
+            <h1 className="font-titulo text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight break-words">{student.name}</h1>
+            {/* "Dossiê do Aluno" era frio para quem é mãe ou pai lendo
+                o resultado do filho. A touca diz mais e é o que a
+                pessoa veio ver. */}
+            <div className="mt-1.5">
+              <BadgeTouca nivel={student.level as CapLevel} completo />
+            </div>
           </div>
         </div>
       </div>
@@ -278,6 +290,19 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
               <p className="text-xl font-extrabold text-ink">{student.age} anos</p>
             </div>
           ) : null}
+        </div>
+
+        {/*
+          A jornada das sete toucas, antes dos critérios.
+
+          A pergunta que o responsável faz primeiro é "em que ponto
+          meu filho está?", e uma lista de critérios não responde
+          isso — responde "o que falta". A linha mostra o percurso
+          inteiro: de onde veio, onde está, o que vem depois.
+        */}
+        <div className="bg-surface rounded-panel border border-line shadow-raised p-4 sm:p-5">
+          <h2 className="font-titulo text-base font-semibold text-ink mb-3">O caminho até aqui</h2>
+          <JornadaToucas atual={student.level as CapLevel} />
         </div>
 
         {/* O que falta para trocar de touca — vale mesmo sem nenhuma avaliação */}
@@ -333,9 +358,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                           {new Date(ev.date).toLocaleDateString('pt-BR')}
                         </p>
                         {evLevel && (
-                          <span className={cn('inline-block mt-1 px-2 py-0.5 rounded text-micro font-bold uppercase tracking-wider text-white', evLevel.bgClass)}>
-                            Touca {evLevel.name}
-                          </span>
+                          <BadgeTouca nivel={ev.level as CapLevel} completo className="mt-1" />
                         )}
                       </div>
                       <div className="flex items-center gap-2">
