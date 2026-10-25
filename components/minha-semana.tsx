@@ -171,7 +171,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
               {aberto.turmas.map(t => (
                 <Card key={t.id} as="panel">
                   <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-sm shrink-0">
+                    <span className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised text-white rounded-lg font-black text-sm shrink-0">
                       <Clock className="w-3.5 h-3.5" /> {t.hora}
                     </span>
                     <span className="text-xs font-bold text-ink-muted flex items-center gap-1">

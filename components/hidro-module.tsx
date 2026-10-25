@@ -183,7 +183,7 @@ export function HidroModule() {
           <div className="flex items-center gap-3 p-3 pt-[max(0.75rem,env(safe-area-inset-top))] shrink-0">
             <span className="text-white font-black text-sm tabular-nums">
               Página {aberta}
-              <span className="text-slate-400 font-bold"> de {TOTAL}</span>
+              <span className="text-ink-on-dark-muted font-bold"> de {TOTAL}</span>
             </span>
 
             <button

@@ -18,17 +18,31 @@
   --color-brand-soft: #fffbeb;    /* fundo de destaque suave */
   --color-brand-line: #fde68a;
 
+  /* Marca sobre fundo ESCURO e em avisos suaves */
+  --color-brand-bright: #fbbf24;  /* ícone/realce da marca na barra escura */
+  --color-brand-wash: #fef3c7;    /* fundo de aviso */
+  --color-brand-deep: #92400e;    /* texto sobre brand-wash */
+
   /* Superfícies */
   --color-canvas: #f0f4f8;        /* fundo da página */
   --color-surface: #ffffff;       /* card, modal */
   --color-surface-sunken: #f8fafc;/* input, linha alternada */
   --color-surface-raised: #0f172a;/* barra escura, chip de horário */
+  --color-surface-deep: #020617;  /* barra lateral, fundo do login */
+  --color-surface-raised-soft: #1e293b; /* bloco dentro da barra escura */
 
   /* Texto — três níveis, só */
   --color-ink: #1e293b;           /* título e corpo */
   --color-ink-muted: #64748b;     /* apoio */
   --color-ink-subtle: #94a3b8;    /* legenda, placeholder */
   --color-ink-inverse: #ffffff;
+
+  /* Texto SOBRE superfície escura.
+     Existe separado de `ink-*` de propósito: o valor até coincide, mas
+     o papel é outro, e quem ler `text-ink-on-dark` sabe que aquele
+     trecho vive numa barra escura. */
+  --color-ink-on-dark: #cbd5e1;
+  --color-ink-on-dark-muted: #94a3b8;
 
   /* Bordas */
   --color-line: #e2e8f0;

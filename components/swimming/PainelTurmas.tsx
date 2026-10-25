@@ -132,7 +132,7 @@ export function PainelTurmas({
                     }
                   >
                     {alunos.length > 0 && (
-                      <div className="divide-y divide-slate-50">
+                      <div className="divide-y divide-surface-sunken">
                         {alunos.map(a => (
                           <LinhaAluno
                             key={a.id}

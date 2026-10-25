@@ -334,14 +334,14 @@ export function ProfessorsModule() {
 
         {!loading && professors.length > 0 && (
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex p-1 bg-slate-200 rounded-lg">
+            <div className="flex p-1 bg-line rounded-lg">
               <button onClick={() => setView('lista')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'lista' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted')}>Lista</button>
               <button onClick={() => setView('disponibilidade')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'disponibilidade' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted')}>Disponibilidade</button>
             </div>
             <div className="px-4 py-2 bg-surface border border-line rounded-xl text-sm font-bold text-ink shadow-sm flex items-center gap-2">
               <Users className="w-4 h-4 text-ink-subtle" /> {professors.length} no total
             </div>
-            <div className="px-4 py-2 bg-success-soft border border-emerald-200 rounded-xl text-sm font-bold text-success-ink shadow-sm flex items-center gap-2">
+            <div className="px-4 py-2 bg-success-soft border border-success-soft rounded-xl text-sm font-bold text-success-ink shadow-sm flex items-center gap-2">
               <UserCheck className="w-4 h-4" /> {activeCount} ativos
             </div>
           </div>
@@ -465,7 +465,7 @@ export function ProfessorsModule() {
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     <div className={cn(
                       "w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0",
-                      isActive ? "bg-amber-100 text-warning-ink" : "bg-surface-sunken text-ink-subtle"
+                      isActive ? "bg-brand-wash text-warning-ink" : "bg-surface-sunken text-ink-subtle"
                     )}>
                       {(p.name || p.username || '?').charAt(0).toUpperCase()}
                     </div>
@@ -494,7 +494,7 @@ export function ProfessorsModule() {
                   <div className="flex items-center gap-2 self-end md:self-center shrink-0">
                     <button onClick={() => toggleActive(p)} title={isActive ? 'Marcar como inativo' : 'Reativar'} className={cn(
                       "p-2 rounded-lg transition-colors",
-                      isActive ? "text-success bg-success-soft hover:bg-success-soft" : "text-ink-subtle bg-surface-sunken hover:bg-slate-200"
+                      isActive ? "text-success bg-success-soft hover:bg-success-soft" : "text-ink-subtle bg-surface-sunken hover:bg-line"
                     )}>
                       {isActive ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                     </button>
@@ -534,13 +534,13 @@ export function ProfessorsModule() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
                       <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Nome completo *</label>
-                      <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" placeholder="Ex: Ana Paula da Silva" />
+                      <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" placeholder="Ex: Ana Paula da Silva" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Situação</label>
                       <button type="button" onClick={() => setForm({ ...form, active: !form.active })} className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors",
-                        form.active ? "bg-success-soft border-emerald-200 text-success-ink" : "bg-surface-sunken border-line text-ink-muted"
+                        form.active ? "bg-success-soft border-success-soft text-success-ink" : "bg-surface-sunken border-line text-ink-muted"
                       )}>
                         {form.active ? <><UserCheck className="w-4 h-4" /> Ativo</> : <><UserX className="w-4 h-4" /> Inativo</>}
                       </button>
@@ -550,7 +550,7 @@ export function ProfessorsModule() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-sm font-black text-ink flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-indigo-500" /> Horário de trabalho
+                        <Clock className="w-4 h-4 text-info" /> Horário de trabalho
                       </label>
                       <button type="button" onClick={replicateMonday} className="text-xs font-bold text-info hover:text-info-ink flex items-center gap-1">
                         <Copy className="w-3.5 h-3.5" /> Replicar Segunda p/ dias úteis
@@ -596,9 +596,9 @@ export function ProfessorsModule() {
                               <div className="mt-3 space-y-2 pl-[52px]">
                                 {day.shifts.map((s, i) => (
                                   <div key={i} className="flex items-center gap-2">
-                                    <input type="time" value={s.start} onChange={e => setShift(key, i, { start: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="time" value={s.start} onChange={e => setShift(key, i, { start: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-info/20" />
                                     <span className="text-ink-subtle text-sm">às</span>
-                                    <input type="time" value={s.end} onChange={e => setShift(key, i, { end: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="time" value={s.end} onChange={e => setShift(key, i, { end: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-info/20" />
                                     {day.shifts.length > 1 && (
                                       <button type="button" onClick={() => removeShift(key, i)} className="p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors">
                                         <X className="w-4 h-4" />
@@ -625,7 +625,7 @@ export function ProfessorsModule() {
                       Salve o professor primeiro para poder criar um login de acesso.
                     </p>
                   ) : currentProfessor?.username && !showAccessForm ? (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-success-soft border border-emerald-200 rounded-xl p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-success-soft border border-success-soft rounded-xl p-3">
                       <div>
                         <p className="text-[10px] font-bold text-success-ink uppercase tracking-wider">Login ativo</p>
                         <p className="font-bold text-ink">{currentProfessor.username}</p>
@@ -638,8 +638,8 @@ export function ProfessorsModule() {
                   ) : showAccessForm ? (
                     <div className="space-y-3 bg-surface-sunken border border-line rounded-xl p-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" placeholder="Usuário (ex: anderson)" value={accessUser} onChange={e => setAccessUser(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <input type="text" placeholder="Usuário (ex: anderson)" value={accessUser} onChange={e => setAccessUser(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-info/20" />
+                        <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-info/20" />
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" size="sm" disabled={accessBusy} onClick={saveAccess}>

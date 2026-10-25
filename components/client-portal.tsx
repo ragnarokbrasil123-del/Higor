@@ -147,7 +147,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-surface-sunken p-6 text-center">
         <p className="text-ink-muted font-bold">Nenhum aluno encontrado nesta conta.</p>
-        <button onClick={onLogout} className="mt-6 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold">Sair</button>
+        <button onClick={onLogout} className="mt-6 px-6 py-3 bg-surface-raised text-white rounded-xl font-bold">Sair</button>
       </div>
     );
   }
@@ -211,7 +211,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             {filhos.map((f, i) => (
               <button key={f.id} onClick={() => setIdx(i)} className={cn(
                 'px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap border transition-all',
-                i === idx ? 'bg-surface text-slate-900 border-white' : 'bg-white/10 text-white border-white/20'
+                i === idx ? 'bg-surface text-surface-raised border-white' : 'bg-white/10 text-white border-white/20'
               )}>
                 {f.name.split(' ')[0]}
               </button>
@@ -238,13 +238,13 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
         {/* Avisos no celular */}
         {suportaAvisos() && avisosOn === false && (
-          <div className="bg-warning-soft border border-amber-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-11 h-11 bg-amber-400 rounded-2xl flex items-center justify-center shrink-0">
+          <div className="bg-warning-soft border border-brand-line rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-11 h-11 bg-brand-bright rounded-2xl flex items-center justify-center shrink-0">
               <BellRing className="w-6 h-6 text-black" />
             </div>
             <div className="flex-1">
               <p className="font-black text-amber-900 text-sm">Quer ser avisado quando sair a avaliação?</p>
-              <p className="text-xs font-medium text-amber-800 mt-0.5">
+              <p className="text-xs font-medium text-brand-deep mt-0.5">
                 {iosSemInstalar
                   ? 'No iPhone, primeiro adicione o app à Tela de Início: toque em Compartilhar, na barra de baixo, e escolha "Adicionar à Tela de Início". Depois volte aqui.'
                   : 'Ative os avisos e o celular te avisa sozinho — não precisa ficar conferindo.'}
@@ -258,7 +258,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           </div>
         )}
         {avisosOn === true && (
-          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-emerald-200 rounded-xl px-3 py-2 w-fit">
+          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl px-3 py-2 w-fit">
             <BellRing className="w-3.5 h-3.5" /> Avisos ativados neste aparelho
           </div>
         )}
@@ -292,7 +292,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             <div className="space-y-2">
               {minhasAulas.map((a, i) => (
                 <div key={i} className="flex flex-wrap items-center gap-3 bg-surface-sunken border border-line rounded-2xl p-3">
-                  <span className="px-3 py-1.5 bg-slate-900 text-white rounded-lg text-sm font-black shrink-0">
+                  <span className="px-3 py-1.5 bg-surface-raised text-white rounded-lg text-sm font-black shrink-0">
                     {a.inicio} às {a.fim}
                   </span>
                   <span className="font-bold text-ink text-sm">{a.dia}</span>
@@ -339,10 +339,10 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-3 py-1 text-xs font-bold rounded-lg uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-amber-100 text-warning-ink')}>
+                        <span className={cn('px-3 py-1 text-xs font-bold rounded-lg uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
                           {ev.approved ? 'Aprovado' : 'Em treinamento'}
                         </span>
-                        <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                        <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
                           <FileText className="w-3.5 h-3.5" /> PDF
                         </button>
                       </div>

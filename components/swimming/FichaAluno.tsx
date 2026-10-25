@@ -42,13 +42,13 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
           </div>
         </div>
 
-        <button onClick={onAvaliar} className="w-full py-5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl shadow-lg shadow-amber-500/30 font-black text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
+        <button onClick={onAvaliar} className="w-full py-5 bg-gradient-to-r from-brand to-orange-500 text-white rounded-2xl shadow-lg shadow-brand/30 font-black text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
           <Award className="w-6 h-6" /> Fazer avaliação
         </button>
 
         <div className="bg-surface rounded-panel border border-line shadow-raised p-5">
           <h3 className="font-black text-ink flex items-center gap-2 mb-4 pb-3 border-b border-line">
-            <History className="w-5 h-5 text-indigo-500" /> Histórico
+            <History className="w-5 h-5 text-info" /> Histórico
           </h3>
           {historico.length === 0 ? (
             <p className="text-sm text-ink-subtle text-center py-6">Nenhuma avaliação registrada.</p>
@@ -64,10 +64,10 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={cn('px-3 py-1.5 rounded-lg text-xs font-black', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-amber-100 text-warning-ink')}>
+                      <span className={cn('px-3 py-1.5 rounded-lg text-xs font-black', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
                         {ev.approved ? 'APROVADO' : 'EM TREINAMENTO'}
                       </span>
-                      <button onClick={() => gerarBoletimPDF(ev, aluno.name)} className="px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                      <button onClick={() => gerarBoletimPDF(ev, aluno.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
                         <FileText className="w-3.5 h-3.5" /> PDF
                       </button>
                       {isAdmin && (

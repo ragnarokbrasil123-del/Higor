@@ -512,11 +512,11 @@ export function StudentsModule() {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="md:col-span-2">
                       <label className="text-[11px] font-bold text-ink-muted">Nome *</label>
-                      <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-ink-muted">Idade</label>
-                      <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-ink-muted">Modalidade</label>
@@ -544,13 +544,13 @@ export function StudentsModule() {
 
                   <div className="space-y-2">
                     {aulasDe(editing.id).length === 0 && (
-                      <p className="text-xs font-bold text-warning-ink bg-warning-soft border border-amber-200 rounded-xl p-3">Este aluno não está em nenhuma turma.</p>
+                      <p className="text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-xl p-3">Este aluno não está em nenhuma turma.</p>
                     )}
                     {aulasDe(editing.id).map(a => {
                       const divergente = a.slot.cap_color !== editing.level;
                       return (
                         <div key={a.slot.id} className="flex items-center gap-3 bg-surface-sunken border border-line rounded-xl p-3">
-                          <CalendarDays className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <CalendarDays className="w-4 h-4 text-info shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-ink">
                               {a.cls!.day_of_week} · {hhmm(a.cls!.start_time)} às {hhmm(a.cls!.end_time)}
@@ -571,10 +571,10 @@ export function StudentsModule() {
                   </div>
 
                   {showAdd && (
-                    <div className="mt-3 border border-indigo-200 bg-indigo-50/40 rounded-2xl p-3 space-y-3">
+                    <div className="mt-3 border border-info-soft bg-info-soft/40 rounded-2xl p-3 space-y-3">
                       <div className="flex flex-wrap gap-1.5">
                         {DAYS.map(d => (
-                          <button key={d} onClick={() => setAddDay(d)} className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all', addDay === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-surface text-ink-muted border-line')}>
+                          <button key={d} onClick={() => setAddDay(d)} className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all', addDay === d ? 'bg-info text-white border-info' : 'bg-surface text-ink-muted border-line')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -589,7 +589,7 @@ export function StudentsModule() {
                           {vagasPorTurma.map(v => (
                             <button key={v.slot.id} onClick={() => entrarNaTurma(v.slot.id)} className="text-left bg-surface border border-line hover:border-indigo-400 rounded-xl p-2.5 transition-colors">
                               <p className="text-sm font-black text-ink flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-indigo-500" /> {hhmm(v.cls!.start_time)}
+                                <Clock className="w-3.5 h-3.5 text-info" /> {hhmm(v.cls!.start_time)}
                               </p>
                               <p className="text-[11px] font-medium text-ink-muted truncate">Prof. {rotuloProfessor(v.cls!.teacher_name)}</p>
                             </button>
@@ -606,23 +606,23 @@ export function StudentsModule() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
-                      <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
-                      <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
-                      <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
                       <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
-                      <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div className="md:col-span-2">
                       <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
-                      <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 min-h-[80px] resize-y" />
+                      <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20 min-h-[80px] resize-y" />
                     </div>
                   </div>
                 </section>

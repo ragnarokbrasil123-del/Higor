@@ -72,7 +72,7 @@ export function PainelSemTurma({ semTurma, semTurmaFiltrado, filtros, avaliadoAg
               <div className="flex items-center gap-3">
                 {(filtros.grupo !== 'all' || filtros.touca !== 'all' || filtros.soPendentes) && (
                   <button onClick={() => { filtros.setGrupo('all'); filtros.setTouca('all'); filtros.setSoPendentes(false); }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-info bg-info-soft border border-indigo-200 rounded-lg px-3 py-1.5">
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-info bg-info-soft border border-info-soft rounded-lg px-3 py-1.5">
                     Limpar filtros <X className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -115,16 +115,16 @@ export function PainelSemTurma({ semTurma, semTurmaFiltrado, filtros, avaliadoAg
                 }
               >
                 {g.aviso && (
-                  <div className="px-4 py-2.5 bg-warning-soft border-b border-amber-100 flex items-start gap-2">
+                  <div className="px-4 py-2.5 bg-warning-soft border-b border-brand-wash flex items-start gap-2">
                     <CalendarDays className="w-4 h-4 text-warning-ink shrink-0 mt-0.5" />
-                    <p className="text-[11px] font-medium text-amber-800">
+                    <p className="text-[11px] font-medium text-brand-deep">
                       Estes alunos são de turma fixa mas ficaram sem horário — o dia/hora da planilha não bateu com nenhum professor.
                       Dá pra alocar cada um na aba <b>Alunos</b> → <b>Abrir ficha</b>.
                     </p>
                   </div>
                 )}
   
-                <div className="divide-y divide-slate-50">
+                <div className="divide-y divide-surface-sunken">
                   {doGrupo.map(a => (
                     <LinhaAluno
                       key={a.id}

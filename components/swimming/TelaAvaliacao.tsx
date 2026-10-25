@@ -43,7 +43,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
         {feito.proximo ? (
           <>
             {/* o professor emenda a turma seguinte sem passar pela tela inicial */}
-            <button onClick={() => abrir(feito.proximo!.ids)} className="mt-8 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl active:scale-95 transition-transform flex items-center gap-2">
+            <button onClick={() => abrir(feito.proximo!.ids)} className="mt-8 px-8 py-4 bg-surface-raised text-white font-black rounded-2xl active:scale-95 transition-transform flex items-center gap-2">
               {feito.proximo.rotulo} · {feito.proximo.ids.length} a avaliar <ChevronRight className="w-5 h-5" />
             </button>
             <button onClick={encerrar} className="mt-3 px-6 py-3 text-ink-muted font-bold rounded-2xl active:scale-95 transition-transform">
@@ -51,7 +51,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
             </button>
           </>
         ) : (
-          <button onClick={encerrar} className="mt-8 px-8 py-4 bg-slate-900 text-white font-black rounded-2xl active:scale-95 transition-transform">
+          <button onClick={encerrar} className="mt-8 px-8 py-4 bg-surface-raised text-white font-black rounded-2xl active:scale-95 transition-transform">
             Voltar para as turmas
           </button>
         )}
@@ -150,7 +150,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
 
       <div className="max-w-3xl mx-auto w-full p-4 space-y-2 pb-32">
         <div className="flex gap-2 mb-3">
-          <button onClick={() => marcarTodos('passed')} className="flex-1 py-3 bg-emerald-600 text-white font-black rounded-xl text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
+          <button onClick={() => marcarTodos('passed')} className="flex-1 py-3 bg-success text-white font-black rounded-xl text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
             <Check className="w-4 h-4" strokeWidth={3} /> Marcar todos como Passou
           </button>
           <button onClick={() => marcarTodos('pending')} className="px-5 py-3 bg-surface border border-line text-ink-muted font-bold rounded-xl text-sm active:scale-95 transition-transform">
@@ -201,7 +201,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
               type="button"
               disabled={marcados === 0}
               onClick={gerarSugestao}
-              className="px-3 py-1.5 bg-info-soft border border-indigo-200 text-info-ink rounded-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-info-soft border border-info-soft text-info-ink rounded-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-3.5 h-3.5" /> {notes ? 'Gerar outra' : 'Gerar sugestão'}
             </button>

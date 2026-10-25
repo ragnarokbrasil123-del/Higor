@@ -43,7 +43,7 @@ export function MobileNav({ items, active, onSelect }: MobileNavProps) {
 
   return (
     <>
-      <nav className="md:hidden grid grid-cols-5 gap-1 px-2 py-2 bg-slate-950 border-t border-slate-900 z-50 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <nav className="md:hidden grid grid-cols-5 gap-1 px-2 py-2 bg-surface-deep border-t border-surface-raised z-50 shrink-0 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {principais.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
@@ -51,7 +51,7 @@ export function MobileNav({ items, active, onSelect }: MobileNavProps) {
             aria-current={active === key ? 'page' : undefined}
             className={cn(
               'flex flex-col items-center justify-center gap-1 min-h-14 rounded-control transition-colors',
-              active === key ? 'bg-brand text-brand-ink' : 'text-slate-400 active:bg-slate-900'
+              active === key ? 'bg-brand text-brand-ink' : 'text-ink-on-dark-muted active:bg-surface-raised'
             )}
           >
             <Icon className="w-5 h-5 shrink-0" />
@@ -65,7 +65,7 @@ export function MobileNav({ items, active, onSelect }: MobileNavProps) {
             aria-label="Mais abas"
             className={cn(
               'flex flex-col items-center justify-center gap-1 min-h-14 rounded-control transition-colors',
-              ativoEstaNoMenu ? 'bg-brand text-brand-ink' : 'text-slate-400 active:bg-slate-900'
+              ativoEstaNoMenu ? 'bg-brand text-brand-ink' : 'text-ink-on-dark-muted active:bg-surface-raised'
             )}
           >
             <Menu className="w-5 h-5 shrink-0" />
@@ -89,14 +89,14 @@ export function MobileNav({ items, active, onSelect }: MobileNavProps) {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="relative bg-slate-950 rounded-t-panel border-t border-slate-800 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative bg-surface-deep rounded-t-panel border-t border-surface-raised-soft pb-[max(1rem,env(safe-area-inset-bottom))]"
             >
               <div className="flex items-center justify-between px-5 pt-4 pb-3">
                 <span className="text-sm font-black text-white uppercase tracking-wider">Todas as abas</span>
                 <button
                   onClick={() => setAberto(false)}
                   aria-label="Fechar"
-                  className="p-2.5 min-w-11 min-h-11 flex items-center justify-center text-slate-400 active:text-white rounded-control"
+                  className="p-2.5 min-w-11 min-h-11 flex items-center justify-center text-ink-on-dark-muted active:text-white rounded-control"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -111,7 +111,7 @@ export function MobileNav({ items, active, onSelect }: MobileNavProps) {
                       'flex items-center gap-3 p-4 min-h-14 rounded-card border text-left transition-colors',
                       active === key
                         ? 'bg-brand text-brand-ink border-brand'
-                        : 'bg-slate-900 text-slate-300 border-slate-800 active:bg-slate-800'
+                        : 'bg-surface-raised text-ink-on-dark border-surface-raised-soft active:bg-surface-raised-soft'
                     )}
                   >
                     <Icon className="w-5 h-5 shrink-0" />

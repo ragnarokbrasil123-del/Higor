@@ -370,17 +370,17 @@ export function ScheduleModule() {
             <div key={g.titulo}>
               {buscando && (
                 <h2 className="text-lg font-black text-ink mb-3 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-indigo-500" /> {g.titulo}
+                  <Calendar className="w-5 h-5 text-info" /> {g.titulo}
                 </h2>
               )}
               <div className="space-y-5">
                 {g.blocos.map(b => (
                   <div key={b.hora}>
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 text-white rounded-lg text-sm font-black shrink-0">
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-raised-soft text-white rounded-lg text-sm font-black shrink-0">
                         <Clock className="w-3.5 h-3.5" /> {b.hora}
                       </div>
-                      <div className="h-px flex-1 bg-slate-200" />
+                      <div className="h-px flex-1 bg-line" />
                       <span className="text-[11px] font-bold text-ink-subtle shrink-0">{b.turmas.length} turma(s)</span>
                     </div>
 
@@ -411,7 +411,7 @@ export function ScheduleModule() {
                                     'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border text-white transition-all',
                                     info?.bgClass || 'bg-slate-300 text-ink',
                                     studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95' : 'opacity-50 border-dashed cursor-default',
-                                    destaque && 'ring-2 ring-offset-1 ring-amber-400'
+                                    destaque && 'ring-2 ring-offset-1 ring-brand-bright'
                                   )}
                                 >
                                   <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', studentName ? 'bg-surface' : 'bg-white/50')} />
@@ -475,10 +475,10 @@ export function ScheduleModule() {
                           onFocus={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}
                           onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)}
                           placeholder="Clique para escolher da lista..."
-                          className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-ink font-medium pr-10"
+                          className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 focus:border-info transition-all text-ink font-medium pr-10"
                         />
                         <button type="button" tabIndex={-1} className="absolute right-3 top-3.5" onClick={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}>
-                          <ChevronDown className="w-5 h-5 text-ink-subtle hover:text-indigo-500 transition-colors" />
+                          <ChevronDown className="w-5 h-5 text-ink-subtle hover:text-info transition-colors" />
                         </button>
                       </div>
 
@@ -486,7 +486,7 @@ export function ScheduleModule() {
                         {isTeacherDropdownOpen && activeList.length > 0 && (
                           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
                             {activeList.map(p => (
-                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-slate-50 last:border-0">
+                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-surface-sunken last:border-0">
                                 <span className="block text-ink font-bold">{p.name || p.username}</span>
                                 <span className="block text-[11px] text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
                               </button>
@@ -496,7 +496,7 @@ export function ScheduleModule() {
                       </AnimatePresence>
 
                       {professors.length === 0 && (
-                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-amber-200 rounded-lg p-2">
+                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-lg p-2">
                           Nenhum professor ativo cadastrado. Cadastre na aba Professores.
                         </p>
                       )}
@@ -511,7 +511,7 @@ export function ScheduleModule() {
                       <label className="block text-sm font-bold text-ink mb-2">Quais dias dessa aula?</label>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
-                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20' : 'bg-surface text-ink-muted border-line hover:border-indigo-300')}>
+                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-info text-white border-info shadow-md shadow-info/20' : 'bg-surface text-ink-muted border-line hover:border-indigo-300')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -521,23 +521,23 @@ export function ScheduleModule() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-bold text-ink mb-2">Horário Início</label>
-                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-ink" />
+                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-ink mb-2">Horário Fim</label>
-                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-ink" />
+                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
                       </div>
                     </div>
 
                     {/* Cruzamento com o horário do professor */}
                     {selectedProf && form.days_of_week.length > 0 && (
                       conflicts.length === 0 ? (
-                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-emerald-200 rounded-xl p-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl p-3">
                           <CheckCircle2 className="w-4 h-4 shrink-0" /> Dentro do horário de trabalho do professor.
                         </div>
                       ) : (
-                        <div className="text-sm bg-warning-soft border border-amber-200 rounded-xl p-3 space-y-1">
-                          <div className="flex items-center gap-2 font-black text-amber-800">
+                        <div className="text-sm bg-warning-soft border border-brand-line rounded-xl p-3 space-y-1">
+                          <div className="flex items-center gap-2 font-black text-brand-deep">
                             <AlertTriangle className="w-4 h-4 shrink-0" /> Fora do horário do professor:
                           </div>
                           {conflicts.map(c => (
@@ -568,7 +568,7 @@ export function ScheduleModule() {
                             key={opt.key}
                             className={cn(
                               'flex flex-col p-3 rounded-xl border transition-colors',
-                              atual > 0 ? 'bg-info-soft border-indigo-200' : 'bg-surface border-line',
+                              atual > 0 ? 'bg-info-soft border-info-soft' : 'bg-surface border-line',
                               travado && 'opacity-50'
                             )}
                           >
