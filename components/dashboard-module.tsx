@@ -1,16 +1,22 @@
 'use client';
 
+import { lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
+import type { Aluno, Aval, DadosPainel, Equipe, Tarefa, Turma, Vaga } from './dashboard/tipos';
+import { calcularResumo, DIAS } from './dashboard/resumo';
+import { diaCurto, num } from './dashboard/formato';
+import { Cartao, Secao } from './dashboard/Cartao';
+import { paginado } from '@/lib/paginado';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, ClipboardCheck, ClipboardList,
-  FileDown, GraduationCap, LayoutDashboard, TrendingDown, TrendingUp, Users, Wrench,
+  FileDown, GraduationCap, LayoutDashboard, Users, Wrench,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { capLevelOrder, levels, type CapLevel } from '@/types';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { gerarRelatorioAlunosPDF } from '@/lib/relatorio-pdf';
-import { Badge, Button, Card, EmptyState, ErrorState, Loading, Modal, PageHeader, PageShell, Select } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, ErrorState, Loading, Modal, PageHeader, PageShell, Select , EsqueletoCartoes } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { lerAlunos } from '@/lib/alunos';
 import { lerEquipe } from '@/lib/equipe';
@@ -24,100 +30,14 @@ import { lerEquipe } from '@/lib/equipe';
    honesto em vez de um gráfico de enfeite.
    ============================================================ */
 
-// sem `phone`: estava declarado e nunca usado em tela — era contato
-// descendo para o navegador à toa (ver COLUNAS_PAINEL)
-type Aluno = { id: string; name: string; level: CapLevel; modalidade: string | null; ativo: boolean | null; guardian_name: string | null };
-type Aval = { id: string; student_id: string; date: string; level: CapLevel; approved: boolean };
-type Turma = { id: string; day_of_week: string; start_time: string; teacher_name: string };
-type Vaga = { class_id: string; student_id: string | null };
-type Equipe = { name: string; username: string | null; role: string; active: boolean | null };
-type Tarefa = { id: string; title: string; completed: boolean; date: string; created_at: string };
 
-/** O PostgREST devolve no máximo 1000 linhas por vez — class_slots tem 1303. */
-async function buscarTudo<T>(tabela: string, colunas: string): Promise<T[]> {
-  const linhas: T[] = [];
-  for (let de = 0; ; de += 1000) {
-    const { data, error } = await supabase.from(tabela).select(colunas).range(de, de + 999);
-    if (error) throw new Error(`${tabela}: ${error.message}`);
-    const lote = (data ?? []) as unknown as T[];
-    if (!lote.length) break;
-    linhas.push(...lote);
-    if (lote.length < 1000) break;
-  }
-  return linhas;
-}
 
-const DIAS = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 
-/** 'AAAA-MM-DD' vira Date no meio do dia, para o fuso não jogar para a véspera. */
-const dataLocal = (s: string) => new Date(s.length <= 10 ? `${s}T12:00:00` : s);
-const diaCurto = (s: string) => dataLocal(s).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-const num = (n: number) => n.toLocaleString('pt-BR');
 
 const irPara = (aba: string) => window.dispatchEvent(new CustomEvent('jumpToTab', { detail: aba }));
 
 /* ------------------------------------------------------------------ */
 
-interface CartaoProps {
-  icone: LucideIcon;
-  titulo: string;
-  valor: string;
-  contexto: string;
-  /** Só aparece quando existe base de comparação real. */
-  tendencia?: { texto: string; sentido: 'sobe' | 'desce' | 'igual' };
-  destaque?: 'neutro' | 'atencao';
-  /** Quando presente, o cartão inteiro vira atalho para a aba correspondente. */
-  aoClicar?: () => void;
-}
-
-function Cartao({ icone: Icone, titulo, valor, contexto, tendencia, destaque = 'neutro', aoClicar }: CartaoProps) {
-  const Seta = tendencia?.sentido === 'desce' ? TrendingDown : TrendingUp;
-  return (
-    <Card
-      onClick={aoClicar}
-      className={cn('flex flex-col gap-1.5', aoClicar && 'cursor-pointer transition-colors hover:border-brand/40 active:bg-surface-sunken')}
-    >
-      <div className="flex items-center gap-1.5 text-ink-subtle">
-        <Icone className={cn('w-4 h-4 shrink-0', destaque === 'atencao' && 'text-warning')} />
-        <span className="text-mini font-bold uppercase tracking-wider truncate">{titulo}</span>
-      </div>
-
-      <p
-        className={cn(
-          'text-2xl md:text-3xl font-black leading-none tabular-nums',
-          destaque === 'atencao' ? 'text-warning-ink' : 'text-ink'
-        )}
-      >
-        {valor}
-      </p>
-
-      <p className="text-xs text-ink-muted font-medium leading-snug">{contexto}</p>
-
-      {tendencia && (
-        <span
-          className={cn(
-            'inline-flex items-center gap-1 text-mini font-bold mt-0.5',
-            tendencia.sentido === 'sobe' && 'text-success-ink',
-            tendencia.sentido === 'desce' && 'text-danger-ink',
-            tendencia.sentido === 'igual' && 'text-ink-subtle'
-          )}
-        >
-          {tendencia.sentido !== 'igual' && <Seta className="w-3 h-3 shrink-0" />}
-          {tendencia.texto}
-        </span>
-      )}
-    </Card>
-  );
-}
-
-function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-3">
-      <h2 className="text-mini font-black text-ink-subtle uppercase tracking-wider">{titulo}</h2>
-      {children}
-    </section>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 
@@ -145,12 +65,12 @@ export function DashboardModule() {
         // As outras seguem direto daqui, que é o esperado.
         const [alunos, avals, turmas, vagas, equipe, limpeza, manut] = await Promise.all([
           lerAlunos('painel') as Promise<Aluno[]>,
-          buscarTudo<Aval>('evaluations', 'id,student_id,date,level,approved'),
-          buscarTudo<Turma>('classes', 'id,day_of_week,start_time,teacher_name'),
-          buscarTudo<Vaga>('class_slots', 'class_id,student_id'),
+          lerAvaliacoesResumo() as Promise<Aval[]>,
+          lerTurmas() as Promise<Turma[]>,
+          lerVagas() as Promise<Vaga[]>,
           lerEquipe() as Promise<Equipe[]>,
-          buscarTudo<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
-          buscarTudo<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),
+          paginado<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
+          paginado<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),
         ]);
         // matricula cancelada nao entra em nenhuma conta do painel
         if (vivo) setDados({ alunos: alunos.filter(a => a.ativo !== false), avals, turmas, vagas, equipe, limpeza, manut });
@@ -161,92 +81,10 @@ export function DashboardModule() {
     return () => { vivo = false; };
   }, []);
 
-  const resumo = useMemo(() => {
-    if (!dados) return null;
-    const { alunos, avals, turmas, vagas, equipe, limpeza, manut } = dados;
-
-    // --- turmas e alocação ---
-    const ocupadas = vagas.filter(v => v.student_id);
-    const comTurma = new Set(ocupadas.map(v => v.student_id as string));
-    const turmasComAluno = new Set(ocupadas.map(v => v.class_id));
-    const semTurma = alunos.filter(a => !comTurma.has(a.id));
-    // wellhub e avulso não têm turma fixa por natureza; "fixo" sem turma é erro de cadastro
-    const fixosSemTurma = semTurma.filter(a => (a.modalidade ?? 'fixo') === 'fixo');
-    const turmasVazias = turmas.filter(t => !turmasComAluno.has(t.id));
-    const ocupacao = vagas.length ? Math.round((ocupadas.length / vagas.length) * 100) : 0;
-
-    // --- agenda de hoje ---
-    const agora = new Date();
-    const nomeHoje = DIAS[agora.getDay()];
-    const turmasHoje = turmas.filter(t => t.day_of_week === nomeHoje);
-    const idsHoje = new Set(turmasHoje.map(t => t.id));
-    const alunosHoje = new Set(ocupadas.filter(v => idsHoje.has(v.class_id)).map(v => v.student_id)).size;
-
-    // --- avaliações ---
-    const avaliados = new Set(avals.map(a => a.student_id));
-    const pendentes = alunos.filter(a => !avaliados.has(a.id)).length;
-    const aprovadas = avals.filter(a => a.approved).length;
-    const taxaAprovacao = avals.length ? Math.round((aprovadas / avals.length) * 100) : null;
-
-    const chaveMes = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const mesAtual = chaveMes(agora);
-    const mesPassado = chaveMes(new Date(agora.getFullYear(), agora.getMonth() - 1, 1));
-    const noMes = avals.filter(a => a.date?.slice(0, 7) === mesAtual).length;
-    const noMesPassado = avals.filter(a => a.date?.slice(0, 7) === mesPassado).length;
-
-    // tendência só quando existe com o que comparar — senão fica de fora
-    let tendencia: CartaoProps['tendencia'];
-    if (noMes || noMesPassado) {
-      const dif = noMes - noMesPassado;
-      tendencia = {
-        sentido: dif > 0 ? 'sobe' : dif < 0 ? 'desce' : 'igual',
-        texto: dif === 0 ? 'igual ao mês passado' : `${dif > 0 ? '+' : ''}${num(dif)} vs. mês passado`,
-      };
-    }
-
-    // últimos 6 meses, sempre reais (zerados enquanto não houver ficha salva)
-    const meses = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date(agora.getFullYear(), agora.getMonth() - (5 - i), 1);
-      return {
-        chave: chaveMes(d),
-        rotulo: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''),
-        total: avals.filter(a => a.date?.slice(0, 7) === chaveMes(d)).length,
-      };
-    });
-
-    // --- toucas (dado real, independe de avaliação) ---
-    const porTouca = capLevelOrder
-      .map(k => ({ chave: k, total: alunos.filter(a => a.level === k).length }))
-      .filter(t => t.total > 0);
-    const maiorTouca = Math.max(1, ...porTouca.map(t => t.total));
-
-    // --- equipe e operação ---
-    const profsSemLogin = equipe.filter(u => u.role === 'teacher' && !u.username && u.active !== false);
-    const manutAberta = manut.filter(t => !t.completed);
-
-    const nomePorId = new Map(alunos.map(a => [a.id, a.name]));
-    const ultimasAvals = [...avals]
-      .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
-      .slice(0, 5)
-      .map(a => ({ ...a, nome: nomePorId.get(a.student_id) ?? 'Aluno removido' }));
-
-    const ultimasTarefas = [
-      ...limpeza.map(t => ({ ...t, tipo: 'limpeza' as const })),
-      ...manut.map(t => ({ ...t, tipo: 'manutencao' as const })),
-    ]
-      .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
-      .slice(0, 5);
-
-    return {
-      alunos, turmas, vagas, avals,
-      totalAlunos: alunos.length, comTurma: comTurma.size, semTurma: semTurma.length,
-      fixosSemTurma: fixosSemTurma.length, turmasVazias: turmasVazias.length,
-      ocupadas: ocupadas.length, ocupacao, nomeHoje, turmasHoje: turmasHoje.length, alunosHoje,
-      pendentes, aprovadas, taxaAprovacao, noMes, tendencia, meses,
-      porTouca, maiorTouca, profsSemLogin: profsSemLogin.length,
-      manutAberta: manutAberta.length, ultimasAvals, ultimasTarefas,
-    };
-  }, [dados]);
+  // O cálculo vive em components/dashboard/resumo.ts: é função pura,
+  // e tirá-la daqui deixou este arquivo com o que ele é de fato —
+  // carregar, filtrar e desenhar.
+  const resumo = useMemo(() => calcularResumo(dados), [dados]);
 
   if (erro) {
     return (
@@ -263,7 +101,10 @@ export function DashboardModule() {
   if (!resumo) {
     return (
       <PageShell>
-        <Loading label="Somando os números da escola..." full />
+        {/* o esqueleto tem o formato dos quatro números que vêm, então
+            a tela não dá salto quando o dado chega */}
+        <PageHeader icon={LayoutDashboard} title="Painel" description="Somando os números da escola..." />
+        <EsqueletoCartoes />
       </PageShell>
     );
   }

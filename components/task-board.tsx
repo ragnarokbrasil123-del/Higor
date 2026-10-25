@@ -6,7 +6,7 @@ import { Check, Edit2, Trash2, X, Camera, Eye } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { Button, DateNav, EmptyState, IconButton, Input, PageHeader, PageShell } from '@/components/ui';
+import { Button, DateNav, EmptyState, IconButton, Input, PageHeader, PageShell , avisarErro } from '@/components/ui';
 
 interface Task {
   id: string;
@@ -181,7 +181,7 @@ export function TaskBoard({
       const nome = tasks.find(t => t.id === activeUploadTaskId)?.title || '';
       avisarEquipe(textoPushFoto(nome));
     } catch {
-      alert('Erro ao salvar foto.');
+      avisarErro('Erro ao salvar foto.');
     } finally {
       setActiveUploadTaskId(null);
       if (fileInputRef.current) fileInputRef.current.value = '';

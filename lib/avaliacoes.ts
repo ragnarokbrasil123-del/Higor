@@ -22,6 +22,7 @@
    ============================================================ */
 
 import { supabase } from '@/lib/supabase';
+import { invalidar } from '@/lib/cache';
 
 export interface NovaAvaliacao {
   student_id: string;
@@ -64,6 +65,10 @@ async function erroDaResposta(resp: Response, padrao: string) {
 }
 
 export async function lancarAvaliacao(av: NovaAvaliacao) {
+  // `students` entra junto: aprovar em todos os critérios promove a
+  // touca do aluno, então a lista de alunos também muda
+  invalidar('evaluations', 'students');
+
   const resp = await fetch('/api/avaliacoes', {
     method: 'POST',
     credentials: 'same-origin',
@@ -84,6 +89,7 @@ export async function lancarAvaliacao(av: NovaAvaliacao) {
 }
 
 export async function apagarAvaliacao(id: string) {
+  invalidar('evaluations');
   const resp = await fetch(`/api/avaliacoes?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',
     credentials: 'same-origin',

@@ -1,6 +1,4 @@
 {
-  "name": "Nautilus & CleanList",
-  "description": "Premium platform for swim school evaluation and corporative cleaning checklists.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "Clube Olimpo",
+  "description": "Gestão de escola de natação: avaliação por touca, grade de horários e comunicação com os responsáveis."
 }

@@ -18,17 +18,31 @@
   --color-brand-soft: #fffbeb;    /* fundo de destaque suave */
   --color-brand-line: #fde68a;
 
+  /* Marca sobre fundo ESCURO e em avisos suaves */
+  --color-brand-bright: #fbbf24;  /* ícone/realce da marca na barra escura */
+  --color-brand-wash: #fef3c7;    /* fundo de aviso */
+  --color-brand-deep: #92400e;    /* texto sobre brand-wash */
+
   /* Superfícies */
   --color-canvas: #f0f4f8;        /* fundo da página */
   --color-surface: #ffffff;       /* card, modal */
   --color-surface-sunken: #f8fafc;/* input, linha alternada */
   --color-surface-raised: #0f172a;/* barra escura, chip de horário */
+  --color-surface-deep: #020617;  /* barra lateral, fundo do login */
+  --color-surface-raised-soft: #1e293b; /* bloco dentro da barra escura */
 
   /* Texto — três níveis, só */
   --color-ink: #1e293b;           /* título e corpo */
   --color-ink-muted: #64748b;     /* apoio */
   --color-ink-subtle: #94a3b8;    /* legenda, placeholder */
   --color-ink-inverse: #ffffff;
+
+  /* Texto SOBRE superfície escura.
+     Existe separado de `ink-*` de propósito: o valor até coincide, mas
+     o papel é outro, e quem ler `text-ink-on-dark` sabe que aquele
+     trecho vive numa barra escura. */
+  --color-ink-on-dark: #cbd5e1;
+  --color-ink-on-dark-muted: #94a3b8;
 
   /* Bordas */
   --color-line: #e2e8f0;
@@ -86,4 +100,59 @@ html, body {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--color-line-strong);
   border-radius: 10px;
+}
+
+/* Entrada dos avisos e diálogos. Curta e discreta — e só roda para
+   quem não pediu "reduzir movimento" (a classe usa motion-safe). */
+@keyframes subir {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Campos de formulário: nunca abaixo de 16px no celular.
+
+   Abaixo de 16px o iPhone dá zoom sozinho ao focar o campo — a
+   tela salta, a pessoa perde o lugar e precisa dar pinça para
+   voltar. Com a mão molhada na beira da piscina isso é péssimo.
+   E 14px sob sol forte é difícil de ler de qualquer jeito.
+
+   Está aqui, e não nas 24 classes espalhadas, porque assim vale
+   também para o próximo campo que alguém escrever. Os `:not()`
+   existem só para a regra ganhar de uma classe utilitária do
+   Tailwind na disputa de especificidade — sem eles, um `text-sm`
+   no elemento venceria.
+
+   Acima de 640px o `sm:text-sm` do kit volta a valer.
+   ============================================================ */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']),
+  textarea:not([hidden]),
+  select:not([hidden]) {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================
+   Alvo de toque mínimo, só em tela de toque.
+
+   30 botões do app eram menores que 44px de altura — abaixo do que
+   um dedo acerta com confiança, ainda mais molhado. A regra vale
+   só para `pointer: coarse` (dedo), então no desktop, com mouse,
+   nada muda de tamanho.
+
+   Use a classe `alvo-livre` num botão que precise fugir disto (um
+   link dentro de um parágrafo, por exemplo).
+   ============================================================ */
+@media (pointer: coarse) {
+  button:not(.alvo-livre),
+  [role='button']:not(.alvo-livre),
+  a[href]:not(.alvo-livre):not(:is(p, li, span) a) {
+    min-height: 2.75rem; /* 44px */
+  }
+
+  /* botão só de ícone também precisa de largura */
+  button:not(.alvo-livre):has(> svg:only-child) {
+    min-width: 2.75rem;
+  }
 }

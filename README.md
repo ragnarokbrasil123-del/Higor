@@ -1,20 +1,49 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Clube Olimpo
 
-# Run and deploy your AI Studio app
+PWA de gestão de uma escola de natação. O objetivo central é **avaliar o aluno
+para troca de touca** (avaliação trimestral por critérios) e **informar os pais**
+do resultado. Secundariamente cobre grade de horários, cadastro de alunos e
+professores, e os checklists de limpeza e manutenção.
 
-This contains everything you need to run your app locally.
+Produção: <https://clubeolimpo.vercel.app> — o Vercel reconstrói a cada push no `main`.
 
-View your app in AI Studio: https://ai.studio/apps/f8fc8eff-8da2-4388-87fd-75aa800050d2
+## Rodar
 
-## Run Locally
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npx tsc --noEmit   # checagem de tipos — é ESTA que valida
+npm run build      # build de produção
+```
 
-**Prerequisites:**  Node.js
+> ⚠️ Nunca rode `npm run build` com o `npm run dev` ligado, nem dois `npm run dev`
+> ao mesmo tempo. Os dois escrevem na mesma pasta `.next`; um apaga os chunks que
+> o outro está servindo e a tela fica branca (HTML 200, JS 404).
 
+## Variáveis de ambiente
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Copie `.env.example` para `.env.local` e preencha. Em produção, os mesmos nomes
+vão em Vercel → Settings → Environment Variables.
+
+| Variável | Para quê |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | as rotas de servidor lerem `students` e `app_users`, que têm RLS |
+| `SESSION_SECRET` | assinar o cookie de sessão |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` · `VAPID_PRIVATE_KEY` | notificações push |
+
+## Antes de mexer
+
+Leia o **`CLAUDE.md`** — ele tem a arquitetura, as regras de negócio que não são
+dedutíveis do código (escala de sábado em duplas, o professor não ter o contato
+dos pais) e as armadilhas já conhecidas.
+
+Duas que valem repetir aqui:
+
+- **Nunca** use `supabase.from('students')` ou `supabase.from('app_users')` num
+  componente. As duas têm RLS; o acesso passa por `lib/alunos.ts` e
+  `lib/equipe.ts`.
+- O PostgREST devolve no máximo 1000 linhas por consulta e `class_slots` passa
+  disso. Pagine com `lib/paginado.ts`, ou leia por `lib/dados.ts`, que já tem
+  cache entre as abas.
+
+O **`LGPD.md`** registra o que foi feito e o que falta na proteção dos dados.

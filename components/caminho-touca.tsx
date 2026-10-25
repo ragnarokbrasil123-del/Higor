@@ -116,7 +116,7 @@ export function CaminhoTouca({ nome, nivel, avaliacoes }: CaminhoToucaProps) {
       )}
 
       {faltam.length === 0 && (
-        <p className="text-sm font-bold text-success-ink bg-success-soft border border-emerald-200 rounded-xl p-3 mt-2">
+        <p className="text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl p-3 mt-2">
           🏅 Todos os fundamentos concluídos! {nome.split(' ')[0]} está pronto para a próxima touca.
         </p>
       )}

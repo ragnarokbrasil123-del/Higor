@@ -1,21 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
-import { SwimmingModule } from '@/components/swimming/SwimmingModule';
-import { ChecklistModule } from '@/components/checklist-module';
-import { MaintenanceModule } from '@/components/maintenance-module';
-import { RegistrationModule } from '@/components/registration-module';
 import { LoginModule } from '@/components/login-module';
-import { ClientPortal } from '@/components/client-portal';
-import { ProfessorsModule } from '@/components/professors-module';
-import { StudentsModule } from '@/components/students-module';
-import { ScheduleModule } from '@/components/schedule-module';
-import { DashboardModule } from '@/components/dashboard-module';
-import { AccessModule } from '@/components/access-module';
 import { InstallPrompt } from '@/components/install-prompt';
-import { MinhaSemana } from '@/components/minha-semana';
-import { HidroModule } from '@/components/hidro-module';
+import { Loading , avisar } from '@/components/ui';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -23,6 +14,78 @@ import { ativarAvisos } from '@/lib/push';
 import { logoutServidor } from '@/lib/equipe';
 import { MobileNav } from '@/components/ui';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
+
+/* ============================================================
+   Cada aba é carregada SÓ quando aberta.
+
+   Antes as 13 abas eram importadas no topo e entravam todas no
+   pacote inicial: o professor que só avalia baixava Painel, Grade,
+   Cadastro, Acessos, Hidro e Checklist junto. Medido com Lighthouse
+   em 25/10: 415 KB de JavaScript, dos quais 146 KB nunca executados,
+   e 1.230 ms de thread principal travada.
+
+   `ssr: false` porque todas dependem do `localStorage` e do Supabase
+   no navegador — renderizar no servidor não adiantaria nada.
+
+   O `LoginModule` fica estático de propósito: é a primeira tela de
+   quem não está logado, e adiar o carregamento dela só atrasaria o
+   que a pessoa veio fazer.
+   ============================================================ */
+
+const carregando = () => (
+  <div className="flex-1 flex items-center justify-center p-8">
+    <Loading />
+  </div>
+);
+
+const SwimmingModule = dynamic(
+  () => import('@/components/swimming/SwimmingModule').then(m => m.SwimmingModule),
+  { ssr: false, loading: carregando }
+);
+const ChecklistModule = dynamic(
+  () => import('@/components/checklist-module').then(m => m.ChecklistModule),
+  { ssr: false, loading: carregando }
+);
+const MaintenanceModule = dynamic(
+  () => import('@/components/maintenance-module').then(m => m.MaintenanceModule),
+  { ssr: false, loading: carregando }
+);
+const RegistrationModule = dynamic(
+  () => import('@/components/registration-module').then(m => m.RegistrationModule),
+  { ssr: false, loading: carregando }
+);
+const ClientPortal = dynamic(
+  () => import('@/components/client-portal').then(m => m.ClientPortal),
+  { ssr: false, loading: carregando }
+);
+const ProfessorsModule = dynamic(
+  () => import('@/components/professors-module').then(m => m.ProfessorsModule),
+  { ssr: false, loading: carregando }
+);
+const StudentsModule = dynamic(
+  () => import('@/components/students-module').then(m => m.StudentsModule),
+  { ssr: false, loading: carregando }
+);
+const ScheduleModule = dynamic(
+  () => import('@/components/schedule-module').then(m => m.ScheduleModule),
+  { ssr: false, loading: carregando }
+);
+const DashboardModule = dynamic(
+  () => import('@/components/dashboard-module').then(m => m.DashboardModule),
+  { ssr: false, loading: carregando }
+);
+const AccessModule = dynamic(
+  () => import('@/components/access-module').then(m => m.AccessModule),
+  { ssr: false, loading: carregando }
+);
+const MinhaSemana = dynamic(
+  () => import('@/components/minha-semana').then(m => m.MinhaSemana),
+  { ssr: false, loading: carregando }
+);
+const HidroModule = dynamic(
+  () => import('@/components/hidro-module').then(m => m.HidroModule),
+  { ssr: false, loading: carregando }
+);
 
 type Tab = 'dashboard' | 'acessos' | 'hidro' | 'swimming' | 'avulsos' | 'sabado' | 'cleaning' | 'maintenance' | 'registration' | 'students' | 'professors' | 'schedule';
 type UserState = { role: 'admin' | 'teacher' | 'client'; data: any } | null;
@@ -263,9 +326,9 @@ export default function Page() {
   const activateNotifications = async () => {
     try {
       await ativarAvisos('', 'admin');
-      alert('🔔 Pronto! Este aparelho vai receber os chamados.');
+      avisar('🔔 Pronto! Este aparelho vai receber os chamados.');
     } catch (err: any) {
-      alert(err?.message || 'Não consegui ativar os avisos neste aparelho.');
+      avisar(err?.message || 'Não consegui ativar os avisos neste aparelho.');
     }
   };
 
@@ -276,45 +339,45 @@ export default function Page() {
       {/* convite para instalar o app — antes so aparecia no portal dos pais */}
       <InstallPrompt acimaDaBarra />
 
-      <div className="md:hidden flex items-center justify-between bg-slate-950 text-white p-4 shrink-0 shadow-md z-30">
+      <div className="md:hidden flex items-center justify-between bg-surface-deep text-white p-4 shrink-0 shadow-md z-30">
         <div className="flex items-center gap-2">
           {/* só aparece quando existe uma troca de aba nossa para desfazer —
               mesmo botão que o gesto/tecla de voltar do celular já usa. */}
           {navDepth > 0 && (
-            <button onClick={() => window.history.back()} aria-label="Voltar" className="p-2 -ml-1 text-slate-300 hover:text-white transition-colors">
+            <button onClick={() => window.history.back()} aria-label="Voltar" className="p-2 -ml-1 text-ink-on-dark hover:text-white transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
-          <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain" />
-          <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-amber-500">Olimpo</span></span>
+          <Image src="/logo.png" alt="Logo" width={36} height={36} className="w-9 h-9 object-contain" />
+          <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-brand">Olimpo</span></span>
         </div>
         
         <div className="flex items-center gap-2">
           {isAdmin && (
-             <button onClick={activateNotifications} className="p-2 text-amber-400 hover:text-white transition-colors bg-slate-900 rounded-lg border border-amber-500/30 shadow-lg shadow-amber-500/10">
+             <button onClick={activateNotifications} className="p-2 text-brand-bright hover:text-white transition-colors bg-surface-raised rounded-lg border border-brand/30 shadow-lg shadow-brand/10">
                <BellRing className="w-5 h-5" />
              </button>
           )}
 
-          <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-white transition-colors bg-slate-900 rounded-lg">
+          <button onClick={handleLogout} className="p-2 text-ink-on-dark-muted hover:text-white transition-colors bg-surface-raised rounded-lg">
             <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      <header className="hidden md:flex bg-slate-950 text-white shrink-0 w-60 lg:w-72 flex-col z-20 shadow-2xl relative">
+      <header className="hidden md:flex bg-surface-deep text-white shrink-0 w-60 lg:w-72 flex-col z-20 shadow-2xl relative">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-            <img src="/logo.png" alt="Logo Clube Olimpo" className="w-full h-full object-contain" />
+            <Image src="/logo.png" alt="Logo Clube Olimpo" width={40} height={40} className="w-full h-full object-contain" />
           </div>
           <span className="font-bold text-lg tracking-tight uppercase">
-            Clube <span className="text-amber-500">Olimpo</span>
+            Clube <span className="text-brand">Olimpo</span>
           </span>
         </div>
 
         <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 space-y-1">
           {isAdmin && (
-            <button onClick={() => irPara('dashboard')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'dashboard' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('dashboard')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'dashboard' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <LayoutDashboard className="w-5 h-5" />
               <span className="font-bold text-sm">Painel</span>
             </button>
@@ -322,68 +385,68 @@ export default function Page() {
 
           {/* matricular aluno e importar planilha e trabalho de secretaria */}
           {isAdmin && (
-            <button onClick={() => irPara('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <UserPlus className="w-5 h-5" />
               <span className="font-bold text-sm">Cadastro Alunos</span>
             </button>
           )}
 
           {isAdmin && (
-            <button onClick={() => irPara('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <Users className="w-5 h-5" />
               <span className="font-bold text-sm">Alunos</span>
             </button>
           )}
 
-          <button onClick={() => irPara('swimming')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'swimming' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+          <button onClick={() => irPara('swimming')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'swimming' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
             <Droplets className="w-5 h-5" />
             <span className="font-bold text-sm">Avaliação Natação</span>
           </button>
 
           {isStaff && (
-            <button onClick={() => irPara('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <Sparkles className="w-5 h-5" />
               <span className="font-bold text-sm">Avulsos & Wellhub</span>
             </button>
           )}
 
           {isAdmin && (
-            <button onClick={() => irPara('sabado')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'sabado' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('sabado')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'sabado' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <CalendarClock className="w-5 h-5" />
               <span className="font-bold text-sm">Avaliação Sábado</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => irPara('hidro')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'hidro' ? "bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('hidro')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'hidro' ? "bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <Waves className="w-5 h-5" />
               <span className="font-bold text-sm">Hidro</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => irPara('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <ClipboardList className="w-5 h-5" />
               <span className="font-bold text-sm">Checklist Limpeza</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => irPara('maintenance')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('maintenance')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <Wrench className="w-5 h-5" />
               <span className="font-bold text-sm">Manutenção</span>
             </button>
           )}
 
           {isAdmin && (
-            <button onClick={() => irPara('professors')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'professors' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('professors')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'professors' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <GraduationCap className="w-5 h-5" />
               <span className="font-bold text-sm">Professores</span>
             </button>
           )}
 
           {isStaff && (
-            <button onClick={() => irPara('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-info text-white border-info shadow-lg shadow-info/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <CalendarDays className="w-5 h-5" />
               {/* o professor consulta a propria agenda; so o admin edita a grade */}
               <span className="font-bold text-sm">{isAdmin ? 'Grade de Horários' : 'Minha semana'}</span>
@@ -391,15 +454,15 @@ export default function Page() {
           )}
 
           {isMaster && (
-            <button onClick={() => irPara('acessos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'acessos' ? "bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20" : "hover:bg-slate-900 text-slate-300 border-transparent")}>
+            <button onClick={() => irPara('acessos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'acessos' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
               <ShieldCheck className="w-5 h-5" />
               <span className="font-bold text-sm">Acessos</span>
             </button>
           )}
 
           {isAdmin && (
-            <div className="pt-4 mt-4 border-t border-slate-800">
-               <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-amber-500/10 text-amber-400 hover:bg-amber-500 hover:text-black rounded-xl transition-all border border-amber-500/30">
+            <div className="pt-4 mt-4 border-t border-surface-raised-soft">
+               <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-brand/10 text-brand-bright hover:bg-brand hover:text-black rounded-xl transition-all border border-brand/30">
                  <BellRing className="w-5 h-5" />
                  <span className="font-bold text-sm">Forçar PWA</span>
                </button>
@@ -408,14 +471,14 @@ export default function Page() {
         </nav>
 
         <div className="p-4 mt-auto">
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-900 rounded-xl transition-colors">
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-ink-on-dark-muted hover:text-white hover:bg-surface-raised rounded-xl transition-colors">
             <LogOut className="w-4 h-4" />
             <span className="font-bold text-xs uppercase tracking-wider">Sair do Sistema</span>
           </button>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto relative z-10 custom-scrollbar pb-6">
+      <main className="flex-1 flex flex-col min-w-0 bg-surface-sunken overflow-y-auto relative z-10 custom-scrollbar pb-6">
         {activeTab === 'dashboard' && isAdmin && <DashboardModule />}
         {activeTab === 'acessos' && isMaster && <AccessModule meuNome={user.data?.username || user.data?.name || ''} />}
         {activeTab === 'registration' && isAdmin && <RegistrationModule onSuccess={() => irPara('swimming')} />}

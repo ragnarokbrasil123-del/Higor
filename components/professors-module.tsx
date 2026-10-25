@@ -9,155 +9,20 @@ import {
   apagarConta, atualizarAtivo, definirLogin, lerEquipe,
   removerLogin, salvarProfessor, semearProfessores,
 } from '@/lib/equipe';
-import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle } from '@/components/ui';
+import {
+  Badge, Button, DataTable, EmptyState, EsqueletoLista, Input, Modal, PageHeader, PageShell,
+  ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle,
+  avisar, avisarErro, confirmar,
+} from '@/components/ui';
 
-type Shift = { start: string; end: string };
-type DaySchedule = { enabled: boolean; shifts: Shift[] };
-type DayKey = 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab';
-type WeekSchedule = Record<DayKey, DaySchedule>;
-
-interface Professor {
-  id: string;
-  name: string | null;
-  username: string | null;
-  password: string | null;
-  role: string;
-  active: boolean | null;
-  schedule: WeekSchedule | null;
-}
-
-const DAYS: { key: DayKey; label: string; full: string }[] = [
-  { key: 'seg', label: 'Seg', full: 'Segunda' },
-  { key: 'ter', label: 'Ter', full: 'Terça' },
-  { key: 'qua', label: 'Qua', full: 'Quarta' },
-  { key: 'qui', label: 'Qui', full: 'Quinta' },
-  { key: 'sex', label: 'Sex', full: 'Sexta' },
-  { key: 'sab', label: 'Sáb', full: 'Sábado' },
-];
-const WEEKDAYS: DayKey[] = ['seg', 'ter', 'qua', 'qui', 'sex'];
-
-const emptyShift = (): Shift => ({ start: '', end: '' });
-const emptyDay = (enabled = false): DaySchedule => ({ enabled, shifts: [emptyShift()] });
-
-function emptyWeek(): WeekSchedule {
-  return {
-    seg: emptyDay(true), ter: emptyDay(true), qua: emptyDay(true),
-    qui: emptyDay(true), sex: emptyDay(true), sab: emptyDay(false),
-  };
-}
-
-function buildWeek(shifts: Shift[], days: DayKey[] = WEEKDAYS): WeekSchedule {
-  const week = {} as WeekSchedule;
-  DAYS.forEach(({ key }) => {
-    week[key] = days.includes(key)
-      ? { enabled: true, shifts: shifts.map(s => ({ ...s })) }
-      : emptyDay(false);
-  });
-  return week;
-}
-
-// Conserta um horário possivelmente incompleto vindo do banco
-function normalizeWeek(raw: any): WeekSchedule {
-  const base = emptyWeek();
-  if (!raw || typeof raw !== 'object') return base;
-  DAYS.forEach(({ key }) => {
-    const d = raw[key];
-    if (d && typeof d === 'object') {
-      const shifts = Array.isArray(d.shifts) && d.shifts.length
-        ? d.shifts.map((s: any) => ({ start: s?.start || '', end: s?.end || '' })).slice(0, 2)
-        : [emptyShift()];
-      base[key] = { enabled: !!d.enabled, shifts };
-    }
-  });
-  return base;
-}
-
-/**
- * Lista inicial da equipe, conforme "Horarios prof natação atualizado .xlsx"
- * (24/10/2026). Anderson e Caio saíram e por isso não estão aqui.
- *
- * Um dia de semana por professor, exceto:
- *  - ANDRÉ, que só trabalha sábado (único com `sab` ligado — nos demais o
- *    sábado é escala de dupla que alterna, e horário semanal fixo não
- *    representa isso);
- *  - FLÁVIA, que não trabalha terça;
- *  - LIVIA, que tem horário diferente por dia.
- *
- * ⚠️ O botão que usa esta lista INSERE, não reconcilia: apertá-lo com a
- * equipe já cadastrada cria todo mundo de novo, duplicado. Serve para
- * popular uma base vazia.
- */
-const INITIAL_PROFESSORS: { name: string; schedule: WeekSchedule }[] = [
-  { name: 'ANDRÉ LUIZ PAIVA DA SILVA', schedule: buildWeek([{ start: '07:15', end: '14:15' }], ['sab']) },
-  { name: 'DOUGLAS GOMES DE ARAÚJO', schedule: buildWeek([{ start: '13:00', end: '17:30' }]) },
-  { name: 'EDUARDO DOS SANTOS DA SILVA', schedule: buildWeek([{ start: '17:30', end: '21:15' }]) },
-  // sem terça
-  { name: 'FLÁVIA REIS LIMA', schedule: buildWeek([{ start: '17:30', end: '21:15' }], ['seg', 'qua', 'qui', 'sex']) },
-  { name: 'ISABELLA KATHELYN GONÇALVES ROCHA', schedule: buildWeek([{ start: '13:00', end: '17:30' }]) },
-  { name: 'LETÍCIA TOLEDO DO ESPIRITO SANTOS', schedule: buildWeek([{ start: '07:00', end: '11:30' }]) },
-  // horário por dia: seg 15:15-20:30 · ter e sex 14:30-19:45 · qua e qui 14:30-20:30
-  {
-    name: 'LIVIA RODRIGUES SOUZA',
-    schedule: {
-      seg: { enabled: true, shifts: [{ start: '15:15', end: '20:30' }] },
-      ter: { enabled: true, shifts: [{ start: '14:30', end: '19:45' }] },
-      qua: { enabled: true, shifts: [{ start: '14:30', end: '20:30' }] },
-      qui: { enabled: true, shifts: [{ start: '14:30', end: '20:30' }] },
-      sex: { enabled: true, shifts: [{ start: '14:30', end: '19:45' }] },
-      sab: emptyDay(false),
-    },
-  },
-  { name: 'LUIZ GABRIEL RAMOS DOS SANTOS', schedule: buildWeek([{ start: '08:30', end: '12:15' }]) },
-  { name: 'PAULA GABRIELLE GONÇALVES DA SILVA GAMA', schedule: buildWeek([{ start: '07:45', end: '11:30' }]) },
-  { name: 'RENÊ GAMA TEIXEIRA', schedule: buildWeek([{ start: '16:45', end: '21:15' }]) },
-];
-
-function fmtShifts(day: DaySchedule): string {
-  return day.shifts
-    .filter(s => s.start && s.end)
-    .map(s => `${s.start}–${s.end}`)
-    .join('  •  ');
-}
-
-// Agrupa dias seguidos com o mesmo horário: "Seg a Sex  07:00–11:30"
-function summarizeSchedule(raw: WeekSchedule | null): string[] {
-  if (!raw) return [];
-  const groups: { from: DayKey; to: DayKey; txt: string }[] = [];
-  DAYS.forEach(({ key }, idx) => {
-    const day = raw[key];
-    if (!day?.enabled) return;
-    const txt = fmtShifts(day);
-    if (!txt) return;
-    const last = groups[groups.length - 1];
-    const prevIdx = last ? DAYS.findIndex(d => d.key === last.to) : -99;
-    if (last && last.txt === txt && idx === prevIdx + 1) {
-      last.to = key;
-    } else {
-      groups.push({ from: key, to: key, txt });
-    }
-  });
-  const lbl = (k: DayKey) => DAYS.find(d => d.key === k)!.label;
-  return groups.map(g => (g.from === g.to ? `${lbl(g.from)}  ${g.txt}` : `${lbl(g.from)} a ${lbl(g.to)}  ${g.txt}`));
-}
-
-const toMinutes = (t: string): number => {
-  const [h, m] = (t || '').split(':').map(Number);
-  return (h || 0) * 60 + (m || 0);
-};
-
-// Carga horária semanal (soma dos turnos), em horas com 1 casa decimal
-function weeklyLoadHours(raw: WeekSchedule | null): number {
-  if (!raw) return 0;
-  let mins = 0;
-  DAYS.forEach(({ key }) => {
-    const d = raw[key];
-    if (!d?.enabled) return;
-    (d.shifts || []).forEach(s => {
-      if (s.start && s.end) mins += Math.max(0, toMinutes(s.end) - toMinutes(s.start));
-    });
-  });
-  return Math.round((mins / 60) * 10) / 10;
-}
+// Tipos, constantes e funções de horário vivem em
+// components/professores/horario.ts — são puras e não dependem de tela.
+import {
+  DAYS, INITIAL_PROFESSORS,
+  emptyDay, emptyShift, emptyWeek, fmtShifts, normalizeWeek,
+  summarizeSchedule, weeklyLoadHours,
+  type DayKey, type DaySchedule, type Professor, type Shift, type WeekSchedule,
+} from './professores/horario';
 
 export function ProfessorsModule() {
   const [professors, setProfessors] = useState<Professor[]>([]);
@@ -184,7 +49,7 @@ export function ProfessorsModule() {
     try {
       setProfessors(await lerEquipe('teacher') as Professor[]);
     } catch (e: any) {
-      alert(e?.message || 'Não consegui carregar os professores.');
+      avisar(e?.message || 'Não consegui carregar os professores.');
     }
     setLoading(false);
   };
@@ -205,7 +70,7 @@ export function ProfessorsModule() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return alert('Digite o nome do professor.');
+    if (!form.name.trim()) return avisar('Digite o nome do professor.');
     setSaving(true);
     try {
       await salvarProfessor({
@@ -216,7 +81,7 @@ export function ProfessorsModule() {
       });
     } catch (e: any) {
       setSaving(false);
-      return alert('Erro ao salvar: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar: ' + (e?.message || ''));
     }
     setSaving(false);
     setModalOpen(false);
@@ -224,11 +89,13 @@ export function ProfessorsModule() {
   };
 
   const handleDelete = async (p: Professor) => {
-    if (!confirm(`Excluir o professor ${p.name || p.username || ''}? Essa ação não pode ser desfeita.`)) return;
+    if (!await confirmar(`${p.name || p.username || 'Este professor'} sai do cadastro. Não há como desfazer.`, {
+      titulo: 'Excluir professor?', acao: 'Excluir', perigo: true,
+    })) return;
     try {
       await apagarConta(p.id);
     } catch (e: any) {
-      return alert('Erro ao excluir: ' + (e?.message || ''));
+      return avisarErro('Erro ao excluir: ' + (e?.message || ''));
     }
     setProfessors(professors.filter(x => x.id !== p.id));
   };
@@ -239,7 +106,7 @@ export function ProfessorsModule() {
     try {
       await atualizarAtivo(p.id, next);
     } catch (e: any) {
-      alert('Erro ao atualizar status: ' + (e?.message || ''));
+      avisarErro('Erro ao atualizar status: ' + (e?.message || ''));
       fetchProfessors();
     }
   };
@@ -247,13 +114,13 @@ export function ProfessorsModule() {
   const saveAccess = async () => {
     if (!form.id) return;
     const u = accessUser.toLowerCase().trim();
-    if (!u || !accessPass.trim()) return alert('Preencha usuário e senha.');
+    if (!u || !accessPass.trim()) return avisar('Preencha usuário e senha.');
     setAccessBusy(true);
     try {
       await definirLogin(form.id, u, accessPass.trim());
     } catch (e: any) {
       setAccessBusy(false);
-      return alert('Erro ao salvar acesso: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar acesso: ' + (e?.message || ''));
     }
     setAccessBusy(false);
     setShowAccessForm(false); setAccessUser(''); setAccessPass('');
@@ -262,23 +129,25 @@ export function ProfessorsModule() {
 
   const removeAccess = async () => {
     if (!form.id) return;
-    if (!confirm('Remover o login deste professor? Ele não conseguirá mais entrar no sistema.')) return;
+    if (!await confirmar('Ele não conseguirá mais entrar no sistema.', { titulo: 'Remover o login?', acao: 'Remover login', perigo: true })) return;
     try {
       await removerLogin(form.id);
     } catch (e: any) {
-      return alert('Erro: ' + (e?.message || ''));
+      return avisarErro('Erro: ' + (e?.message || ''));
     }
     fetchProfessors();
   };
 
   const seedInitial = async () => {
-    if (!confirm(`Cadastrar os ${INITIAL_PROFESSORS.length} professores da lista inicial com os horários?`)) return;
+    if (!await confirmar(`Serão criados ${INITIAL_PROFESSORS.length} professores com os horários da lista.`, {
+      titulo: 'Importar lista inicial?', acao: 'Importar',
+    })) return;
     setSeeding(true);
     try {
       await semearProfessores(INITIAL_PROFESSORS.map(p => ({ name: p.name, schedule: p.schedule })));
     } catch (e: any) {
       setSeeding(false);
-      return alert('Erro ao importar: ' + (e?.message || ''));
+      return avisarErro('Erro ao importar: ' + (e?.message || ''));
     }
     setSeeding(false);
     fetchProfessors();
@@ -334,21 +203,21 @@ export function ProfessorsModule() {
 
         {!loading && professors.length > 0 && (
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex p-1 bg-slate-200 rounded-lg">
+            <div className="flex p-1 bg-line rounded-lg">
               <button onClick={() => setView('lista')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'lista' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted')}>Lista</button>
               <button onClick={() => setView('disponibilidade')} className={cn('px-4 py-1.5 text-sm font-bold rounded-md transition-all', view === 'disponibilidade' ? 'bg-surface text-ink shadow-sm' : 'text-ink-muted')}>Disponibilidade</button>
             </div>
             <div className="px-4 py-2 bg-surface border border-line rounded-xl text-sm font-bold text-ink shadow-sm flex items-center gap-2">
               <Users className="w-4 h-4 text-ink-subtle" /> {professors.length} no total
             </div>
-            <div className="px-4 py-2 bg-success-soft border border-emerald-200 rounded-xl text-sm font-bold text-success-ink shadow-sm flex items-center gap-2">
+            <div className="px-4 py-2 bg-success-soft border border-success-soft rounded-xl text-sm font-bold text-success-ink shadow-sm flex items-center gap-2">
               <UserCheck className="w-4 h-4" /> {activeCount} ativos
             </div>
           </div>
         )}
 
         {loading ? (
-          <Loading label="Carregando professores..." />
+          <EsqueletoLista linhas={6} />
         ) : professors.length === 0 ? (
           <EmptyState
             icon={<GraduationCap className="w-14 h-14" />}
@@ -378,14 +247,14 @@ export function ProfessorsModule() {
                           <TR key={p.id} muted={!isActive}>
                             <TD className="font-bold text-ink sticky left-0 bg-surface z-10 whitespace-nowrap">
                               {p.name || p.username || '—'}
-                              {!isActive && <span className="ml-2 text-[9px] font-bold text-danger uppercase">inativo</span>}
+                              {!isActive && <span className="ml-2 text-micro font-bold text-danger uppercase">inativo</span>}
                             </TD>
                             {DAYS.map(d => {
                               // sábado é escala alternada para todos — não há horário a mostrar
                               if (d.key === 'sab') {
                                 return (
                                   <TD key={d.key} className="align-top">
-                                    <span className="text-[10px] font-bold text-ink-subtle uppercase tracking-wider">escala</span>
+                                    <span className="text-micro font-bold text-ink-subtle uppercase tracking-wider">escala</span>
                                   </TD>
                                 );
                               }
@@ -396,7 +265,7 @@ export function ProfessorsModule() {
                                   {shifts.length ? (
                                     <div className="flex flex-col gap-1">
                                       {shifts.map((s, i) => (
-                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-indigo-100 text-[11px] font-bold text-info-ink whitespace-nowrap">
+                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-indigo-100 text-mini font-bold text-info-ink whitespace-nowrap">
                                           {s.start}–{s.end}
                                         </span>
                                       ))}
@@ -465,7 +334,7 @@ export function ProfessorsModule() {
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     <div className={cn(
                       "w-11 h-11 rounded-full flex items-center justify-center font-bold text-lg shrink-0",
-                      isActive ? "bg-amber-100 text-warning-ink" : "bg-surface-sunken text-ink-subtle"
+                      isActive ? "bg-brand-wash text-warning-ink" : "bg-surface-sunken text-ink-subtle"
                     )}>
                       {(p.name || p.username || '?').charAt(0).toUpperCase()}
                     </div>
@@ -494,7 +363,7 @@ export function ProfessorsModule() {
                   <div className="flex items-center gap-2 self-end md:self-center shrink-0">
                     <button onClick={() => toggleActive(p)} title={isActive ? 'Marcar como inativo' : 'Reativar'} className={cn(
                       "p-2 rounded-lg transition-colors",
-                      isActive ? "text-success bg-success-soft hover:bg-success-soft" : "text-ink-subtle bg-surface-sunken hover:bg-slate-200"
+                      isActive ? "text-success bg-success-soft hover:bg-success-soft" : "text-ink-subtle bg-surface-sunken hover:bg-line"
                     )}>
                       {isActive ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                     </button>
@@ -534,13 +403,13 @@ export function ProfessorsModule() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="md:col-span-2 space-y-1">
                       <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Nome completo *</label>
-                      <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" placeholder="Ex: Ana Paula da Silva" />
+                      <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" placeholder="Ex: Ana Paula da Silva" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-ink-muted uppercase tracking-wider">Situação</label>
                       <button type="button" onClick={() => setForm({ ...form, active: !form.active })} className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors",
-                        form.active ? "bg-success-soft border-emerald-200 text-success-ink" : "bg-surface-sunken border-line text-ink-muted"
+                        form.active ? "bg-success-soft border-success-soft text-success-ink" : "bg-surface-sunken border-line text-ink-muted"
                       )}>
                         {form.active ? <><UserCheck className="w-4 h-4" /> Ativo</> : <><UserX className="w-4 h-4" /> Inativo</>}
                       </button>
@@ -550,7 +419,7 @@ export function ProfessorsModule() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-sm font-black text-ink flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-indigo-500" /> Horário de trabalho
+                        <Clock className="w-4 h-4 text-info" /> Horário de trabalho
                       </label>
                       <button type="button" onClick={replicateMonday} className="text-xs font-bold text-info hover:text-info-ink flex items-center gap-1">
                         <Copy className="w-3.5 h-3.5" /> Replicar Segunda p/ dias úteis
@@ -596,9 +465,9 @@ export function ProfessorsModule() {
                               <div className="mt-3 space-y-2 pl-[52px]">
                                 {day.shifts.map((s, i) => (
                                   <div key={i} className="flex items-center gap-2">
-                                    <input type="time" value={s.start} onChange={e => setShift(key, i, { start: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="time" value={s.start} onChange={e => setShift(key, i, { start: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-info/20" />
                                     <span className="text-ink-subtle text-sm">às</span>
-                                    <input type="time" value={s.end} onChange={e => setShift(key, i, { end: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                                    <input type="time" value={s.end} onChange={e => setShift(key, i, { end: e.target.value })} className="px-3 py-2 bg-surface-sunken border border-line rounded-lg text-sm font-medium text-ink outline-none focus:ring-2 focus:ring-info/20" />
                                     {day.shifts.length > 1 && (
                                       <button type="button" onClick={() => removeShift(key, i)} className="p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors">
                                         <X className="w-4 h-4" />
@@ -625,9 +494,9 @@ export function ProfessorsModule() {
                       Salve o professor primeiro para poder criar um login de acesso.
                     </p>
                   ) : currentProfessor?.username && !showAccessForm ? (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-success-soft border border-emerald-200 rounded-xl p-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-success-soft border border-success-soft rounded-xl p-3">
                       <div>
-                        <p className="text-[10px] font-bold text-success-ink uppercase tracking-wider">Login ativo</p>
+                        <p className="text-micro font-bold text-success-ink uppercase tracking-wider">Login ativo</p>
                         <p className="font-bold text-ink">{currentProfessor.username}</p>
                       </div>
                       <div className="flex gap-2">
@@ -638,8 +507,8 @@ export function ProfessorsModule() {
                   ) : showAccessForm ? (
                     <div className="space-y-3 bg-surface-sunken border border-line rounded-xl p-3">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" placeholder="Usuário (ex: anderson)" value={accessUser} onChange={e => setAccessUser(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
-                        <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                        <input type="text" placeholder="Usuário (ex: anderson)" value={accessUser} onChange={e => setAccessUser(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-info/20" />
+                        <input type="text" placeholder="Senha de acesso" value={accessPass} onChange={e => setAccessPass(e.target.value)} className="w-full px-3 py-2.5 bg-surface border border-line rounded-lg text-sm outline-none focus:ring-2 focus:ring-info/20" />
                       </div>
                       <div className="flex gap-2">
                         <Button type="button" size="sm" disabled={accessBusy} onClick={saveAccess}>

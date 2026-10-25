@@ -127,12 +127,12 @@ export function PainelTurmas({
                     etiqueta={<><Clock className="w-3.5 h-3.5" /> {bloco.hora}</>}
                     subtitulo={
                       bloco.professor && isAdmin
-                        ? <p className="text-[11px] font-bold text-ink-muted truncate">{bloco.professor}</p>
+                        ? <p className="text-mini font-bold text-ink-muted truncate">{bloco.professor}</p>
                         : undefined
                     }
                   >
                     {alunos.length > 0 && (
-                      <div className="divide-y divide-slate-50">
+                      <div className="divide-y divide-surface-sunken">
                         {alunos.map(a => (
                           <LinhaAluno
                             key={a.id}

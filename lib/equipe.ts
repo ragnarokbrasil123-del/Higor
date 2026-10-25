@@ -13,6 +13,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { paginado } from '@/lib/paginado';
+import { comCache, invalidar, limparCache } from '@/lib/cache';
 import {
   contaLiberada, conviteExpirado, gerarCodigoConvite, normalizarCodigo, validadeConvite,
 } from '@/lib/acesso';
@@ -61,6 +62,12 @@ export type ResultadoEquipe =
   | { ok: false; motivo: MotivoLogin };
 
 export async function loginEquipe(usuario: string, senha: string): Promise<ResultadoEquipe> {
+  // Esvazia o cache ANTES de entrar. Não é higiene, é separação de
+  // acesso: no aparelho da recepção o admin sai e o professor entra
+  // em seguida, e o professor não pode herdar em memória os dados
+  // que o admin tinha carregado — o escopo dele é menor de propósito.
+  limparCache();
+
   const resp = await postar(
     { acao: 'login', usuario, senha },
     '/api/login-equipe'
@@ -162,13 +169,24 @@ export async function criarAcesso(
 
 /** Encerra a sessão de servidor. O cookie é HttpOnly: só a rota apaga. */
 export async function logoutServidor() {
+  // primeiro a memória, depois a rede: se a chamada falhar (offline),
+  // os dados já saíram da memória do aparelho mesmo assim
+  limparCache();
   await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
 }
 
 /* ================= leitura e CRUD ================= */
 
-/** `role` filtra (ex.: só professores). */
-export async function lerEquipe(role?: 'teacher' | 'admin'): Promise<any[]> {
+/**
+ * `role` filtra (ex.: só professores). Fica em cache para a troca de
+ * aba não refazer a consulta; `forcar` pula o cache.
+ */
+export async function lerEquipe(role?: 'teacher' | 'admin', forcar = false): Promise<any[]> {
+  const dados = await comCache<any[]>(`app_users:${role ?? 'todos'}`, () => buscarEquipe(role), forcar);
+  return [...dados];
+}
+
+async function buscarEquipe(role?: 'teacher' | 'admin'): Promise<any[]> {
   const url = role ? `/api/equipe?role=${role}` : '/api/equipe';
   const resp = await fetch(url, { credentials: 'same-origin' }).catch(() => null);
 
@@ -180,8 +198,15 @@ export async function lerEquipe(role?: 'teacher' | 'admin'): Promise<any[]> {
   return role ? todos.filter(u => u.role === role) : todos;
 }
 
-/** Operações de escrita. Devolve o código quando a ação gera um. */
+/**
+ * Operações de escrita. Devolve o código quando a ação gera um.
+ *
+ * Descarta o cache da equipe em TODA ação: são poucas e pouco
+ * frequentes, e esquecer uma deixaria a tela mostrando o estado
+ * anterior (um acesso cortado que continua aparecendo como ativo).
+ */
 async function acaoEquipe(corpo: any, fallback: () => Promise<any>): Promise<any> {
+  invalidar('app_users');
   const resp = await postar(corpo);
   if (resp?.ok) return resp.json();
   if (resp && !(await usarFallback(resp))) throw await erroDaResposta(resp, 'Não consegui concluir.');

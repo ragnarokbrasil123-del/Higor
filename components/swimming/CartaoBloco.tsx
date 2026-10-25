@@ -31,9 +31,9 @@ export function CartaoBloco({ etiqueta, subtitulo, alunos, pendentes, onAvaliar,
       {/* linha própria pros selos de touca: com muitas toucas (ex. Wellhub,
           que mistura até 4) eles brigavam por espaço com o contador/botão
           na mesma linha e chegavam a sobrepor um ao outro. */}
-      <div className="p-4 space-y-2 border-b border-slate-50">
+      <div className="p-4 space-y-2 border-b border-surface-sunken">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-black text-sm shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised text-white rounded-lg font-black text-sm shrink-0">
             {etiqueta}
           </div>
 

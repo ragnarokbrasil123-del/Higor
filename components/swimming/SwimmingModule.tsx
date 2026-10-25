@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Droplets, Search, X } from 'lucide-react';
 import type { Student } from '@/types';
-import { FilterBar, Input, Loading, PageHeader, PageShell, Select } from '@/components/ui';
+import { FilterBar, Input, Loading, PageHeader, PageShell, Select , EsqueletoLista } from '@/components/ui';
 
 import { FichaAluno } from './FichaAluno';
 import { LinhaAluno } from './LinhaAluno';
@@ -177,7 +177,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
 
   // ================================================================ RENDER
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center bg-canvas"><Loading label="Carregando avaliações..." /></div>;
+    return <div className="flex-1 overflow-y-auto bg-canvas p-4 md:p-8"><EsqueletoLista linhas={7} /></div>;
   }
 
   // ---------------------------------------------------- MODO AVALIANDO
@@ -232,13 +232,13 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         </FilterBar>
 
         {!semTurmaMode && filterProf !== 'all' && (
-          <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-info bg-info-soft border border-indigo-200 rounded-lg px-3 py-1.5">
+          <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-info bg-info-soft border border-info-soft rounded-lg px-3 py-1.5">
             Filtrando por {filterProf.split(' ')[0]} <X className="w-3.5 h-3.5" />
           </button>
         )}
 
         {buscando ? (
-          <div className="bg-surface rounded-panel border border-line shadow-raised divide-y divide-slate-50">
+          <div className="bg-surface rounded-panel border border-line shadow-raised divide-y divide-surface-sunken">
             {resultadoBusca.length === 0 ? (
               <p className="p-8 text-center text-ink-subtle font-medium text-sm">Nenhum aluno encontrado.</p>
             ) : resultadoBusca.map(s => (

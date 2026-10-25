@@ -1,100 +1,24 @@
 'use client';
 
+import { invalidarGrade, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { paginado } from '@/lib/paginado';
 import { lerAlunos } from '@/lib/alunos';
 import { lerEquipe } from '@/lib/equipe';
 import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CapLevel, levels, capLevelOrder, CAPACIDADE_TOUCA, NIVEL_UNICO, GRUPO_VERDE_MAIS } from '@/types';
+import { CapLevel, levels, CAPACIDADE_TOUCA, NIVEL_UNICO, GRUPO_VERDE_MAIS } from '@/types';
 import { cn } from '@/lib/utils';
 import { lecionaEm, rotuloProfessor } from '@/lib/professor';
-import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle } from '@/components/ui';
+import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle , avisarErro, avisar, confirmar } from '@/components/ui';
 
-interface ClassSlot {
-  id: string;
-  class_id: string;
-  cap_color: string; // chave de nível: 'orange', 'green', ...
-  student_id: string | null;
-}
-
-interface ClassBlock {
-  id: string;
-  teacher_name: string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-  class_slots?: ClassSlot[];
-}
-
-type Shift = { start: string; end: string };
-interface ProfLite {
-  id: string;
-  name: string | null;
-  username: string | null;
-  active: boolean | null;
-  schedule: Record<string, { enabled: boolean; shifts: Shift[] }> | null;
-}
-
-const DAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-const DAY_TO_KEY: Record<string, string> = {
-  'Segunda-feira': 'seg', 'Terça-feira': 'ter', 'Quarta-feira': 'qua',
-  'Quinta-feira': 'qui', 'Sexta-feira': 'sex', 'Sábado': 'sab',
-};
-const DAY_KEY_SHORT: Record<string, string> = { seg: 'Seg', ter: 'Ter', qua: 'Qua', qui: 'Qui', sex: 'Sex', sab: 'Sáb' };
-
-const CAP_OPTIONS = capLevelOrder.map(key => ({ key, label: levels[key].label, bg: levels[key].bgClass }));
-const emptySlots = () => capLevelOrder.reduce((acc, k) => ({ ...acc, [k]: 0 }), {} as Record<CapLevel, number>);
-
-/**
- * Teto que `nivel` ainda pode alcançar, dado o que já está preenchido nos
- * outros campos do formulário. Amarela/Laranja/Vermelha travam em 0 assim
- * que outra das três tiver vaga (turma de nível único); Verde em diante
- * dividem um teto único de 9 (ver CAPACIDADE_TOUCA em types/index.ts).
- */
-function tetoVagas(nivel: CapLevel, slots: Record<CapLevel, number>): number {
-  if (NIVEL_UNICO.includes(nivel)) {
-    const outroAtivo = NIVEL_UNICO.some(k => k !== nivel && (slots[k] || 0) > 0);
-    return outroAtivo ? 0 : CAPACIDADE_TOUCA[nivel];
-  }
-  const usadoPelosOutros = GRUPO_VERDE_MAIS.reduce((s, k) => s + (k === nivel ? 0 : (slots[k] || 0)), 0);
-  return Math.max(0, CAPACIDADE_TOUCA[nivel] - usadoPelosOutros);
-}
-
-// Verifica se a janela [start,end] cabe em algum turno do professor naquele dia
-function windowFits(schedule: ProfLite['schedule'], dayKey: string, start: string, end: string): { ok: boolean; hours: string } {
-  /**
-   * Sábado é escala: todo funcionário trabalha um sábado sim, outro não.
-   * Um horário semanal fixo não consegue representar isso, então não há o
-   * que conferir — e um aviso de "fora do expediente" aqui seria sempre
-   * falso. É a mesma razão pela qual a aba de sábado agrupa por horário e
-   * não mostra professor.
-   */
-  if (dayKey === 'sab') return { ok: true, hours: 'escala alternada' };
-
-  const d = schedule?.[dayKey];
-  if (!d?.enabled) return { ok: false, hours: 'folga' };
-  const shifts = (Array.isArray(d.shifts) ? d.shifts : []).filter(s => s?.start && s?.end);
-  if (!shifts.length) return { ok: false, hours: 'sem horário definido' };
-  const ok = shifts.some(s => s.start <= start && end <= s.end);
-  return { ok, hours: shifts.map(s => `${s.start}–${s.end}`).join(' / ') };
-}
-
-// Resumo textual do horário semanal do professor
-function summarizeProf(schedule: ProfLite['schedule']): string {
-  if (!schedule) return 'sem horário cadastrado';
-  const parts: string[] = [];
-  (['seg', 'ter', 'qua', 'qui', 'sex', 'sab'] as const).forEach(k => {
-    const d = schedule[k];
-    if (!d?.enabled) return;
-    const txt = (d.shifts || []).filter(s => s.start && s.end).map(s => `${s.start}–${s.end}`).join(' / ');
-    if (txt) parts.push(`${DAY_KEY_SHORT[k]} ${txt}`);
-  });
-  // o sábado não entra no cadastro semanal: é escala alternada para todos
-  if (!parts.length) return 'sem horário na semana  •  sáb escala';
-  return parts.join('  •  ') + '  •  sáb escala';
-}
+// Tipos, constantes e as regras de vaga/expediente vivem em
+// components/grade/regras.ts — são puras e não dependem de tela.
+import {
+  CAP_OPTIONS, DAY_KEY_SHORT, DAY_TO_KEY, DAYS,
+  emptySlots, summarizeProf, tetoVagas, windowFits,
+  type ClassBlock, type ClassSlot, type ProfLite, type Shift,
+} from './grade/regras';
 
 export function ScheduleModule() {
   const [classes, setClasses] = useState<ClassBlock[]>([]);
@@ -142,8 +66,8 @@ export function ScheduleModule() {
     // `class_slots` passa de 1000 linhas: sem paginar, o corte do PostgREST
     // escondia vagas e as turmas apareciam com menos aluno do que têm.
     const [todas, slotData, stuData] = await Promise.all([
-      paginado<any>('classes', '*', 'start_time'),
-      paginado<any>('class_slots', '*'),
+      lerTurmas(),
+      lerVagas(),
       lerAlunos('nomes'),
     ]);
 
@@ -169,25 +93,26 @@ export function ScheduleModule() {
   };
 
   const handleCreateClass = async (e: React.FormEvent) => {
+    invalidarGrade();
     e.preventDefault();
-    if (!form.teacher_name.trim()) return alert('Selecione o professor.');
-    if (form.days_of_week.length === 0) return alert('Selecione pelo menos um dia da semana.');
+    if (!form.teacher_name.trim()) return avisar('Selecione o professor.');
+    if (form.days_of_week.length === 0) return avisar('Selecione pelo menos um dia da semana.');
 
     const totalSlots = Object.values(form.slots).reduce((a, b) => a + b, 0);
-    if (totalSlots === 0) return alert('Adicione pelo menos 1 vaga de aluno para essa turma.');
+    if (totalSlots === 0) return avisar('Adicione pelo menos 1 vaga de aluno para essa turma.');
 
     const niveisUnicoAtivos = NIVEL_UNICO.filter(k => form.slots[k] > 0);
     if (niveisUnicoAtivos.length > 1) {
-      return alert('Amarela, Laranja e Vermelha são turmas de nível único — escolha só uma dessas toucas.');
+      return avisar('Amarela, Laranja e Vermelha são turmas de nível único — escolha só uma dessas toucas.');
     }
     for (const k of NIVEL_UNICO) {
       if (form.slots[k] > CAPACIDADE_TOUCA[k]) {
-        return alert(`Touca ${levels[k].label} pode ter no máximo ${CAPACIDADE_TOUCA[k]} vagas por turma.`);
+        return avisar(`Touca ${levels[k].label} pode ter no máximo ${CAPACIDADE_TOUCA[k]} vagas por turma.`);
       }
     }
     const somaVerdeMais = GRUPO_VERDE_MAIS.reduce((s, k) => s + form.slots[k], 0);
     if (somaVerdeMais > 9) {
-      return alert('Verde em diante pode ter no máximo 9 vagas por turma, somando todas as toucas dessa faixa.');
+      return avisar('Verde em diante pode ter no máximo 9 vagas por turma, somando todas as toucas dessa faixa.');
     }
 
     setIsSubmitting(true);
@@ -219,14 +144,15 @@ export function ScheduleModule() {
       setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: emptySlots() });
     } catch (err: any) {
       console.error(err);
-      alert('Erro ao criar turma: ' + (err.message || 'desconhecido'));
+      avisarErro('Erro ao criar turma: ' + (err.message || 'desconhecido'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeleteClass = async (id: string) => {
-    if (!confirm('Apagar essa turma inteira e todas as suas vagas?')) return;
+    invalidarGrade();
+    if (!await confirmar('A turma e todas as vagas dela serão apagadas.', { titulo: 'Apagar turma?', acao: 'Apagar', perigo: true })) return;
     await supabase.from('class_slots').delete().eq('class_id', id);
     await supabase.from('classes').delete().eq('id', id);
     loadClasses();
@@ -368,18 +294,18 @@ export function ScheduleModule() {
             <div key={g.titulo}>
               {buscando && (
                 <h2 className="text-lg font-black text-ink mb-3 flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-indigo-500" /> {g.titulo}
+                  <Calendar className="w-5 h-5 text-info" /> {g.titulo}
                 </h2>
               )}
               <div className="space-y-5">
                 {g.blocos.map(b => (
                   <div key={b.hora}>
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 text-white rounded-lg text-sm font-black shrink-0">
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-raised-soft text-white rounded-lg text-sm font-black shrink-0">
                         <Clock className="w-3.5 h-3.5" /> {b.hora}
                       </div>
-                      <div className="h-px flex-1 bg-slate-200" />
-                      <span className="text-[11px] font-bold text-ink-subtle shrink-0">{b.turmas.length} turma(s)</span>
+                      <div className="h-px flex-1 bg-line" />
+                      <span className="text-mini font-bold text-ink-subtle shrink-0">{b.turmas.length} turma(s)</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -409,7 +335,7 @@ export function ScheduleModule() {
                                     'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border text-white transition-all',
                                     info?.bgClass || 'bg-slate-300 text-ink',
                                     studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95' : 'opacity-50 border-dashed cursor-default',
-                                    destaque && 'ring-2 ring-offset-1 ring-amber-400'
+                                    destaque && 'ring-2 ring-offset-1 ring-brand-bright'
                                   )}
                                 >
                                   <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', studentName ? 'bg-surface' : 'bg-white/50')} />
@@ -473,10 +399,10 @@ export function ScheduleModule() {
                           onFocus={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}
                           onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)}
                           placeholder="Clique para escolher da lista..."
-                          className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-ink font-medium pr-10"
+                          className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 focus:border-info transition-all text-ink font-medium pr-10"
                         />
                         <button type="button" tabIndex={-1} className="absolute right-3 top-3.5" onClick={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}>
-                          <ChevronDown className="w-5 h-5 text-ink-subtle hover:text-indigo-500 transition-colors" />
+                          <ChevronDown className="w-5 h-5 text-ink-subtle hover:text-info transition-colors" />
                         </button>
                       </div>
 
@@ -484,9 +410,9 @@ export function ScheduleModule() {
                         {isTeacherDropdownOpen && activeList.length > 0 && (
                           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
                             {activeList.map(p => (
-                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-slate-50 last:border-0">
+                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-surface-sunken last:border-0">
                                 <span className="block text-ink font-bold">{p.name || p.username}</span>
-                                <span className="block text-[11px] text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
+                                <span className="block text-mini text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
                               </button>
                             ))}
                           </motion.div>
@@ -494,12 +420,12 @@ export function ScheduleModule() {
                       </AnimatePresence>
 
                       {professors.length === 0 && (
-                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-amber-200 rounded-lg p-2">
+                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-lg p-2">
                           Nenhum professor ativo cadastrado. Cadastre na aba Professores.
                         </p>
                       )}
                       {selectedProf && (
-                        <p className="mt-2 text-[11px] text-ink-muted font-medium">
+                        <p className="mt-2 text-mini text-ink-muted font-medium">
                           <span className="font-bold text-ink-muted">Trabalha:</span> {summarizeProf(selectedProf.schedule)}
                         </p>
                       )}
@@ -509,7 +435,7 @@ export function ScheduleModule() {
                       <label className="block text-sm font-bold text-ink mb-2">Quais dias dessa aula?</label>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
-                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/20' : 'bg-surface text-ink-muted border-line hover:border-indigo-300')}>
+                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-info text-white border-info shadow-md shadow-info/20' : 'bg-surface text-ink-muted border-line hover:border-indigo-300')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -519,23 +445,23 @@ export function ScheduleModule() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-bold text-ink mb-2">Horário Início</label>
-                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-ink" />
+                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-ink mb-2">Horário Fim</label>
-                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/20 font-medium text-ink" />
+                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
                       </div>
                     </div>
 
                     {/* Cruzamento com o horário do professor */}
                     {selectedProf && form.days_of_week.length > 0 && (
                       conflicts.length === 0 ? (
-                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-emerald-200 rounded-xl p-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl p-3">
                           <CheckCircle2 className="w-4 h-4 shrink-0" /> Dentro do horário de trabalho do professor.
                         </div>
                       ) : (
-                        <div className="text-sm bg-warning-soft border border-amber-200 rounded-xl p-3 space-y-1">
-                          <div className="flex items-center gap-2 font-black text-amber-800">
+                        <div className="text-sm bg-warning-soft border border-brand-line rounded-xl p-3 space-y-1">
+                          <div className="flex items-center gap-2 font-black text-brand-deep">
                             <AlertTriangle className="w-4 h-4 shrink-0" /> Fora do horário do professor:
                           </div>
                           {conflicts.map(c => (
@@ -543,7 +469,7 @@ export function ScheduleModule() {
                               {c.day.split('-')[0]}: {c.hours === 'folga' ? 'é folga dele(a)' : `só trabalha ${c.hours}`}
                             </p>
                           ))}
-                          <p className="text-[11px] text-warning-ink ml-6 pt-1">Você ainda pode salvar (ex.: substituição).</p>
+                          <p className="text-mini text-warning-ink ml-6 pt-1">Você ainda pode salvar (ex.: substituição).</p>
                         </div>
                       )
                     )}
@@ -566,13 +492,13 @@ export function ScheduleModule() {
                             key={opt.key}
                             className={cn(
                               'flex flex-col p-3 rounded-xl border transition-colors',
-                              atual > 0 ? 'bg-info-soft border-indigo-200' : 'bg-surface border-line',
+                              atual > 0 ? 'bg-info-soft border-info-soft' : 'bg-surface border-line',
                               travado && 'opacity-50'
                             )}
                           >
                             <label className="text-sm font-bold text-ink mb-2 flex items-center gap-2">
                               <div className={cn('w-3 h-3 rounded-full shadow-sm', opt.bg)} /> {opt.label}
-                              <span className="ml-auto text-[10px] font-bold text-ink-subtle">máx {CAPACIDADE_TOUCA[opt.key]}</span>
+                              <span className="ml-auto text-micro font-bold text-ink-subtle">máx {CAPACIDADE_TOUCA[opt.key]}</span>
                             </label>
                             <div className="flex items-center bg-surface-sunken rounded-lg p-1">
                               <button
@@ -593,7 +519,7 @@ export function ScheduleModule() {
                               </button>
                             </div>
                             {travado && (
-                              <p className="text-[10px] font-bold text-warning-ink mt-1.5">
+                              <p className="text-micro font-bold text-warning-ink mt-1.5">
                                 {NIVEL_UNICO.includes(opt.key) ? 'turma já é de outro nível único' : 'grupo verde+ cheio (9/9)'}
                               </p>
                             )}

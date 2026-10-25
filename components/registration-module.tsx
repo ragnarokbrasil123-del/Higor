@@ -1,134 +1,23 @@
 'use client';
 
+import { invalidarGrade, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { paginado } from '@/lib/paginado';
 import { criarAlunos, lerAlunos } from '@/lib/alunos';
 import { cn } from '@/lib/utils';
-import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR } from '@/components/ui';
+import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR , avisarErro, avisar } from '@/components/ui';
 
-// ===================== Helpers de importação em massa =====================
-const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
-
-/** fixo (padrão), wellhub (aceita "gympass" como sinônimo comum) ou avulso. */
-function parseModalidadeSmart(raw: string): { modalidade: string; guessed: boolean } {
-  const k = stripAccents((raw || '').toLowerCase().trim());
-  if (!k) return { modalidade: 'fixo', guessed: false };
-  if (k.includes('wellhub') || k.includes('gympass') || k.includes('gym pass')) return { modalidade: 'wellhub', guessed: false };
-  if (k.includes('avuls')) return { modalidade: 'avulso', guessed: false };
-  if (k.includes('fix')) return { modalidade: 'fixo', guessed: false };
-  return { modalidade: 'fixo', guessed: true };
-}
-
-function parseLevelSmart(raw: string): { level: CapLevel; guessed: boolean } {
-  const k = stripAccents((raw || '').toLowerCase().trim());
-  const exact: Record<string, CapLevel> = {
-    amarela: 'yellow', laranja: 'orange', vermelha: 'red', verde: 'green',
-    'azul claro': 'lightBlue', 'azul escuro': 'darkBlue', preta: 'black',
-    yellow: 'yellow', orange: 'orange', red: 'red', green: 'green',
-    lightblue: 'lightBlue', darkblue: 'darkBlue', black: 'black',
-  };
-  if (exact[k]) return { level: exact[k], guessed: false };
-  if (k.includes('amarel') || k.includes('bebe')) return { level: 'yellow', guessed: false };
-  if (k.includes('laranj')) return { level: 'orange', guessed: false };
-  if (k.includes('vermelh')) return { level: 'red', guessed: false };
-  if (k.includes('verde')) return { level: 'green', guessed: false };
-  if (k.includes('azul') && k.includes('escur')) return { level: 'darkBlue', guessed: false };
-  if (k.includes('azul')) return { level: 'lightBlue', guessed: true };
-  if (k.includes('pret')) return { level: 'black', guessed: false };
-  return { level: 'orange', guessed: true };
-}
-
-const DAY_CANON: Record<string, string> = {
-  'segunda-feira': 'Segunda-feira', segunda: 'Segunda-feira', seg: 'Segunda-feira', '2': 'Segunda-feira', '2a': 'Segunda-feira',
-  'terca-feira': 'Terça-feira', terca: 'Terça-feira', ter: 'Terça-feira', '3': 'Terça-feira', '3a': 'Terça-feira',
-  'quarta-feira': 'Quarta-feira', quarta: 'Quarta-feira', qua: 'Quarta-feira', '4': 'Quarta-feira', '4a': 'Quarta-feira',
-  'quinta-feira': 'Quinta-feira', quinta: 'Quinta-feira', qui: 'Quinta-feira', '5': 'Quinta-feira', '5a': 'Quinta-feira',
-  'sexta-feira': 'Sexta-feira', sexta: 'Sexta-feira', sex: 'Sexta-feira', '6': 'Sexta-feira', '6a': 'Sexta-feira',
-  sabado: 'Sábado', sab: 'Sábado', '7': 'Sábado',
-};
-function parseTime(raw: string): string {
-  if (!raw) return '';
-  const m = stripAccents(raw.toLowerCase()).match(/(\d{1,2})[:h.]?(\d{2})?/);
-  if (!m) return '';
-  return `${m[1].padStart(2, '0')}:${(m[2] || '00').padStart(2, '0')}`;
-}
-const splitCells = (raw: string): string[] => (raw || '').split(/[/,;&]| e /i).map(p => p.trim()).filter(Boolean);
-
-/** "Segunda 08:00 / Quarta 15:00" — para a prévia da importação. */
-const formatarDiasHorarios = (pares: DiaHorario[]): string =>
-  pares.length ? pares.map(dh => `${dh.day.split('-')[0]}${dh.time ? ' ' + dh.time : ''}`).join(' / ') : '—';
-
-interface DiaHorario { day: string; time: string }
-
-/**
- * Junta dia(s) e horário(s) de uma linha da planilha.
- * - Um horário só (ou nenhum): vale para todos os dias da célula "dia".
- * - Vários horários: pareiam por posição com os dias, na mesma ordem
- *   (dia "Segunda-feira/Quarta-feira" + horario "08:00/15:00" vira
- *   Segunda às 08:00, Quarta às 15:00). Se a quantidade não bater, sinaliza.
- */
-function parseDiasHorarios(rawDay: string, rawTime: string): { pares: DiaHorario[]; contagemDivergente: boolean; diaInvalido: boolean } {
-  const diasBrutos = splitCells(rawDay);
-  const horariosBrutos = splitCells(rawTime);
-  if (diasBrutos.length === 0) return { pares: [], contagemDivergente: false, diaInvalido: false };
-
-  if (horariosBrutos.length > 1 && horariosBrutos.length !== diasBrutos.length) {
-    return { pares: [], contagemDivergente: true, diaInvalido: false };
-  }
-
-  let diaInvalido = false;
-  const pares: DiaHorario[] = [];
-  diasBrutos.forEach((d, i) => {
-    const day = DAY_CANON[stripAccents(d.toLowerCase())];
-    if (!day) { diaInvalido = true; return; }
-    const timeRaw = horariosBrutos.length > 1 ? horariosBrutos[i] : horariosBrutos[0];
-    pares.push({ day, time: parseTime(timeRaw || '') });
-  });
-
-  return { pares, contagemDivergente: false, diaInvalido };
-}
-function splitDelimited(text: string): string[][] {
-  const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim());
-  if (!lines.length) return [];
-  const first = lines[0];
-  const delim = first.includes('\t') ? '\t' : first.split(';').length > first.split(',').length ? ';' : ',';
-  return lines.map(l => l.split(delim).map(c => c.trim().replace(/^"|"$/g, '')));
-}
-const HEADER_MAP: Record<string, string> = {
-  nome: 'name', aluno: 'name', 'nome do aluno': 'name', crianca: 'name',
-  idade: 'age', anos: 'age',
-  touca: 'level', nivel: 'level', cor: 'level', categoria: 'level',
-  modalidade: 'modalidade', tipo: 'modalidade',
-  dia: 'day', dias: 'day', 'dia da semana': 'day',
-  horario: 'time', hora: 'time', 'horario da aula': 'time',
-  responsavel: 'guardian', 'nome do responsavel': 'guardian', mae: 'guardian', pai: 'guardian',
-  telefone: 'phone', whatsapp: 'phone', celular: 'phone', fone: 'phone', contato: 'phone',
-  endereco: 'endereco', 'rua/numero': 'endereco',
-  observacoes: 'observacoes', observacao: 'observacoes', obs: 'observacoes',
-  // senha não é mais pedida no modelo (a senha do responsável já é sabida:
-  // 4 últimos dígitos do telefone) — mas se alguém ainda mandar, continua valendo.
-  senha: 'password', password: 'password',
-};
-
-interface BulkRow {
-  name: string;
-  age: number;
-  level: CapLevel;
-  modalidade: string;
-  guardian: string;
-  phone: string;
-  password: string;
-  endereco: string;
-  observacoes: string;
-  diasHorarios: DiaHorario[];
-  issues: string[];
-  skip: boolean;
-}
-// ========================================================================
+// O parser da planilha colada vive em components/cadastro/planilha.ts:
+// é puro (entra texto, sai linha estruturada) e não depende de tela.
+import {
+  HEADER_MAP,
+  formatarDiasHorarios, parseDiasHorarios, parseLevelSmart,
+  parseModalidadeSmart, splitDelimited, stripAccents,
+  type BulkRow, type DiaHorario,
+} from './cadastro/planilha';
 
 interface RegistrationModuleProps {
   onSuccess: () => void;
@@ -172,8 +61,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     // que sobram do corte do PostgREST simplesmente não apareciam aqui —
     // matrícula no balcão via "sem vaga" num horário que tinha vaga.
     const [clsData, slotData] = await Promise.all([
-      paginado<any>('classes', '*', 'start_time'),
-      paginado<any>('class_slots', '*'),
+      lerTurmas(),
+      lerVagas(),
     ]);
     setClasses(clsData);
     setAvailableSlots(slotData.filter(s => !s.student_id || s.student_id === ''));
@@ -198,14 +87,14 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       ]);
     } catch (e: any) {
       setLoading(false);
-      return alert('Erro ao salvar no banco: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar no banco: ' + (e?.message || ''));
     }
 
     setLoading(false);
 
     setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword('');
     fetchAllStudents();
-    alert('Aluno matriculado com sucesso!\n\nPara definir o dia e o horário dele, abra a aba "Alunos" e clique em "Abrir ficha".');
+    avisar('Aluno matriculado com sucesso!\n\nPara definir o dia e o horário dele, abra a aba "Alunos" e clique em "Abrir ficha".');
   };
 
   // ---- Importação em massa ----
@@ -321,6 +210,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   };
 
   const runBulkImport = async () => {
+    invalidarGrade();
     const toCreate = bulkRows.filter(r => !r.skip);
     if (toCreate.length === 0) return;
     setBulkImporting(true);
@@ -393,12 +283,12 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   
                   <div className="space-y-1 md:space-y-2 md:col-span-2">
                     <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Aluno *</label>
-                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                   </div>
                   
                   <div className="space-y-1 md:space-y-2">
                     <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Idade</label>
-                    <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} placeholder="opcional" className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                    <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} placeholder="opcional" className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                   </div>
                   
                   <div className="space-y-1 md:space-y-2">
@@ -414,22 +304,22 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                     </p>
                   </div>
 
-                  <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-slate-50/50 border border-line rounded-2xl space-y-4 md:space-y-6">
-                    <h3 className="font-bold text-ink text-sm md:text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-amber-500" /> Dados do Responsável (Acesso ao Portal)</h3>
+                  <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-surface-sunken/50 border border-line rounded-2xl space-y-4 md:space-y-6">
+                    <h3 className="font-bold text-ink text-sm md:text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-brand" /> Dados do Responsável (Acesso ao Portal)</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <div className="space-y-1 md:space-y-2">
                         <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Responsável</label>
-                        <input type="text" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                        <input type="text" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                       </div>
                       <div className="space-y-1 md:space-y-2">
                         <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">WhatsApp (Login)</label>
-                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(DDD) 99999-9999" className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all" />
+                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(DDD) 99999-9999" className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
                       </div>
                       <div className="space-y-1 md:space-y-2 md:col-span-2">
                         <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Senha de Acesso do Pai *</label>
                         <div className="relative">
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
-                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-amber-200 rounded-xl text-sm md:text-base focus:ring-2 focus:ring-amber-500/20 outline-none transition-all font-medium text-amber-900" />
+                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-brand-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all font-medium text-amber-900" />
                         </div>
                       </div>
                     </div>
@@ -438,7 +328,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                 </div>
                 
                 <div className="pt-4 md:pt-6 border-t border-line flex justify-end">
-                  <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-amber-500 md:text-black rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
+                  <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-brand md:text-black rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
                     <Save className="w-4 h-4" /> {loading ? "Salvando..." : "Matricular Aluno"}
                   </button>
                 </div>
@@ -448,9 +338,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
           ) : (
 
             <motion.div key="bulk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto space-y-5">
-              <div className="bg-warning-soft border border-amber-200 rounded-2xl p-5 md:p-6">
+              <div className="bg-warning-soft border border-brand-line rounded-2xl p-5 md:p-6">
                 <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
-                <p className="text-sm text-amber-800">
+                <p className="text-sm text-brand-deep">
                   Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
                   <b> nome, idade, touca, modalidade, dia, horario, responsavel, telefone, endereco, observacoes</b>.
                   Só <b>nome</b> é obrigatório — o resto pode ficar em branco.
@@ -462,10 +352,10 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   <code className="bg-white/60 px-1 rounded">08:00/15:00</code>.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
+                  <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-amber-300 text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
                     <Download className="w-4 h-4" /> Baixar modelo CSV
                   </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-amber-300 text-amber-800 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-amber-100 transition-colors">
+                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-amber-300 text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
                     <UploadCloud className="w-4 h-4" /> Selecionar arquivo
                   </button>
                   <input type="file" accept=".csv,.tsv,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { const f = e.target.files?.[0]; if (f) readFileToText(f); e.target.value = ''; }} />
@@ -473,7 +363,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
               </div>
 
               {bulkResult && (
-                <div className="bg-success-soft border border-emerald-200 rounded-2xl p-5 flex items-start gap-3">
+                <div className="bg-success-soft border border-success-soft rounded-2xl p-5 flex items-start gap-3">
                   <CheckCircle2 className="w-6 h-6 text-success shrink-0 mt-0.5" />
                   <div className="text-sm">
                     <p className="font-black text-emerald-800">Importação concluída!</p>
@@ -491,13 +381,13 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   onChange={(e) => setBulkText(e.target.value)}
                   spellCheck={false}
                   placeholder={'nome;idade;touca;modalidade;dia;horario;responsavel;telefone;endereco;observacoes\nAna Clara Souza;7;Laranja;fixo;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;;'}
-                  className="w-full h-44 p-4 bg-surface-sunken border border-line rounded-2xl text-xs md:text-sm font-mono text-ink outline-none focus:ring-2 focus:ring-amber-500/20 resize-y"
+                  className="w-full h-44 p-4 bg-surface-sunken border border-line rounded-2xl text-xs md:text-sm font-mono text-ink outline-none focus:ring-2 focus:ring-brand/20 resize-y"
                 />
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs font-bold text-ink-muted">{bulkStatus}</p>
                   <div className="flex gap-2">
                     <button onClick={() => { setBulkText(''); setBulkRows([]); setBulkStatus(''); setBulkResult(null); }} className="px-4 py-2.5 text-sm font-bold text-ink-muted hover:text-ink">Limpar</button>
-                    <button onClick={analyzeBulk} disabled={!bulkText.trim()} className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold disabled:opacity-40 active:scale-95 transition-transform">Analisar</button>
+                    <button onClick={analyzeBulk} disabled={!bulkText.trim()} className="px-5 py-2.5 bg-surface-raised text-white rounded-xl text-sm font-bold disabled:opacity-40 active:scale-95 transition-transform">Analisar</button>
                   </div>
                 </div>
               </div>
@@ -506,7 +396,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                 <div className="bg-surface border border-line rounded-3xl overflow-hidden">
                   <div className="p-4 border-b border-line bg-surface-sunken flex items-center justify-between gap-3">
                     <h3 className="font-black text-ink text-sm">Prévia ({bulkRows.length} linha{bulkRows.length > 1 ? 's' : ''})</h3>
-                    <button onClick={runBulkImport} disabled={bulkImporting || bulkRows.filter(r => !r.skip).length === 0} className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-black disabled:opacity-40 active:scale-95 transition-transform flex items-center gap-2">
+                    <button onClick={runBulkImport} disabled={bulkImporting || bulkRows.filter(r => !r.skip).length === 0} className="px-5 py-2.5 bg-success text-white rounded-xl text-sm font-black disabled:opacity-40 active:scale-95 transition-transform flex items-center gap-2">
                       <Save className="w-4 h-4" /> {bulkImporting ? 'Importando...' : `Importar ${bulkRows.filter(r => !r.skip).length} aluno(s)`}
                     </button>
                   </div>
@@ -528,9 +418,9 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                 </TD>
                                 <TD>
                                   <div className="flex flex-wrap gap-1">
-                                    <span className={cn('px-2 py-1 rounded text-[10px] font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
+                                    <span className={cn('px-2 py-1 rounded text-micro font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
                                     {r.modalidade !== 'fixo' && (
-                                      <span className="px-2 py-1 rounded text-[10px] font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
+                                      <span className="px-2 py-1 rounded text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
                                     )}
                                   </div>
                                 </TD>
@@ -543,7 +433,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                                   ) : (
                                     <ul className="space-y-0.5">
                                       {r.issues.map((iss, k) => (
-                                        <li key={k} className={cn('inline-flex items-center gap-1 text-[11px] font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
+                                        <li key={k} className={cn('inline-flex items-center gap-1 text-mini font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
                                           <AlertTriangle className="w-3 h-3 shrink-0" /> {iss}
                                         </li>
                                       ))}

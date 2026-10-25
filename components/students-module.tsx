@@ -1,5 +1,6 @@
 'use client';
 
+import { invalidarGrade, lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -10,63 +11,17 @@ import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
-import { paginado } from '@/lib/paginado';
 import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
-import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar , EsqueletoLista } from '@/components/ui';
 
-interface StudentRow {
-  id: string;
-  name: string;
-  age: number | null;
-  level: CapLevel;
-  guardian_name: string | null;
-  phone: string | null;
-  password: string | null;
-  modalidade: string | null;
-  endereco: string | null;
-  observacoes: string | null;
-  /** Matrícula ativa. Quem cancela vira false e mantém ficha e histórico. */
-  ativo: boolean | null;
-  inativo_em: string | null;
-  inativo_motivo: string | null;
-}
-interface ClassRow {
-  id: string;
-  teacher_name: string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-}
-interface SlotRow {
-  id: string;
-  class_id: string;
-  cap_color: string;
-  student_id: string | null;
-}
-interface EvalRow {
-  student_id: string;
-  date: string;
-  approved: boolean;
-}
-
-const DAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-const MODALIDADES = ['fixo', 'wellhub', 'avulso'];
-const hhmm = (t: string) => String(t || '').slice(0, 5);
-
-/**
- * Selo de avaliação com o resultado do trimestre — não só "avaliado/pendente"
- * (como o SeloAvaliacao da Avaliação de Natação), mas separando quem passou
- * de quem ainda está em treinamento, pra dar pra ver isso direto na lista,
- * sem precisar abrir a ficha ou baixar um PDF.
- */
-function SeloAvaliacaoDetalhado({ ultima }: { ultima?: { date: string; approved: boolean } }) {
-  if (!ultima) return <Badge tone="neutral">pendente</Badge>;
-  const data = new Date(ultima.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  return ultima.approved
-    ? <Badge tone="success">✓ Aprovado {data}</Badge>
-    : <Badge tone="warning">Treinando {data}</Badge>;
-}
+// Tipos, constantes e o selo vivem em components/alunos/ — são puros
+// e não dependem de estado nem de rede.
+import {
+  DAYS, MODALIDADES, hhmm,
+  type ClassRow, type EvalRow, type SlotRow, type StudentRow,
+} from './alunos/tipos';
+import { SeloAvaliacaoDetalhado } from './alunos/SeloAvaliacaoDetalhado';
 
 export function StudentsModule() {
   const [students, setStudents] = useState<StudentRow[]>([]);
@@ -103,9 +58,9 @@ export function StudentsModule() {
     // e a rota só o entrega para o papel admin (ver /api/alunos).
     const [st, cl, sl, ev] = await Promise.all([
       lerAlunos('completo'),
-      paginado<any>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
-      paginado<any>('class_slots', 'id, class_id, cap_color, student_id'),
-      paginado<any>('evaluations', 'student_id, date, approved'),
+      lerTurmas(),
+      lerVagas(),
+      lerAvaliacoesResumo(),
     ]);
     setStudents((st as StudentRow[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     setClasses(cl as ClassRow[]);
@@ -145,8 +100,12 @@ export function StudentsModule() {
     !!editing && !!original && CAMPOS.some(c => (editing[c] ?? '') !== (original[c] ?? ''));
 
   /** Fecha a ficha, mas não deixa perder texto digitado em silêncio. */
-  const fecharFicha = () => {
-    if (temMudanca() && !confirm('Você alterou a ficha e ainda não salvou. Fechar mesmo assim e perder as alterações?')) return;
+  // virou `async` porque o diálogo agora devolve Promise. Segue
+  // servindo direto como onClick, que aceita handler assíncrono.
+  const fecharFicha = async () => {
+    if (temMudanca() && !await confirmar('As alterações que você fez na ficha serão perdidas.', {
+      titulo: 'Fechar sem salvar?', acao: 'Fechar sem salvar', perigo: true,
+    })) return;
     setEditing(null);
     setOriginal(null);
   };
@@ -154,7 +113,7 @@ export function StudentsModule() {
   // ------------------------------------------------ salvar dados
   const salvar = async () => {
     if (!editing) return;
-    if (!editing.name.trim()) return alert('O nome é obrigatório.');
+    if (!editing.name.trim()) return avisar('O nome é obrigatório.');
     setSaving(true);
     try {
       await atualizarAlunos(editing.id, {
@@ -170,7 +129,7 @@ export function StudentsModule() {
       });
     } catch (e: any) {
       setSaving(false);
-      return alert('Erro ao salvar: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar: ' + (e?.message || ''));
     }
     setSaving(false);
     await fetchAll();
@@ -186,12 +145,16 @@ export function StudentsModule() {
    * pessoa voltar em seis meses, está tudo lá.
    */
   const cancelarMatricula = async (s: StudentRow) => {
-    const motivo = prompt(
-      `Cancelar a matrícula de ${s.name}?\n\n` +
-      'A ficha, as avaliações e o histórico de touca são mantidos — só a vaga na turma é liberada.\n\n' +
-      'Motivo (opcional):'
+    invalidarGrade();
+    const motivo = await perguntar(
+      'A ficha, as avaliações e o histórico de touca são mantidos — só a vaga na turma é liberada.',
+      {
+        titulo: `Cancelar a matrícula de ${s.name}?`,
+        acao: 'Cancelar matrícula',
+        rotulo: 'Motivo (opcional)',
+      }
     );
-    if (motivo === null) return; // clicou em cancelar no diálogo
+    if (motivo === null) return; // fechou o diálogo sem confirmar
 
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
     try {
@@ -201,7 +164,7 @@ export function StudentsModule() {
         inativo_motivo: motivo.trim() || null,
       });
     } catch (e: any) {
-      return alert('Erro ao cancelar: ' + (e?.message || ''));
+      return avisarErro('Erro ao cancelar: ' + (e?.message || ''));
     }
     setEditing(null);
     setOriginal(null);
@@ -213,12 +176,12 @@ export function StudentsModule() {
     try {
       await atualizarAlunos(s.id, { ativo: true, inativo_em: null, inativo_motivo: null });
     } catch (e: any) {
-      return alert('Erro ao reativar: ' + (e?.message || ''));
+      return avisarErro('Erro ao reativar: ' + (e?.message || ''));
     }
     setEditing(e => (e ? { ...e, ativo: true, inativo_em: null, inativo_motivo: null } : e));
     setOriginal(o => (o ? { ...o, ativo: true, inativo_em: null, inativo_motivo: null } : o));
     fetchAll();
-    alert(`${s.name} voltou para a lista de ativos. Escolha a turma dele aqui na ficha.`);
+    avisar(`${s.name} voltou para a lista de ativos. Escolha a turma dele aqui na ficha.`);
   };
 
   /**
@@ -227,17 +190,18 @@ export function StudentsModule() {
    * duplicado ou digitado errado, não para aluno que saiu.
    */
   const excluir = async (s: StudentRow) => {
-    if (!confirm(
-      `APAGAR ${s.name} de vez?\n\n` +
-      'As avaliações dele serão apagadas junto e não há como desfazer.\n\n' +
-      'Se a pessoa apenas saiu da escola, use "Cancelar matrícula" — ela mantém o histórico.'
+    invalidarGrade();
+    if (!await confirmar(
+      'As avaliações dele serão apagadas junto, e não há como desfazer.\n\n' +
+      'Se a pessoa apenas saiu da escola, use "Cancelar matrícula" — ela mantém o histórico.',
+      { titulo: `Apagar ${s.name} de vez?`, acao: 'Apagar de vez', perigo: true }
     )) return;
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
     await supabase.from('evaluations').delete().eq('student_id', s.id);
     try {
       await apagarAluno(s.id);
     } catch (e: any) {
-      return alert('Erro ao excluir: ' + (e?.message || ''));
+      return avisarErro('Erro ao excluir: ' + (e?.message || ''));
     }
     setEditing(null);
     setOriginal(null);
@@ -246,15 +210,17 @@ export function StudentsModule() {
 
   // ------------------------------------------------ turmas
   const sairDaTurma = async (slotId: string) => {
+    invalidarGrade();
     const { error } = await supabase.from('class_slots').update({ student_id: null }).eq('id', slotId);
-    if (error) return alert('Erro: ' + error.message);
+    if (error) return avisarErro('Erro: ' + error.message);
     setSlots(prev => prev.map(s => (s.id === slotId ? { ...s, student_id: null } : s)));
   };
 
   const entrarNaTurma = async (slotId: string) => {
+    invalidarGrade();
     if (!editing) return;
     const { error } = await supabase.from('class_slots').update({ student_id: editing.id }).eq('id', slotId);
-    if (error) return alert('Erro: ' + error.message);
+    if (error) return avisarErro('Erro: ' + error.message);
     setSlots(prev => prev.map(s => (s.id === slotId ? { ...s, student_id: editing.id } : s)));
     setShowAdd(false);
   };
@@ -342,7 +308,7 @@ export function StudentsModule() {
 
         {/* lista */}
         {loading ? (
-          <Loading label="Carregando alunos..." />
+          <EsqueletoLista linhas={8} />
         ) : (
           <div className="bg-surface rounded-panel border border-line shadow-raised overflow-hidden">
             <ResponsiveTable
@@ -507,21 +473,21 @@ export function StudentsModule() {
                   <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider mb-3">Dados do aluno</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="md:col-span-2">
-                      <label className="text-[11px] font-bold text-ink-muted">Nome *</label>
-                      <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-mini font-bold text-ink-muted">Nome *</label>
+                      <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted">Idade</label>
-                      <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-mini font-bold text-ink-muted">Idade</label>
+                      <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted">Modalidade</label>
+                      <label className="text-mini font-bold text-ink-muted">Modalidade</label>
                       <Select value={editing.modalidade || 'fixo'} onChange={e => setEditing({ ...editing, modalidade: e.target.value })} className="mt-1 py-2.5">
                         {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
                       </Select>
                     </div>
                     <div className="md:col-span-4">
-                      <label className="text-[11px] font-bold text-ink-muted">Touca</label>
+                      <label className="text-mini font-bold text-ink-muted">Touca</label>
                       <Select value={editing.level} onChange={e => setEditing({ ...editing, level: e.target.value as CapLevel })} className="mt-1 py-2.5">
                         {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].name}</option>)}
                       </Select>
@@ -540,20 +506,20 @@ export function StudentsModule() {
 
                   <div className="space-y-2">
                     {aulasDe(editing.id).length === 0 && (
-                      <p className="text-xs font-bold text-warning-ink bg-warning-soft border border-amber-200 rounded-xl p-3">Este aluno não está em nenhuma turma.</p>
+                      <p className="text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-xl p-3">Este aluno não está em nenhuma turma.</p>
                     )}
                     {aulasDe(editing.id).map(a => {
                       const divergente = a.slot.cap_color !== editing.level;
                       return (
                         <div key={a.slot.id} className="flex items-center gap-3 bg-surface-sunken border border-line rounded-xl p-3">
-                          <CalendarDays className="w-4 h-4 text-indigo-500 shrink-0" />
+                          <CalendarDays className="w-4 h-4 text-info shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-ink">
                               {a.cls!.day_of_week} · {hhmm(a.cls!.start_time)} às {hhmm(a.cls!.end_time)}
                             </p>
                             <p className="text-xs font-medium text-ink-muted truncate">Prof. {rotuloProfessor(a.cls!.teacher_name)}</p>
                             {divergente && (
-                              <p className="text-[11px] font-bold text-warning-ink flex items-center gap-1 mt-1">
+                              <p className="text-mini font-bold text-warning-ink flex items-center gap-1 mt-1">
                                 <AlertTriangle className="w-3 h-3" /> vaga de {levels[a.slot.cap_color as CapLevel]?.label || a.slot.cap_color} — touca do aluno mudou
                               </p>
                             )}
@@ -567,15 +533,15 @@ export function StudentsModule() {
                   </div>
 
                   {showAdd && (
-                    <div className="mt-3 border border-indigo-200 bg-indigo-50/40 rounded-2xl p-3 space-y-3">
+                    <div className="mt-3 border border-info-soft bg-info-soft/40 rounded-2xl p-3 space-y-3">
                       <div className="flex flex-wrap gap-1.5">
                         {DAYS.map(d => (
-                          <button key={d} onClick={() => setAddDay(d)} className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all', addDay === d ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-surface text-ink-muted border-line')}>
+                          <button key={d} onClick={() => setAddDay(d)} className={cn('px-3 py-1.5 rounded-lg text-xs font-bold border transition-all', addDay === d ? 'bg-info text-white border-info' : 'bg-surface text-ink-muted border-line')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
                       </div>
-                      <p className="text-[11px] font-bold text-ink-muted">
+                      <p className="text-mini font-bold text-ink-muted">
                         Vagas livres de <b>{levels[editing.level]?.label}</b> em {addDay.split('-')[0]}:
                       </p>
                       {vagasPorTurma.length === 0 ? (
@@ -585,9 +551,9 @@ export function StudentsModule() {
                           {vagasPorTurma.map(v => (
                             <button key={v.slot.id} onClick={() => entrarNaTurma(v.slot.id)} className="text-left bg-surface border border-line hover:border-indigo-400 rounded-xl p-2.5 transition-colors">
                               <p className="text-sm font-black text-ink flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-indigo-500" /> {hhmm(v.cls!.start_time)}
+                                <Clock className="w-3.5 h-3.5 text-info" /> {hhmm(v.cls!.start_time)}
                               </p>
-                              <p className="text-[11px] font-medium text-ink-muted truncate">Prof. {rotuloProfessor(v.cls!.teacher_name)}</p>
+                              <p className="text-mini font-medium text-ink-muted truncate">Prof. {rotuloProfessor(v.cls!.teacher_name)}</p>
                             </button>
                           ))}
                         </div>
@@ -601,24 +567,24 @@ export function StudentsModule() {
                   <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider mb-3">Responsável e acesso</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
-                      <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
+                      <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
-                      <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
+                      <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
-                      <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
+                      <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
-                      <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20" />
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
+                      <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
-                      <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 min-h-[80px] resize-y" />
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
+                      <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20 min-h-[80px] resize-y" />
                     </div>
                   </div>
                 </section>

@@ -19,6 +19,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { paginado } from '@/lib/paginado';
+import { comCache, invalidar } from '@/lib/cache';
 import { COLUNAS_POR_ESCOPO, type EscopoAluno } from '@/lib/alunos-colunas';
 
 /** A rota disse "ainda não configurado"? */
@@ -45,7 +46,19 @@ async function erroDaResposta(resp: Response, padrao: string) {
 
 /* ---------------- leitura ---------------- */
 
-export async function lerAlunos(escopo: EscopoAluno): Promise<any[]> {
+/**
+ * Lê os alunos de um escopo. Guarda em cache por escopo, para a
+ * troca de aba não refazer a consulta — `forcar` pula o cache.
+ *
+ * A cópia (`[...]`) existe porque alguns módulos fazem `.sort()` no
+ * array recebido, e isso reordenaria o que está guardado.
+ */
+export async function lerAlunos(escopo: EscopoAluno, forcar = false): Promise<any[]> {
+  const dados = await comCache<any[]>(`students:${escopo}`, () => buscarAlunos(escopo), forcar);
+  return [...dados];
+}
+
+async function buscarAlunos(escopo: EscopoAluno): Promise<any[]> {
   try {
     const resp = await fetch(`/api/alunos?escopo=${escopo}`, { credentials: 'same-origin' });
     if (resp.ok) {
@@ -61,10 +74,16 @@ export async function lerAlunos(escopo: EscopoAluno): Promise<any[]> {
   return paginado<any>('students', COLUNAS_POR_ESCOPO[escopo], 'name');
 }
 
-/* ---------------- escrita ---------------- */
+/* ---------------- escrita ----------------
+
+   Toda escrita descarta o cache de aluno. Sem isso, quem salva uma
+   ficha e troca de aba continua vendo a versão antiga — o cache é o
+   mesmo para todas as telas. `class_slots` entra junto nos casos em
+   que a vaga muda (cancelar matrícula libera a vaga).                */
 
 /** Cria um aluno ou uma lista (importação em massa). Devolve `{id, name}[]`. */
 export async function criarAlunos(alunos: Record<string, any>[]): Promise<any[]> {
+  invalidar('students');
   const resp = await fetch('/api/alunos', {
     method: 'POST',
     credentials: 'same-origin',
@@ -88,6 +107,8 @@ export async function criarAlunos(alunos: Record<string, any>[]): Promise<any[]>
 /** Atualiza um aluno (ou vários, no caso do consentimento dos irmãos). */
 export async function atualizarAlunos(ids: string | string[], campos: Record<string, any>) {
   const lista = Array.isArray(ids) ? ids : [ids];
+  // `ativo` muda a situação da matrícula, que libera ou ocupa vaga
+  invalidar('students', ...(('ativo' in campos) ? ['class_slots'] : []));
 
   const resp = await fetch('/api/alunos', {
     method: 'PATCH',
@@ -107,6 +128,8 @@ export async function atualizarAlunos(ids: string | string[], campos: Record<str
 }
 
 export async function apagarAluno(id: string) {
+  // apagar leva junto as avaliações e libera as vagas
+  invalidar('students', 'class_slots', 'evaluations');
   const resp = await fetch(`/api/alunos?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',
     credentials: 'same-origin',
