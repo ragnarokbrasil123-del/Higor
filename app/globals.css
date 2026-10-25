@@ -23,6 +23,20 @@
   --color-brand-wash: #fef3c7;    /* fundo de aviso */
   --color-brand-deep: #92400e;    /* texto sobre brand-wash */
 
+  /* A marca quando vira TEXTO sobre fundo claro.
+     Existe separado porque a cor de preenchimento costuma reprovar
+     em contraste quando usada em letra pequena. */
+  --color-brand-text: #b45309;
+
+  /* Ouro — conquista e troca de touca. Entra na paleta Olimpo Aqua;
+     aqui recebe o âmbar atual para a aparência não mudar antes da
+     aprovação. Preenchimento com texto escuro por cima; como TEXTO,
+     só o `ouro-text`. */
+  --color-ouro: #f59e0b;
+  --color-ouro-soft: #fffbeb;
+  --color-ouro-line: #fde68a;
+  --color-ouro-text: #b45309;
+
   /* Superfícies */
   --color-canvas: #f0f4f8;        /* fundo da página */
   --color-surface: #ffffff;       /* card, modal */
@@ -155,4 +169,200 @@ html, body {
   button:not(.alvo-livre):has(> svg:only-child) {
     min-width: 2.75rem;
   }
+}
+
+/* ============================================================
+   OLIMPO AQUA — paleta nova, ainda EM APROVAÇÃO.
+
+   Fica sob `[data-tema="aqua"]` de propósito: redefinir as mesmas
+   variáveis que o @theme já declara faz as classes utilitárias
+   (`bg-brand`, `text-ink`, ...) mudarem de cor dentro desse escopo,
+   sem tocar em nenhum componente. O app segue com a cara de hoje;
+   só a página /design liga o atributo.
+
+   Quando a Etapa 3 chegar, aplicar a uma aba é pôr o atributo nela,
+   e no fim ele sobe para o <html>.
+
+   TODOS os valores abaixo foram conferidos com contraste WCAG:
+     tinta/névoa 16,31:1 · secundário 5,12:1 · legenda 4,76:1
+     branco sobre botão 4,56:1 · água como texto 5,82:1
+     dourado como texto 4,89:1 · tinta sobre dourado 7,26:1
+   ============================================================ */
+[data-tema='aqua'] {
+  /* --- superfícies: névoa azulada, para o sol --- */
+  --color-canvas: #f4f8fb;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #edf3f8;
+  --color-surface-raised: #0b1b2b;
+  --color-surface-deep: #061320;
+  --color-surface-raised-soft: #14293f;
+
+  /* --- texto --- */
+  --color-ink: #0b1b2b;
+  --color-ink-muted: #5b6b7c;
+  --color-ink-subtle: #61707f;
+  --color-ink-inverse: #ffffff;
+  --color-ink-on-dark: #c8dae8;
+  --color-ink-on-dark-muted: #8fa6b8;
+
+  /* --- bordas --- */
+  --color-line: #d5dfe7;
+  --color-line-strong: #bcccd9;
+
+  /* --- marca: azul-água ---
+     `brand` é a identidade (anel de foco, borda, área grande).
+     `brand-hover` é o fundo de botão, mais escuro de propósito:
+     o #0a84c6 com texto branco dá 4,09:1 e reprova em texto pequeno.
+     `brand-text` é a marca quando vira TEXTO sobre fundo claro. */
+  --color-brand: #0a84c6;
+  --color-brand-hover: #097cba;
+  --color-brand-ink: #ffffff;
+  --color-brand-text: #0a6b9e;
+  --color-brand-soft: #eaf4fb;
+  --color-brand-line: #bfdef2;
+  --color-brand-bright: #38d0f0;
+  --color-brand-wash: #eaf4fb;
+  --color-brand-deep: #0a6b9e;
+
+  /* --- ouro: só conquista e troca de touca, com parcimônia ---
+     usado como PREENCHIMENTO, com tinta por cima (7,26:1).
+     Como texto, só o `ouro-text`, que é mais escuro. */
+  --color-ouro: #c9a24b;
+  --color-ouro-soft: #faf4e6;
+  --color-ouro-line: #e8d6a8;
+  --color-ouro-text: #8a6d23;
+
+  /* --- estado: sempre acompanhado de ícone ou texto --- */
+  --color-success: #0f7a52;
+  --color-success-soft: #e8f6f0;
+  --color-success-ink: #0b5c3e;
+
+  --color-warning: #a6680b;
+  --color-warning-soft: #fdf4e3;
+  --color-warning-ink: #7d4e08;
+
+  --color-danger: #c2342b;
+  --color-danger-soft: #fdeceb;
+  --color-danger-ink: #93271f;
+
+  --color-info: #0a6b9e;
+  --color-info-soft: #eaf4fb;
+  --color-info-ink: #085880;
+}
+
+/* ------------------------------------------------------------
+   Tema escuro. Segue o sistema, e `data-escuro` força (é o que a
+   página /design usa para você ver os dois no mesmo aparelho).
+   Contrastes: texto 15,16:1 · ciano 9,45:1 · ouro 9,69:1.
+   ------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  [data-tema='aqua']:not([data-escuro='nao']) {
+    --color-canvas: #06101c;
+    --color-surface: #0e1b2c;
+    --color-surface-sunken: #0a1726;
+    --color-surface-raised: #0a1726;
+    --color-surface-deep: #06101c;
+    --color-surface-raised-soft: #16283d;
+
+    --color-ink: #e8f1f8;
+    --color-ink-muted: #9fb3c4;
+    --color-ink-subtle: #8095a8;
+    --color-ink-inverse: #06101c;
+    --color-ink-on-dark: #c8dae8;
+    --color-ink-on-dark-muted: #8fa6b8;
+
+    --color-line: #1c2e42;
+    --color-line-strong: #2a4258;
+
+    --color-brand: #38d0f0;
+    --color-brand-hover: #5bdaf5;
+    --color-brand-ink: #06101c;
+    --color-brand-text: #38d0f0;
+    --color-brand-soft: #0d2537;
+    --color-brand-line: #1d4a63;
+    --color-brand-bright: #38d0f0;
+    --color-brand-wash: #0d2537;
+    --color-brand-deep: #8ce3f7;
+
+    --color-ouro: #e0be6a;
+    --color-ouro-soft: #241e10;
+    --color-ouro-line: #4a3c1c;
+    --color-ouro-text: #e0be6a;
+
+    --color-success: #4ade9b;
+    --color-success-soft: #0c2a1e;
+    --color-success-ink: #7ceab8;
+
+    --color-warning: #f5b544;
+    --color-warning-soft: #2b1f0a;
+    --color-warning-ink: #f8ca78;
+
+    --color-danger: #f87171;
+    --color-danger-soft: #2b1212;
+    --color-danger-ink: #fba5a5;
+
+    --color-info: #38d0f0;
+    --color-info-soft: #0d2537;
+    --color-info-ink: #8ce3f7;
+  }
+}
+
+/* `data-escuro="sim"` força o escuro mesmo num aparelho no claro. */
+[data-tema='aqua'][data-escuro='sim'] {
+  --color-canvas: #06101c;
+  --color-surface: #0e1b2c;
+  --color-surface-sunken: #0a1726;
+  --color-surface-raised: #0a1726;
+  --color-surface-deep: #06101c;
+  --color-surface-raised-soft: #16283d;
+  --color-ink: #e8f1f8;
+  --color-ink-muted: #9fb3c4;
+  --color-ink-subtle: #8095a8;
+  --color-ink-inverse: #06101c;
+  --color-line: #1c2e42;
+  --color-line-strong: #2a4258;
+  --color-brand: #38d0f0;
+  --color-brand-hover: #5bdaf5;
+  --color-brand-ink: #06101c;
+  --color-brand-text: #38d0f0;
+  --color-brand-soft: #0d2537;
+  --color-brand-line: #1d4a63;
+  --color-brand-wash: #0d2537;
+  --color-brand-deep: #8ce3f7;
+  --color-ouro: #e0be6a;
+  --color-ouro-soft: #241e10;
+  --color-ouro-line: #4a3c1c;
+  --color-ouro-text: #e0be6a;
+  --color-success: #4ade9b;
+  --color-success-soft: #0c2a1e;
+  --color-success-ink: #7ceab8;
+  --color-warning: #f5b544;
+  --color-warning-soft: #2b1f0a;
+  --color-warning-ink: #f8ca78;
+  --color-danger: #f87171;
+  --color-danger-soft: #2b1212;
+  --color-danger-ink: #fba5a5;
+  --color-info: #38d0f0;
+  --color-info-soft: #0d2537;
+  --color-info-ink: #8ce3f7;
+}
+
+/* ------------------------------------------------------------
+   Tipografia Olimpo Aqua.
+
+   `font-titulo` só existe quando a fonte foi carregada; o fallback
+   é a mesma pilha do corpo, então um título nunca fica sem fonte.
+
+   `tabular-nums` entra por classe própria para horários, vagas e
+   contagens: sem isso os dígitos têm larguras diferentes e as
+   colunas de uma lista deixam de alinhar, que é o oposto do
+   "placar de competição" que a tela quer parecer.
+   ------------------------------------------------------------ */
+@theme {
+  --font-titulo: var(--fonte-titulo), ui-sans-serif, system-ui, sans-serif;
+}
+
+.numero {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }

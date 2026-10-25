@@ -1,9 +1,27 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Sora } from "next/font/google";
 import "./globals.css";
-import { Avisos } from "@/components/ui";
+import { Avisos } from "@/components/ui/Avisos";
 
 const inter = Inter({ subsets: ["latin"] });
+
+/**
+ * Fonte de títulos e números de destaque (Olimpo Aqua).
+ *
+ * `preload: false` DE PROPÓSITO enquanto o visual novo está em
+ * aprovação: só a página /design usa a fonte, e pré-carregar um
+ * arquivo que o app não desenha custaria LCP em todo mundo à toa.
+ * Quando a Etapa 3 aplicar o visual nas abas, isto vira `true`.
+ *
+ * Só os pesos usados: 600 para título, 700 para número grande.
+ */
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--fonte-titulo",
+  display: "swap",
+  preload: false,
+});
 
 export const metadata: Metadata = {
   title: "Clube Olimpo",
@@ -53,7 +71,7 @@ export default function RootLayout({
         */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${sora.variable}`}>
         {children}
         {/* Host dos avisos e diálogos. Fica aqui, e não na página,
             porque o portal dos pais e a tela de login renderizam
