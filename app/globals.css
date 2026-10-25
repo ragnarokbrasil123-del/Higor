@@ -368,3 +368,48 @@ html, body {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
+
+/* ============================================================
+   Entradas em CSS, no lugar da biblioteca de animação.
+
+   O `motion` custava 124 KB num chunk só, para animar opacidade,
+   deslocamento e escala — que é exatamente o que um @keyframes faz
+   sem baixar nada.
+
+   O que se perde: a animação de SAÍDA. A biblioteca segurava o
+   elemento na tela enquanto ele desaparecia; em CSS puro o elemento
+   some na hora que o React o remove. Para um app usado com pressa na
+   beira da piscina, sumir na hora é no mínimo neutro.
+
+   Todas entram por `motion-safe:`, então quem pediu "reduzir
+   movimento" no sistema não vê nenhuma.
+   ============================================================ */
+@keyframes surge {
+  from { opacity: 0; transform: translateY(0.625rem); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes surge-lado {
+  from { opacity: 0; transform: translateX(1.25rem); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes aparece {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes cresce {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Folha que sobe de baixo (modal no celular, menu "Mais"). Entrada mais
+   longa que as outras porque o elemento atravessa a tela inteira. */
+@keyframes folha {
+  from { opacity: 0; transform: translateY(100%); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Entra de cima para baixo: avisos no topo, listas suspensas. */
+@keyframes desce {
+  from { opacity: 0; transform: translateY(-0.625rem); }
+  to   { opacity: 1; transform: none; }
+}

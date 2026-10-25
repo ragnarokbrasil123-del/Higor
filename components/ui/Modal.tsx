@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IconButton } from './Button';
@@ -28,6 +27,10 @@ const LARGURA = {
 /**
  * Diálogo padrão do app: fundo escurecido, cabeçalho fixo,
  * corpo rolável e rodapé fixo. Antes eram 3 cópias à mão.
+ *
+ * A entrada é `@keyframes` (folha no celular, escala no desktop), não
+ * biblioteca de animação. Sem a biblioteca não existe animação de saída:
+ * ao fechar, o diálogo some na hora em que o React o remove.
  */
 export function Modal({ open, onClose, title, footer, headerAction, size = 'lg', children }: ModalProps) {
   // fecha no Esc
@@ -59,69 +62,62 @@ export function Modal({ open, onClose, title, footer, headerAction, size = 'lg',
     };
   }, [open]);
 
+  if (!open) return null;
+
   const conteudo = (
-    <AnimatePresence>
-      {open && (
-        <div
-          className="fixed inset-x-0 top-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
-          style={viewport ? { height: viewport.height, transform: `translateY(${viewport.top}px)` } : { bottom: 0 }}
-        >
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-surface-raised/60 backdrop-blur-sm"
-          />
+    <div
+      className="fixed inset-x-0 top-0 z-[100] flex items-end justify-center sm:items-center sm:p-4"
+      style={viewport ? { height: viewport.height, transform: `translateY(${viewport.top}px)` } : { bottom: 0 }}
+    >
+      <div
+        onClick={onClose}
+        className="absolute inset-0 bg-surface-raised/60 backdrop-blur-sm motion-safe:animate-[aparece_.18s_ease-out]"
+      />
 
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320 }}
-            className={cn(
-              'relative bg-surface w-full shadow-overlay flex flex-col overflow-hidden',
-              // celular: folha inferior colada embaixo, ocupando quase toda a altura
-              // (% em vez de dvh/vh: assim acompanha o encolhimento do wrapper quando o teclado abre)
-              'rounded-t-panel max-h-[92%] pb-[env(safe-area-inset-bottom)]',
-              // tablet para cima: diálogo centralizado
-              'sm:rounded-panel sm:max-h-[90%] sm:pb-0',
-              LARGURA[size]
-            )}
-          >
-            <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0" aria-hidden="true">
-              <span className="w-10 h-1 rounded-full bg-line-strong" />
-            </div>
-
-            {(title || headerAction) && (
-              <div className="px-4 py-3 sm:p-5 border-b border-line bg-surface-sunken flex items-center justify-between gap-3 shrink-0">
-                <div className="min-w-0 flex-1">
-                  {typeof title === 'string' ? (
-                    <h2 className="text-lg font-black text-ink truncate">{title}</h2>
-                  ) : (
-                    title
-                  )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {headerAction}
-                  <IconButton onClick={onClose} aria-label="Fechar">
-                    <X className="w-4 h-4" />
-                  </IconButton>
-                </div>
-              </div>
-            )}
-
-            <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 overscroll-contain">{children}</div>
-
-            {footer && (
-              <div className="p-4 bg-surface-sunken border-t border-line shrink-0 flex items-center gap-3">{footer}</div>
-            )}
-          </motion.div>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className={cn(
+          'relative bg-surface w-full shadow-overlay flex flex-col overflow-hidden',
+          // celular: folha inferior colada embaixo, ocupando quase toda a altura
+          // (% em vez de dvh/vh: assim acompanha o encolhimento do wrapper quando o teclado abre)
+          'rounded-t-panel max-h-[92%] pb-[env(safe-area-inset-bottom)]',
+          // tablet para cima: diálogo centralizado
+          'sm:rounded-panel sm:max-h-[90%] sm:pb-0',
+          'motion-safe:animate-[folha_.26s_cubic-bezier(.16,1,.3,1)]',
+          'sm:motion-safe:animate-[cresce_.18s_ease-out]',
+          LARGURA[size]
+        )}
+      >
+        <div className="sm:hidden pt-2.5 pb-1 flex justify-center shrink-0" aria-hidden="true">
+          <span className="w-10 h-1 rounded-full bg-line-strong" />
         </div>
-      )}
-    </AnimatePresence>
+
+        {(title || headerAction) && (
+          <div className="px-4 py-3 sm:p-5 border-b border-line bg-surface-sunken flex items-center justify-between gap-3 shrink-0">
+            <div className="min-w-0 flex-1">
+              {typeof title === 'string' ? (
+                <h2 className="text-lg font-black text-ink truncate">{title}</h2>
+              ) : (
+                title
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {headerAction}
+              <IconButton onClick={onClose} aria-label="Fechar">
+                <X className="w-4 h-4" />
+              </IconButton>
+            </div>
+          </div>
+        )}
+
+        <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 overscroll-contain">{children}</div>
+
+        {footer && (
+          <div className="p-4 bg-surface-sunken border-t border-line shrink-0 flex items-center gap-3">{footer}</div>
+        )}
+      </div>
+    </div>
   );
 
   /**

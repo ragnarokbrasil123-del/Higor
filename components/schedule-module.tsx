@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { lerAlunos } from '@/lib/alunos';
 import { lerEquipe } from '@/lib/equipe';
 import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, CAPACIDADE_TOUCA, NIVEL_UNICO, GRUPO_VERDE_MAIS } from '@/types';
 import { cn } from '@/lib/utils';
 import { lecionaEm, rotuloProfessor } from '@/lib/professor';
@@ -406,18 +405,16 @@ export function ScheduleModule() {
                         </button>
                       </div>
 
-                      <AnimatePresence>
-                        {isTeacherDropdownOpen && activeList.length > 0 && (
-                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-control shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
-                            {activeList.map(p => (
-                              <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-surface-sunken last:border-0">
-                                <span className="block text-ink font-bold">{p.name || p.username}</span>
-                                <span className="block text-mini text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
-                              </button>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {isTeacherDropdownOpen && activeList.length > 0 && (
+                        <div className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-control shadow-xl max-h-56 overflow-y-auto custom-scrollbar motion-safe:animate-[desce_.15s_ease-out]">
+                          {activeList.map(p => (
+                            <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-surface-sunken last:border-0">
+                              <span className="block text-ink font-bold">{p.name || p.username}</span>
+                              <span className="block text-mini text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
                       {professors.length === 0 && (
                         <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-control p-2">

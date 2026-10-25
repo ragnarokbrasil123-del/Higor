@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, CheckCircle2, ChevronRight, MessageCircle, Sparkles, X } from 'lucide-react';
 import { levels, type CapLevel } from '@/types';
 import { cn } from '@/lib/utils';
@@ -139,28 +138,21 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {ultimoSalvo && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            className="sticky top-[92px] z-30 mx-4 mt-3"
-          >
-            <div className={cn(
-              'rounded-card px-4 py-3 shadow-overlay flex items-center gap-3',
-              ultimoSalvo.novaTouca ? 'bg-success text-white' : 'bg-surface-raised text-white'
-            )}>
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
-              <p className="text-sm font-bold leading-tight">
-                {ultimoSalvo.novaTouca
-                  ? <>{ultimoSalvo.nome} passou para a touca <b>{ultimoSalvo.novaTouca}</b>! 🏅</>
-                  : <>Avaliação de {ultimoSalvo.nome} salva.</>}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {ultimoSalvo && (
+        <div className="sticky top-[92px] z-30 mx-4 mt-3 motion-safe:animate-[desce_.2s_ease-out]">
+          <div className={cn(
+            'rounded-card px-4 py-3 shadow-overlay flex items-center gap-3',
+            ultimoSalvo.novaTouca ? 'bg-success text-white' : 'bg-surface-raised text-white'
+          )}>
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-bold leading-tight">
+              {ultimoSalvo.novaTouca
+                ? <>{ultimoSalvo.nome} passou para a touca <b>{ultimoSalvo.novaTouca}</b>! 🏅</>
+                : <>Avaliação de {ultimoSalvo.nome} salva.</>}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-3xl mx-auto w-full p-4 space-y-2 pb-32">
         <div className="flex gap-2 mb-3">

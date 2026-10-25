@@ -2,7 +2,6 @@
 
 import { invalidarGrade, lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import {
   Users, Search, Edit2, Trash2, X, Save, Plus, Clock, User, MapPin,
   Phone, Lock, MessageCircle, AlertTriangle, CalendarDays, StickyNote, ChevronRight,

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Check, Edit2, Trash2, X, Camera, Eye } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Button, DateNav, EmptyState, IconButton, Input, PageHeader, PageShell , avisarErro } from '@/components/ui';
 
@@ -192,16 +191,14 @@ export function TaskBoard({
     <PageShell width="focus">
       <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
-      <AnimatePresence>
-        {viewingPhoto && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-            <button onClick={() => setViewingPhoto(null)} aria-label="Fechar foto" className="absolute top-6 right-6 p-3 min-w-11 min-h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
-              <X className="w-7 h-7" />
-            </button>
-            <img src={viewingPhoto} className="max-w-full max-h-[85vh] object-contain rounded-card shadow-overlay" alt={`Evidência — ${titulo}`} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {viewingPhoto && (
+        <div className="fixed inset-0 z-[99999] bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm motion-safe:animate-[aparece_.15s_ease-out]">
+          <button onClick={() => setViewingPhoto(null)} aria-label="Fechar foto" className="absolute top-6 right-6 p-3 min-w-11 min-h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors">
+            <X className="w-7 h-7" />
+          </button>
+          <img src={viewingPhoto} className="max-w-full max-h-[85vh] object-contain rounded-card shadow-overlay" alt={`Evidência — ${titulo}`} />
+        </div>
+      )}
 
       <PageHeader
         icon={icone}
@@ -219,94 +216,89 @@ export function TaskBoard({
         </div>
 
         <div className="p-2 md:p-4 space-y-1.5">
-          <AnimatePresence mode="popLayout">
-            {tasks.length === 0 ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <EmptyState
-                  icon={<Check className="w-12 h-12" />}
-                  title="Nada para hoje"
-                  description={tarefasPadrao?.length ? 'Gere a lista padrão e ajuste o que precisar.' : 'Cadastre acima a primeira tarefa do dia.'}
-                  action={tarefasPadrao?.length ? (
-                    <Button variant="dark" size="lg" onClick={gerarPadrao}>{rotuloPadrao}</Button>
-                  ) : undefined}
-                />
-              </motion.div>
-            ) : (
-              tasks.map(task => (
-                <motion.div
-                  key={task.id}
-                  layout
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className={cn(
-                    'group flex items-start gap-3 p-3 rounded-card border transition-colors',
-                    task.completed ? 'bg-success-soft border-success/25' : 'bg-surface border-line'
-                  )}
+          {tasks.length === 0 ? (
+            <div className="motion-safe:animate-[aparece_.2s_ease-out]">
+              <EmptyState
+                icon={<Check className="w-12 h-12" />}
+                title="Nada para hoje"
+                description={tarefasPadrao?.length ? 'Gere a lista padrão e ajuste o que precisar.' : 'Cadastre acima a primeira tarefa do dia.'}
+                action={tarefasPadrao?.length ? (
+                  <Button variant="dark" size="lg" onClick={gerarPadrao}>{rotuloPadrao}</Button>
+                ) : undefined}
+              />
+            </div>
+          ) : (
+            tasks.map(task => (
+              <div
+                key={task.id}
+                className={cn(
+                  'group flex items-start gap-3 p-3 rounded-card border transition-colors',
+                  'motion-safe:animate-[surge_.18s_ease-out]',
+                  task.completed ? 'bg-success-soft border-success/25' : 'bg-surface border-line'
+                )}
+              >
+                {/* alvo de toque grande: marcar é a ação mais frequente */}
+                <button
+                  onClick={() => toggleTask(task.id)}
+                  aria-label={task.completed ? `Desmarcar ${task.title}` : `Concluir ${task.title}`}
+                  aria-pressed={task.completed}
+                  className="w-11 h-11 shrink-0 flex items-center justify-center rounded-control active:scale-90 transition-transform"
                 >
-                  {/* alvo de toque grande: marcar é a ação mais frequente */}
-                  <button
-                    onClick={() => toggleTask(task.id)}
-                    aria-label={task.completed ? `Desmarcar ${task.title}` : `Concluir ${task.title}`}
-                    aria-pressed={task.completed}
-                    className="w-11 h-11 shrink-0 flex items-center justify-center rounded-control active:scale-90 transition-transform"
-                  >
-                    <span className={cn('w-7 h-7 rounded-badge flex items-center justify-center border-2 transition-colors',
-                      task.completed ? 'bg-success border-success' : 'border-line-strong')}>
-                      <motion.span animate={{ scale: task.completed ? 1 : 0 }}>
-                        <Check className="w-4 h-4 text-white" strokeWidth={3} />
-                      </motion.span>
+                  <span className={cn('w-7 h-7 rounded-badge flex items-center justify-center border-2 transition-colors',
+                    task.completed ? 'bg-success border-success' : 'border-line-strong')}>
+                    <span className={cn('transition-transform', task.completed ? 'scale-100' : 'scale-0')}>
+                      <Check className="w-4 h-4 text-white" strokeWidth={3} />
                     </span>
-                  </button>
+                  </span>
+                </button>
 
-                  <div className="flex-1 min-w-0 pt-2.5">
-                    {editingTaskId === task.id ? (
-                      <Input
-                        value={editingTitle}
-                        onChange={e => setEditingTitle(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && saveEditing()}
-                        onBlur={saveEditing}
-                        autoFocus
-                        className="py-2"
-                      />
-                    ) : (
-                      <p
-                        onDoubleClick={() => startEditing(task)}
-                        className={cn('text-sm font-medium leading-snug break-words',
-                          task.completed ? 'text-success-ink/70 line-through' : 'text-ink')}
-                      >
-                        {task.title}
-                      </p>
-                    )}
-                  </div>
+                <div className="flex-1 min-w-0 pt-2.5">
+                  {editingTaskId === task.id ? (
+                    <Input
+                      value={editingTitle}
+                      onChange={e => setEditingTitle(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && saveEditing()}
+                      onBlur={saveEditing}
+                      autoFocus
+                      className="py-2"
+                    />
+                  ) : (
+                    <p
+                      onDoubleClick={() => startEditing(task)}
+                      className={cn('text-sm font-medium leading-snug break-words',
+                        task.completed ? 'text-success-ink/70 line-through' : 'text-ink')}
+                    >
+                      {task.title}
+                    </p>
+                  )}
+                </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {task.photo_url ? (
-                      <IconButton tone="info" onClick={() => setViewingPhoto(task.photo_url!)} aria-label="Ver foto">
-                        <Eye className="w-5 h-5" />
-                      </IconButton>
-                    ) : (
-                      <IconButton onClick={() => openCamera(task.id)} aria-label="Adicionar foto">
-                        <Camera className="w-5 h-5" />
-                      </IconButton>
-                    )}
+                <div className="flex items-center gap-1 shrink-0">
+                  {task.photo_url ? (
+                    <IconButton tone="info" onClick={() => setViewingPhoto(task.photo_url!)} aria-label="Ver foto">
+                      <Eye className="w-5 h-5" />
+                    </IconButton>
+                  ) : (
+                    <IconButton onClick={() => openCamera(task.id)} aria-label="Adicionar foto">
+                      <Camera className="w-5 h-5" />
+                    </IconButton>
+                  )}
 
-                    {editingTaskId === task.id ? (
-                      <>
-                        <IconButton tone="success" onClick={saveEditing} aria-label="Salvar"><Check className="w-5 h-5" /></IconButton>
-                        <IconButton onClick={cancelEditing} aria-label="Cancelar"><X className="w-5 h-5" /></IconButton>
-                      </>
-                    ) : (
-                      <>
-                        <IconButton onClick={() => startEditing(task)} aria-label="Editar" className="hidden sm:inline-flex"><Edit2 className="w-4 h-4" /></IconButton>
-                        <IconButton tone="danger" onClick={() => deleteTask(task.id)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></IconButton>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
+                  {editingTaskId === task.id ? (
+                    <>
+                      <IconButton tone="success" onClick={saveEditing} aria-label="Salvar"><Check className="w-5 h-5" /></IconButton>
+                      <IconButton onClick={cancelEditing} aria-label="Cancelar"><X className="w-5 h-5" /></IconButton>
+                    </>
+                  ) : (
+                    <>
+                      <IconButton onClick={() => startEditing(task)} aria-label="Editar" className="hidden sm:inline-flex"><Edit2 className="w-4 h-4" /></IconButton>
+                      <IconButton tone="danger" onClick={() => deleteTask(task.id)} aria-label="Excluir"><Trash2 className="w-4 h-4" /></IconButton>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </PageShell>

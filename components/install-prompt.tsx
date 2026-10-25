@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Download, X, Share, PlusSquare, Smartphone } from 'lucide-react';
 
 interface InstallPromptProps {
@@ -118,10 +117,8 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
 
   // --- MODO 2: BANNER (SUTIL NO RODAPÉ) ---
   return (
-    <motion.div
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      className={`fixed left-0 right-0 z-[99999] bg-surface-raised border-t border-surface-raised-soft p-4 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:hidden ${
+    <div
+      className={`fixed left-0 right-0 z-[99999] motion-safe:animate-[surge_.25s_ease-out] bg-surface-raised border-t border-surface-raised-soft p-4 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:hidden ${
         acimaDaBarra
           ? 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]'
           : 'bottom-0 pb-8 md:pb-4'
@@ -145,6 +142,6 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
         )}
         <button onClick={dispensar} aria-label="Fechar" className="p-1 text-ink-muted hover:text-white transition-colors"><X className="w-5 h-5" /></button>
       </div>
-    </motion.div>
+    </div>
   );
 }
