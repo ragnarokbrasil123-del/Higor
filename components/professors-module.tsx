@@ -9,7 +9,7 @@ import {
   apagarConta, atualizarAtivo, definirLogin, lerEquipe,
   removerLogin, salvarProfessor, semearProfessores,
 } from '@/lib/equipe';
-import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, TD, TH, THead, TR, Toggle , avisarErro, avisar, confirmar } from '@/components/ui';
 
 type Shift = { start: string; end: string };
 type DaySchedule = { enabled: boolean; shifts: Shift[] };
@@ -184,7 +184,7 @@ export function ProfessorsModule() {
     try {
       setProfessors(await lerEquipe('teacher') as Professor[]);
     } catch (e: any) {
-      alert(e?.message || 'Não consegui carregar os professores.');
+      avisar(e?.message || 'Não consegui carregar os professores.');
     }
     setLoading(false);
   };
@@ -205,7 +205,7 @@ export function ProfessorsModule() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) return alert('Digite o nome do professor.');
+    if (!form.name.trim()) return avisar('Digite o nome do professor.');
     setSaving(true);
     try {
       await salvarProfessor({
@@ -216,7 +216,7 @@ export function ProfessorsModule() {
       });
     } catch (e: any) {
       setSaving(false);
-      return alert('Erro ao salvar: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar: ' + (e?.message || ''));
     }
     setSaving(false);
     setModalOpen(false);
@@ -224,11 +224,13 @@ export function ProfessorsModule() {
   };
 
   const handleDelete = async (p: Professor) => {
-    if (!confirm(`Excluir o professor ${p.name || p.username || ''}? Essa ação não pode ser desfeita.`)) return;
+    if (!await confirmar(`${p.name || p.username || 'Este professor'} sai do cadastro. Não há como desfazer.`, {
+      titulo: 'Excluir professor?', acao: 'Excluir', perigo: true,
+    })) return;
     try {
       await apagarConta(p.id);
     } catch (e: any) {
-      return alert('Erro ao excluir: ' + (e?.message || ''));
+      return avisarErro('Erro ao excluir: ' + (e?.message || ''));
     }
     setProfessors(professors.filter(x => x.id !== p.id));
   };
@@ -239,7 +241,7 @@ export function ProfessorsModule() {
     try {
       await atualizarAtivo(p.id, next);
     } catch (e: any) {
-      alert('Erro ao atualizar status: ' + (e?.message || ''));
+      avisarErro('Erro ao atualizar status: ' + (e?.message || ''));
       fetchProfessors();
     }
   };
@@ -247,13 +249,13 @@ export function ProfessorsModule() {
   const saveAccess = async () => {
     if (!form.id) return;
     const u = accessUser.toLowerCase().trim();
-    if (!u || !accessPass.trim()) return alert('Preencha usuário e senha.');
+    if (!u || !accessPass.trim()) return avisar('Preencha usuário e senha.');
     setAccessBusy(true);
     try {
       await definirLogin(form.id, u, accessPass.trim());
     } catch (e: any) {
       setAccessBusy(false);
-      return alert('Erro ao salvar acesso: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar acesso: ' + (e?.message || ''));
     }
     setAccessBusy(false);
     setShowAccessForm(false); setAccessUser(''); setAccessPass('');
@@ -262,23 +264,25 @@ export function ProfessorsModule() {
 
   const removeAccess = async () => {
     if (!form.id) return;
-    if (!confirm('Remover o login deste professor? Ele não conseguirá mais entrar no sistema.')) return;
+    if (!await confirmar('Ele não conseguirá mais entrar no sistema.', { titulo: 'Remover o login?', acao: 'Remover login', perigo: true })) return;
     try {
       await removerLogin(form.id);
     } catch (e: any) {
-      return alert('Erro: ' + (e?.message || ''));
+      return avisarErro('Erro: ' + (e?.message || ''));
     }
     fetchProfessors();
   };
 
   const seedInitial = async () => {
-    if (!confirm(`Cadastrar os ${INITIAL_PROFESSORS.length} professores da lista inicial com os horários?`)) return;
+    if (!await confirmar(`Serão criados ${INITIAL_PROFESSORS.length} professores com os horários da lista.`, {
+      titulo: 'Importar lista inicial?', acao: 'Importar',
+    })) return;
     setSeeding(true);
     try {
       await semearProfessores(INITIAL_PROFESSORS.map(p => ({ name: p.name, schedule: p.schedule })));
     } catch (e: any) {
       setSeeding(false);
-      return alert('Erro ao importar: ' + (e?.message || ''));
+      return avisarErro('Erro ao importar: ' + (e?.message || ''));
     }
     setSeeding(false);
     fetchProfessors();

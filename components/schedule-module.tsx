@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { CapLevel, levels, capLevelOrder, CAPACIDADE_TOUCA, NIVEL_UNICO, GRUPO_VERDE_MAIS } from '@/types';
 import { cn } from '@/lib/utils';
 import { lecionaEm, rotuloProfessor } from '@/lib/professor';
-import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle } from '@/components/ui';
+import { Button, Chip, ChipRow, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, Select, Toggle , avisarErro, avisar, confirmar } from '@/components/ui';
 
 interface ClassSlot {
   id: string;
@@ -171,24 +171,24 @@ export function ScheduleModule() {
   const handleCreateClass = async (e: React.FormEvent) => {
     invalidarGrade();
     e.preventDefault();
-    if (!form.teacher_name.trim()) return alert('Selecione o professor.');
-    if (form.days_of_week.length === 0) return alert('Selecione pelo menos um dia da semana.');
+    if (!form.teacher_name.trim()) return avisar('Selecione o professor.');
+    if (form.days_of_week.length === 0) return avisar('Selecione pelo menos um dia da semana.');
 
     const totalSlots = Object.values(form.slots).reduce((a, b) => a + b, 0);
-    if (totalSlots === 0) return alert('Adicione pelo menos 1 vaga de aluno para essa turma.');
+    if (totalSlots === 0) return avisar('Adicione pelo menos 1 vaga de aluno para essa turma.');
 
     const niveisUnicoAtivos = NIVEL_UNICO.filter(k => form.slots[k] > 0);
     if (niveisUnicoAtivos.length > 1) {
-      return alert('Amarela, Laranja e Vermelha são turmas de nível único — escolha só uma dessas toucas.');
+      return avisar('Amarela, Laranja e Vermelha são turmas de nível único — escolha só uma dessas toucas.');
     }
     for (const k of NIVEL_UNICO) {
       if (form.slots[k] > CAPACIDADE_TOUCA[k]) {
-        return alert(`Touca ${levels[k].label} pode ter no máximo ${CAPACIDADE_TOUCA[k]} vagas por turma.`);
+        return avisar(`Touca ${levels[k].label} pode ter no máximo ${CAPACIDADE_TOUCA[k]} vagas por turma.`);
       }
     }
     const somaVerdeMais = GRUPO_VERDE_MAIS.reduce((s, k) => s + form.slots[k], 0);
     if (somaVerdeMais > 9) {
-      return alert('Verde em diante pode ter no máximo 9 vagas por turma, somando todas as toucas dessa faixa.');
+      return avisar('Verde em diante pode ter no máximo 9 vagas por turma, somando todas as toucas dessa faixa.');
     }
 
     setIsSubmitting(true);
@@ -220,7 +220,7 @@ export function ScheduleModule() {
       setForm({ ...form, teacher_name: '', days_of_week: ['Segunda-feira'], slots: emptySlots() });
     } catch (err: any) {
       console.error(err);
-      alert('Erro ao criar turma: ' + (err.message || 'desconhecido'));
+      avisarErro('Erro ao criar turma: ' + (err.message || 'desconhecido'));
     } finally {
       setIsSubmitting(false);
     }
@@ -228,7 +228,7 @@ export function ScheduleModule() {
 
   const handleDeleteClass = async (id: string) => {
     invalidarGrade();
-    if (!confirm('Apagar essa turma inteira e todas as suas vagas?')) return;
+    if (!await confirmar('A turma e todas as vagas dela serão apagadas.', { titulo: 'Apagar turma?', acao: 'Apagar', perigo: true })) return;
     await supabase.from('class_slots').delete().eq('class_id', id);
     await supabase.from('classes').delete().eq('id', id);
     loadClasses();

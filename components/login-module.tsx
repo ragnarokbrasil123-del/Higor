@@ -1,5 +1,6 @@
 'use client';
 
+import { avisar } from '@/components/ui';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -143,7 +144,7 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
   };
 
   const handleForgotPassword = () => {
-    alert("Para sua segurança, as senhas só podem ser redefinidas presencialmente ou pelo WhatsApp oficial da recepção do Clube Olimpo. Por favor, entre em contato conosco!");
+    avisar("Para sua segurança, as senhas só podem ser redefinidas presencialmente ou pelo WhatsApp oficial da recepção do Clube Olimpo. Por favor, entre em contato conosco!");
   };
 
   return (

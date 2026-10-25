@@ -13,7 +13,7 @@ import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
-import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar } from '@/components/ui';
 
 interface StudentRow {
   id: string;
@@ -145,8 +145,12 @@ export function StudentsModule() {
     !!editing && !!original && CAMPOS.some(c => (editing[c] ?? '') !== (original[c] ?? ''));
 
   /** Fecha a ficha, mas não deixa perder texto digitado em silêncio. */
-  const fecharFicha = () => {
-    if (temMudanca() && !confirm('Você alterou a ficha e ainda não salvou. Fechar mesmo assim e perder as alterações?')) return;
+  // virou `async` porque o diálogo agora devolve Promise. Segue
+  // servindo direto como onClick, que aceita handler assíncrono.
+  const fecharFicha = async () => {
+    if (temMudanca() && !await confirmar('As alterações que você fez na ficha serão perdidas.', {
+      titulo: 'Fechar sem salvar?', acao: 'Fechar sem salvar', perigo: true,
+    })) return;
     setEditing(null);
     setOriginal(null);
   };
@@ -154,7 +158,7 @@ export function StudentsModule() {
   // ------------------------------------------------ salvar dados
   const salvar = async () => {
     if (!editing) return;
-    if (!editing.name.trim()) return alert('O nome é obrigatório.');
+    if (!editing.name.trim()) return avisar('O nome é obrigatório.');
     setSaving(true);
     try {
       await atualizarAlunos(editing.id, {
@@ -170,7 +174,7 @@ export function StudentsModule() {
       });
     } catch (e: any) {
       setSaving(false);
-      return alert('Erro ao salvar: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar: ' + (e?.message || ''));
     }
     setSaving(false);
     await fetchAll();
@@ -187,12 +191,15 @@ export function StudentsModule() {
    */
   const cancelarMatricula = async (s: StudentRow) => {
     invalidarGrade();
-    const motivo = prompt(
-      `Cancelar a matrícula de ${s.name}?\n\n` +
-      'A ficha, as avaliações e o histórico de touca são mantidos — só a vaga na turma é liberada.\n\n' +
-      'Motivo (opcional):'
+    const motivo = await perguntar(
+      'A ficha, as avaliações e o histórico de touca são mantidos — só a vaga na turma é liberada.',
+      {
+        titulo: `Cancelar a matrícula de ${s.name}?`,
+        acao: 'Cancelar matrícula',
+        rotulo: 'Motivo (opcional)',
+      }
     );
-    if (motivo === null) return; // clicou em cancelar no diálogo
+    if (motivo === null) return; // fechou o diálogo sem confirmar
 
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
     try {
@@ -202,7 +209,7 @@ export function StudentsModule() {
         inativo_motivo: motivo.trim() || null,
       });
     } catch (e: any) {
-      return alert('Erro ao cancelar: ' + (e?.message || ''));
+      return avisarErro('Erro ao cancelar: ' + (e?.message || ''));
     }
     setEditing(null);
     setOriginal(null);
@@ -214,12 +221,12 @@ export function StudentsModule() {
     try {
       await atualizarAlunos(s.id, { ativo: true, inativo_em: null, inativo_motivo: null });
     } catch (e: any) {
-      return alert('Erro ao reativar: ' + (e?.message || ''));
+      return avisarErro('Erro ao reativar: ' + (e?.message || ''));
     }
     setEditing(e => (e ? { ...e, ativo: true, inativo_em: null, inativo_motivo: null } : e));
     setOriginal(o => (o ? { ...o, ativo: true, inativo_em: null, inativo_motivo: null } : o));
     fetchAll();
-    alert(`${s.name} voltou para a lista de ativos. Escolha a turma dele aqui na ficha.`);
+    avisar(`${s.name} voltou para a lista de ativos. Escolha a turma dele aqui na ficha.`);
   };
 
   /**
@@ -229,17 +236,17 @@ export function StudentsModule() {
    */
   const excluir = async (s: StudentRow) => {
     invalidarGrade();
-    if (!confirm(
-      `APAGAR ${s.name} de vez?\n\n` +
-      'As avaliações dele serão apagadas junto e não há como desfazer.\n\n' +
-      'Se a pessoa apenas saiu da escola, use "Cancelar matrícula" — ela mantém o histórico.'
+    if (!await confirmar(
+      'As avaliações dele serão apagadas junto, e não há como desfazer.\n\n' +
+      'Se a pessoa apenas saiu da escola, use "Cancelar matrícula" — ela mantém o histórico.',
+      { titulo: `Apagar ${s.name} de vez?`, acao: 'Apagar de vez', perigo: true }
     )) return;
     await supabase.from('class_slots').update({ student_id: null }).eq('student_id', s.id);
     await supabase.from('evaluations').delete().eq('student_id', s.id);
     try {
       await apagarAluno(s.id);
     } catch (e: any) {
-      return alert('Erro ao excluir: ' + (e?.message || ''));
+      return avisarErro('Erro ao excluir: ' + (e?.message || ''));
     }
     setEditing(null);
     setOriginal(null);
@@ -250,7 +257,7 @@ export function StudentsModule() {
   const sairDaTurma = async (slotId: string) => {
     invalidarGrade();
     const { error } = await supabase.from('class_slots').update({ student_id: null }).eq('id', slotId);
-    if (error) return alert('Erro: ' + error.message);
+    if (error) return avisarErro('Erro: ' + error.message);
     setSlots(prev => prev.map(s => (s.id === slotId ? { ...s, student_id: null } : s)));
   };
 
@@ -258,7 +265,7 @@ export function StudentsModule() {
     invalidarGrade();
     if (!editing) return;
     const { error } = await supabase.from('class_slots').update({ student_id: editing.id }).eq('id', slotId);
-    if (error) return alert('Erro: ' + error.message);
+    if (error) return avisarErro('Erro: ' + error.message);
     setSlots(prev => prev.map(s => (s.id === slotId ? { ...s, student_id: editing.id } : s)));
     setShowAdd(false);
   };

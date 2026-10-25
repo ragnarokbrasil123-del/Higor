@@ -1,5 +1,6 @@
 'use client';
 
+import { avisarErro, avisar } from '@/components/ui/Avisos';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { atualizarAlunos } from '@/lib/alunos';
@@ -152,7 +153,7 @@ export function useFilaAvaliacao({ view, alunoPorId, grupos, avaliadoAgora, reca
     if (!alunoAtual) return;
 
     if (!pular) {
-      if (marcados === 0) return alert('Marque pelo menos um critério, ou use "Pular".');
+      if (marcados === 0) return avisar('Marque pelo menos um critério, ou use "Pular".');
       setSalvando(true);
       const aprovado = passou === criterios.length && criterios.length > 0;
       try {
@@ -169,7 +170,7 @@ export function useFilaAvaliacao({ view, alunoPorId, grupos, avaliadoAgora, reca
         });
       } catch (e: any) {
         setSalvando(false);
-        return alert('Erro ao salvar: ' + (e?.message || ''));
+        return avisarErro('Erro ao salvar: ' + (e?.message || ''));
       }
 
       // A regra de promoção não muda: passou em todos -> sobe uma touca.

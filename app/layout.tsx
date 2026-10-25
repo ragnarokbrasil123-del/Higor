@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Avisos } from "@/components/ui";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -52,7 +53,13 @@ export default function RootLayout({
         */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+        {/* Host dos avisos e diálogos. Fica aqui, e não na página,
+            porque o portal dos pais e a tela de login renderizam
+            fora da casca principal e também precisam avisar. */}
+        <Avisos />
+      </body>
     </html>
   );
 }

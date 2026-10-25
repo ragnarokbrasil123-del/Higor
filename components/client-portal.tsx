@@ -16,7 +16,7 @@ import { ConsentimentoPortal } from '@/components/consentimento-portal';
 import { avisoPronto, VERSAO_AVISO } from '@/lib/aviso-privacidade';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
-import { EmptyState } from '@/components/ui';
+import { EmptyState , avisar } from '@/components/ui';
 
 /** O que o login traz da linha de students (ver COLUNAS_PORTAL). */
 type AlunoLogado = Student & {
@@ -105,9 +105,9 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     try {
       await ativarAvisos(filhos[0]?.phone || '');
       setAvisosOn(true);
-      alert('Pronto! Você será avisado assim que sair uma nova avaliação. 🔔');
+      avisar('Pronto! Você será avisado assim que sair uma nova avaliação. 🔔');
     } catch (e: any) {
-      alert(e.message || 'Não consegui ativar os avisos.');
+      avisar(e.message || 'Não consegui ativar os avisos.');
     } finally {
       setAtivando(false);
     }

@@ -8,7 +8,7 @@ import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { criarAlunos, lerAlunos } from '@/lib/alunos';
 import { cn } from '@/lib/utils';
-import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR } from '@/components/ui';
+import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR , avisarErro, avisar } from '@/components/ui';
 
 // ===================== Helpers de importação em massa =====================
 const stripAccents = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '');
@@ -198,14 +198,14 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
       ]);
     } catch (e: any) {
       setLoading(false);
-      return alert('Erro ao salvar no banco: ' + (e?.message || ''));
+      return avisarErro('Erro ao salvar no banco: ' + (e?.message || ''));
     }
 
     setLoading(false);
 
     setName(''); setAge(''); setLevel('orange'); setGuardianName(''); setPhone(''); setPassword('');
     fetchAllStudents();
-    alert('Aluno matriculado com sucesso!\n\nPara definir o dia e o horário dele, abra a aba "Alunos" e clique em "Abrir ficha".');
+    avisar('Aluno matriculado com sucesso!\n\nPara definir o dia e o horário dele, abra a aba "Alunos" e clique em "Abrir ficha".');
   };
 
   // ---- Importação em massa ----

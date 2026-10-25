@@ -1,5 +1,6 @@
 'use client';
 
+import { avisarErro, confirmar } from '@/components/ui/Avisos';
 import { lerAvaliacoesCompletas, lerTurmas, lerVagas } from '@/lib/dados';
 import { useEffect, useState } from 'react';
 import { lerAlunos } from '@/lib/alunos';
@@ -92,13 +93,13 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
   };
 
   const apagarAvaliacao = async (id: string) => {
-    if (!confirm('Apagar permanentemente esta avaliação do histórico?')) return;
+    if (!await confirmar('Esta avaliação sai do histórico do aluno e não há como desfazer.', { titulo: 'Apagar avaliação?', acao: 'Apagar', perigo: true })) return;
     try {
       // a rota registra no audit_log DE QUEM era a avaliação antes de
       // apagar: senão apagar a avaliação apagaria o rastro de quem errou
       await removerAvaliacao(id);
     } catch (e: any) {
-      return alert('Erro ao apagar: ' + (e?.message || ''));
+      return avisarErro('Erro ao apagar: ' + (e?.message || ''));
     }
     recarregarAvaliacoes();
   };

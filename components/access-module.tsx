@@ -17,6 +17,7 @@ import {
 import {
   Badge, Button, Card, EmptyState, IconButton, Input, Label, Loading,
   Modal, PageHeader, PageShell, Select,
+  avisar, avisarErro, confirmar,
 } from '@/components/ui';
 import {
   CONVITE_DIAS_VALIDADE, LOGIN_PROFESSOR_LIBERADO, conviteExpirado,
@@ -74,12 +75,12 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
       await navigator.clipboard.writeText(codigo);
       setCopiado(codigo);
       setTimeout(() => setCopiado(null), 2000);
-    } catch { alert('Não consegui copiar. O código é: ' + codigo); }
+    } catch { avisarErro('Não consegui copiar. O código é: ' + codigo); }
   };
 
   const enviarConvite = async () => {
     const nomeFinal = alvo === 'novo' ? nome.trim() : (contas?.find(c => c.id === alvo)?.name ?? '');
-    if (!nomeFinal) return alert('Informe o nome da pessoa.');
+    if (!nomeFinal) return avisar('Informe o nome da pessoa.');
 
     setSalvando(true);
     // O CÓDIGO é gerado no servidor, não aqui: se o navegador escolhesse o
@@ -94,7 +95,7 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
       });
     } catch (e: any) {
       setSalvando(false);
-      return alert('Erro ao convidar: ' + (e?.message || ''));
+      return avisarErro('Erro ao convidar: ' + (e?.message || ''));
     }
 
     setSalvando(false);
@@ -104,21 +105,25 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
   };
 
   const novoCodigo = async (c: Conta) => {
-    if (!confirm(`Gerar um código novo para ${c.name}? O código anterior deixa de funcionar.`)) return;
+    if (!await confirmar(`O código anterior de ${c.name} deixa de funcionar.`, {
+      titulo: 'Gerar um código novo?', acao: 'Gerar novo',
+    })) return;
     try {
       await pedirCodigoNovo(c.id);
     } catch (e: any) {
-      return alert('Erro: ' + (e?.message || ''));
+      return avisarErro('Erro: ' + (e?.message || ''));
     }
     carregar();
   };
 
   const revogar = async (c: Conta) => {
-    if (!confirm(`Cortar o acesso de ${c.name || c.username}? A pessoa deixa de entrar imediatamente.`)) return;
+    if (!await confirmar(`${c.name || c.username} deixa de entrar imediatamente.`, {
+      titulo: 'Cortar o acesso?', acao: 'Cortar acesso', perigo: true,
+    })) return;
     try {
       await revogarAcesso(c.id);
     } catch (e: any) {
-      return alert('Erro: ' + (e?.message || ''));
+      return avisarErro('Erro: ' + (e?.message || ''));
     }
     carregar();
   };
@@ -130,7 +135,7 @@ export function AccessModule({ meuNome }: { meuNome: string }) {
       // liberação no nome de outra pessoa.
       await reativarAcesso(c.id, meuNome);
     } catch (e: any) {
-      return alert('Erro: ' + (e?.message || ''));
+      return avisarErro('Erro: ' + (e?.message || ''));
     }
     carregar();
   };

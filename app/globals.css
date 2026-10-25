@@ -101,3 +101,10 @@ html, body {
   background: var(--color-line-strong);
   border-radius: 10px;
 }
+
+/* Entrada dos avisos e diálogos. Curta e discreta — e só roda para
+   quem não pediu "reduzir movimento" (a classe usa motion-safe). */
+@keyframes subir {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to   { opacity: 1; transform: translateY(0); }
+}

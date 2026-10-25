@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { LoginModule } from '@/components/login-module';
 import { InstallPrompt } from '@/components/install-prompt';
-import { Loading } from '@/components/ui';
+import { Loading , avisar } from '@/components/ui';
 import { Droplets, ClipboardList, UserPlus, GraduationCap, LogOut, Wrench, BellRing, AlertTriangle, X, CalendarDays, Users, Sparkles, CalendarClock, LayoutDashboard, ShieldCheck, Waves, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
@@ -326,9 +326,9 @@ export default function Page() {
   const activateNotifications = async () => {
     try {
       await ativarAvisos('', 'admin');
-      alert('🔔 Pronto! Este aparelho vai receber os chamados.');
+      avisar('🔔 Pronto! Este aparelho vai receber os chamados.');
     } catch (err: any) {
-      alert(err?.message || 'Não consegui ativar os avisos neste aparelho.');
+      avisar(err?.message || 'Não consegui ativar os avisos neste aparelho.');
     }
   };
 
