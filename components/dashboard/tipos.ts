@@ -22,6 +22,11 @@ export type Aval = {
   date: string;
   level: CapLevel;
   approved: boolean;
+  /**
+   * Quem lançou. Nulo nas avaliações anteriores ao registro de autoria
+   * (as 431 que já existiam em 24/10/2026).
+   */
+  avaliador_nome: string | null;
 };
 
 export type Turma = { id: string; day_of_week: string; start_time: string; teacher_name: string };

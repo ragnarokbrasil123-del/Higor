@@ -16,6 +16,8 @@ interface AvaliacaoPDF {
   scores?: Record<string, string> | null;
   notes?: string | null;
   approved?: boolean | null;
+  /** Quem lançou. Nulo nas avaliações anteriores ao registro de autoria. */
+  avaliador_nome?: string | null;
 }
 
 /** Gera e baixa o boletim trimestral em PDF. Usado pela Avaliação e pelo Portal dos Pais. */
@@ -96,6 +98,21 @@ export async function gerarBoletimPDF(evaluation: AvaliacaoPDF, alunoNome: strin
   doc.setFontSize(16);
   if (isApproved) { doc.setTextColor(21, 128, 61); doc.text('PARABÉNS! ALUNO APROVADO!', 105, y + 16, { align: 'center' }); }
   else { doc.setTextColor(185, 28, 28); doc.text('CONTINUAR PRATICANDO NO PRÓXIMO TRIMESTRE', 105, y + 16, { align: 'center' }); }
+
+  /*
+   * Quem avaliou, no rodapé.
+   *
+   * Vai depois do bloco de resultado e em cinza pequeno: para o
+   * responsável é informação de procedência ("quem olhou meu filho"),
+   * não o assunto do boletim. Some quando a avaliação é antiga e não
+   * tem autoria registrada — melhor nada do que um campo vazio.
+   */
+  if (evaluation.avaliador_nome) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(148, 163, 184);
+    doc.text(`Avaliação realizada por ${evaluation.avaliador_nome}`, 105, y + 33, { align: 'center' });
+  }
 
   doc.save(`Boletim_${alunoNome.replace(/\s+/g, '_')}_${new Date(evaluation.date).getFullYear()}.pdf`);
 }

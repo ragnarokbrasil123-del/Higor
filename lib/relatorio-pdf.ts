@@ -8,6 +8,8 @@ export interface LinhaRelatorio {
   aulas: string;
   responsavel: string;
   situacao: 'Aprovado' | 'Em treinamento' | 'Pendente';
+  /** Quem lançou a avaliação. Vazio em quem está pendente. */
+  avaliador?: string | null;
 }
 
 /** Cor e texto (mais curto, pra caber na coluna) de cada situação. */
@@ -20,18 +22,41 @@ const SITUACAO_PDF: Record<LinhaRelatorio['situacao'], { texto: string; cor: [nu
 const truncar = (s: string, max: number) => (s.length > max ? s.slice(0, max - 1) + '…' : s);
 
 /**
+ * Encurta o nome de quem avaliou para caber na coluna.
+ *
+ * Os nomes da equipe são completos ("LETÍCIA TOLEDO DO ESPIRITO SANTOS")
+ * e cortados viram "LETÍCIA TOLEDO DO ESP…", que não ajuda ninguém.
+ * Primeiro nome + inicial do segundo identifica sem ambiguidade — os
+ * dez professores têm primeiros nomes distintos, e a inicial cobre o
+ * dia em que isso deixar de ser verdade.
+ */
+function nomeCurto(nome?: string | null): string {
+  const partes = String(nome || '').trim().split(/\s+/).filter(Boolean);
+  if (!partes.length) return '—';
+  const primeiro = partes[0];
+  const titulo = (p: string) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+  return partes.length === 1 ? titulo(primeiro) : `${titulo(primeiro)} ${partes[1].charAt(0).toUpperCase()}.`;
+}
+
+/**
  * Gera e baixa um relatório de alunos em PDF, com os filtros escolhidos
  * descritos no topo — usado pelo botão "Gerar relatório" do Painel.
  */
 export async function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFiltros: string) {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF();
+  /*
+   * Seis colunas em 186mm úteis (x de 12 a 198). As larguras foram
+   * reapertadas para caber "Avaliado por" sem estourar a folha —
+   * `max` é em caracteres, e a fonte 8 do corpo rende ~1,7mm por letra.
+   */
   const COLS = [
-    { titulo: 'Aluno', x: 12, max: 32 },
-    { titulo: 'Touca', x: 68, max: 10 },
-    { titulo: 'Turma(s)', x: 90, max: 26 },
-    { titulo: 'Responsável', x: 140, max: 24 },
-    { titulo: 'Avaliação', x: 180, max: 10 },
+    { titulo: 'Aluno', x: 12, max: 26 },
+    { titulo: 'Touca', x: 57, max: 9 },
+    { titulo: 'Turma(s)', x: 74, max: 20 },
+    { titulo: 'Responsável', x: 109, max: 17 },
+    { titulo: 'Avaliação', x: 141, max: 10 },
+    { titulo: 'Avaliado por', x: 162, max: 20 },
   ];
 
   doc.setFillColor(248, 250, 252);
@@ -99,6 +124,12 @@ export async function gerarRelatorioAlunosPDF(linhas: LinhaRelatorio[], resumoFi
     doc.setTextColor(...cor);
     doc.setFont('helvetica', 'bold');
     doc.text(texto, COLS[4].x, y);
+
+    // quem avaliou, em cinza: é informação de apoio, não compete com o resultado
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(truncar(nomeCurto(linha.avaliador), COLS[5].max), COLS[5].x, y);
+
     y += 8;
   });
 

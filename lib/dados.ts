@@ -43,7 +43,7 @@ const COLUNAS_VAGAS = '*';
  * obrigar o Painel a baixar todos os critérios de todo mundo ficaria
  * caro rápido.
  */
-const COLUNAS_AVAL_RESUMO = 'id, student_id, date, level, approved';
+const COLUNAS_AVAL_RESUMO = 'id, student_id, date, level, approved, avaliador_nome';
 const COLUNAS_AVAL_COMPLETO = '*';
 
 /**

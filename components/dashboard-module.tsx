@@ -198,6 +198,8 @@ export function DashboardModule() {
           aulas: aulasDoAluno(a.id).map(t => `${t.day_of_week.split('-')[0]} ${t.start_time.slice(0, 5)}`).join(' / ') || 'sem turma',
           responsavel: a.guardian_name || '—',
           situacao,
+          // quem lançou a avaliação do trimestre; vazio em quem está pendente
+          avaliador: ultima?.avaliador_nome ?? null,
         };
       });
 
