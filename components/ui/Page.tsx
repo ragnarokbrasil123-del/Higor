@@ -59,7 +59,7 @@ export function PageHeader({ icon: Icon, title, description, metric, action }: P
   return (
     <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0 flex-1">
-        <h1 className="text-xl md:text-2xl font-black text-ink flex items-center gap-2 text-balance">
+        <h1 className="font-titulo text-xl md:text-2xl font-semibold text-ink flex items-center gap-2 text-balance">
           {Icon && <Icon className="w-6 h-6 md:w-7 md:h-7 text-brand shrink-0" />}
           {title}
         </h1>
@@ -71,7 +71,7 @@ export function PageHeader({ icon: Icon, title, description, metric, action }: P
           {action && <div className="[&>*]:w-full sm:[&>*]:w-auto">{action}</div>}
           {metric && (
             <Card className="px-5 py-3 shrink-0">
-              <p className="text-2xl font-black text-ink leading-none tabular-nums">
+              <p className="font-titulo numero text-2xl font-bold text-ink leading-none">
                 {metric.value}
                 {metric.of !== undefined && <span className="text-ink-subtle"> / {metric.of}</span>}
               </p>

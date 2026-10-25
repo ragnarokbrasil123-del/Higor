@@ -92,19 +92,19 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
         <p className="text-ink-on-dark text-sm mb-10 max-w-[280px]">Tenha o Clube Olimpo na tela do seu celular para acesso ultra-rápido à sua ficha.</p>
 
         {isIOS ? (
-           <div className="bg-white/10 border border-white/20 p-6 rounded-3xl w-full max-w-sm flex flex-col items-center gap-4">
+           <div className="bg-white/10 border border-white/20 p-6 rounded-panel w-full max-w-sm flex flex-col items-center gap-4">
              <p className="text-white text-sm font-bold">No seu iPhone, siga os 2 passos:</p>
-             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-xl w-full">
+             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-control w-full">
                <Share className="w-6 h-6 text-brand-bright shrink-0" /> 
                <span className="text-xs text-left">1. Toque em <b>Compartilhar</b> na barra inferior do seu Safari.</span>
              </div>
-             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-xl w-full">
+             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-control w-full">
                <PlusSquare className="w-6 h-6 text-brand-bright shrink-0" /> 
                <span className="text-xs text-left">2. Toque em <b>Adicionar à Tela de Início</b>.</span>
              </div>
            </div>
         ) : (
-           <button onClick={handleInstallClick} className="w-full max-w-xs py-4 bg-brand text-brand-ink font-extrabold rounded-2xl text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-brand/30">
+           <button onClick={handleInstallClick} className="w-full max-w-xs py-4 bg-brand text-brand-ink font-extrabold rounded-card text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-brand/30">
              <Download className="w-6 h-6" /> Instalar Agora
            </button>
         )}

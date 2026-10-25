@@ -232,7 +232,7 @@ export function SwimmingModule({ escopo = 'turmas' }: SwimmingModuleProps) {
         </FilterBar>
 
         {!semTurmaMode && filterProf !== 'all' && (
-          <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-info bg-info-soft border border-info-soft rounded-lg px-3 py-1.5">
+          <button onClick={() => setFilterProf('all')} className="inline-flex items-center gap-2 text-xs font-bold text-info bg-info-soft border border-info-soft rounded-control px-3 py-1.5">
             Filtrando por {filterProf.split(' ')[0]} <X className="w-3.5 h-3.5" />
           </button>
         )}

@@ -163,19 +163,19 @@ function GlobalNotifier() {
             initial={{ opacity: 0, y: -100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-danger text-white rounded-3xl p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-danger"
+            className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-danger text-white rounded-panel p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-danger"
           >
             <button onClick={() => setAlert(null)} className="absolute top-4 right-4 p-2 bg-danger-ink/50 hover:bg-danger-ink rounded-full transition-colors">
               <X className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-danger rounded-2xl animate-pulse">
+              <div className="p-3 bg-danger rounded-card animate-pulse">
                 <AlertTriangle className="w-10 h-10 text-brand-bright" />
               </div>
               <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{alert.title}</h2>
             </div>
             <p className="text-danger-soft font-bold ml-16 text-lg">{alert.message}</p>
-            <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-danger-ink font-black py-4 rounded-xl hover:bg-danger-soft active:scale-95 transition-all text-lg shadow-lg">
+            <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-danger-ink font-black py-4 rounded-control hover:bg-danger-soft active:scale-95 transition-all text-lg shadow-lg">
               Ciente!
             </button>
           </motion.div>
@@ -364,12 +364,12 @@ export default function Page() {
         
         <div className="relative flex items-center gap-2">
           {isAdmin && (
-             <button onClick={activateNotifications} className="p-2 text-brand-bright hover:text-white transition-colors bg-surface-raised rounded-lg border border-brand/30 shadow-lg shadow-brand/10">
+             <button onClick={activateNotifications} className="p-2 text-brand-bright hover:text-white transition-colors bg-surface-raised rounded-control border border-brand/30 shadow-lg shadow-brand/10">
                <BellRing className="w-5 h-5" />
              </button>
           )}
 
-          <button onClick={handleLogout} className="p-2 text-ink-on-dark-muted hover:text-white transition-colors bg-surface-raised rounded-lg">
+          <button onClick={handleLogout} className="p-2 text-ink-on-dark-muted hover:text-white transition-colors bg-surface-raised rounded-control">
             <LogOut className="w-5 h-5" />
           </button>
         </div>
@@ -455,7 +455,7 @@ export default function Page() {
         </nav>
 
         <div className="p-4 mt-auto">
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-ink-on-dark-muted hover:text-white hover:bg-surface-raised rounded-xl transition-colors">
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-ink-on-dark-muted hover:text-white hover:bg-surface-raised rounded-control transition-colors">
             <LogOut className="w-4 h-4" />
             <span className="font-bold text-xs uppercase tracking-wider">Sair do Sistema</span>
           </button>

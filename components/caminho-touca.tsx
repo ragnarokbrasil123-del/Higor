@@ -45,7 +45,7 @@ export function CaminhoTouca({ nome, nivel, avaliacoes }: CaminhoToucaProps) {
 
       {/* touca atual -> próxima */}
       <div className="flex items-center gap-3 mb-5">
-        <span className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-sunken border border-line">
+        <span className="flex items-center gap-2 px-3 py-2 rounded-control bg-surface-sunken border border-line">
           <span className={cn('w-3 h-3 rounded-full shrink-0', atual.bgClass)} />
           <span className="text-sm font-bold text-ink">{atual.label}</span>
         </span>
@@ -53,7 +53,7 @@ export function CaminhoTouca({ nome, nivel, avaliacoes }: CaminhoToucaProps) {
         {proxima ? (
           <>
             <span className="text-ink-subtle font-black shrink-0">→</span>
-            <span className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-sunken border border-dashed border-line-strong">
+            <span className="flex items-center gap-2 px-3 py-2 rounded-control bg-surface-sunken border border-dashed border-line-strong">
               <span className={cn('w-3 h-3 rounded-full shrink-0', proxima.bgClass)} />
               <span className="text-sm font-bold text-ink-muted">{proxima.label}</span>
             </span>
@@ -75,7 +75,7 @@ export function CaminhoTouca({ nome, nivel, avaliacoes }: CaminhoToucaProps) {
       </div>
 
       {!ultimaDoNivel && (
-        <p className="text-xs font-medium text-ink-muted bg-surface-sunken border border-line rounded-xl p-3 mb-4 leading-relaxed">
+        <p className="text-xs font-medium text-ink-muted bg-surface-sunken border border-line rounded-control p-3 mb-4 leading-relaxed">
           {nome.split(' ')[0]} ainda não passou por uma avaliação nesta touca. A lista abaixo é o que
           está sendo treinado nas aulas.
         </p>
@@ -116,7 +116,7 @@ export function CaminhoTouca({ nome, nivel, avaliacoes }: CaminhoToucaProps) {
       )}
 
       {faltam.length === 0 && (
-        <p className="text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl p-3 mt-2">
+        <p className="text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-control p-3 mt-2">
           🏅 Todos os fundamentos concluídos! {nome.split(' ')[0]} está pronto para a próxima touca.
         </p>
       )}

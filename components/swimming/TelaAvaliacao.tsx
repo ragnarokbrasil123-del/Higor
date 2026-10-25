@@ -215,7 +215,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
               type="button"
               disabled={marcados === 0}
               onClick={gerarSugestao}
-              className="px-3 py-1.5 bg-info-soft border border-info-soft text-info-ink rounded-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-info-soft border border-info-soft text-info-ink rounded-control text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-3.5 h-3.5" /> {notes ? 'Gerar outra' : 'Gerar sugestão'}
             </button>

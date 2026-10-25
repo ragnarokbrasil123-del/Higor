@@ -84,7 +84,7 @@ export function ConsentimentoPortal({ filhos, aoAceitar }: Props) {
       <div className="mx-auto w-full max-w-lg px-4 py-8 pb-16">
 
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2.5 bg-surface-raised rounded-2xl shrink-0">
+          <div className="p-2.5 bg-surface-raised rounded-card shrink-0">
             <ShieldCheck className="w-6 h-6 text-brand" />
           </div>
           <div>
@@ -118,7 +118,7 @@ export function ConsentimentoPortal({ filhos, aoAceitar }: Props) {
           <div className="flex gap-3">
             <span
               className={
-                'mt-0.5 w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center ' +
+                'mt-0.5 w-5 h-5 rounded-badge border-2 shrink-0 flex items-center justify-center ' +
                 (aceitaSaude ? 'bg-surface-raised border-surface-raised' : 'bg-surface border-line')
               }
             >

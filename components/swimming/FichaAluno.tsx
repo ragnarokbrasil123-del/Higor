@@ -43,7 +43,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
           </div>
         </div>
 
-        <button onClick={onAvaliar} className="w-full py-5 bg-gradient-to-r from-brand to-brand-hover text-white rounded-2xl shadow-lg shadow-brand/30 font-black text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
+        <button onClick={onAvaliar} className="w-full py-5 bg-gradient-to-r from-brand to-brand-hover text-white rounded-card shadow-lg shadow-brand/30 font-black text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
           <Award className="w-6 h-6" /> Fazer avaliação
         </button>
 
@@ -56,21 +56,21 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
           ) : (
             <div className="space-y-4">
               {historico.map(ev => (
-                <div key={ev.id} className="bg-surface-sunken border border-line rounded-2xl p-4">
+                <div key={ev.id} className="bg-surface-sunken border border-line rounded-card p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <div>
                       <p className="numero font-black text-ink">{new Date(ev.date).toLocaleDateString('pt-BR')}</p>
                       <BadgeTouca nivel={ev.level as CapLevel} completo className="mt-0.5" />
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={cn('px-3 py-1.5 rounded-lg text-xs font-black', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
+                      <span className={cn('px-3 py-1.5 rounded-control text-xs font-black', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
                         {ev.approved ? 'APROVADO' : 'EM TREINAMENTO'}
                       </span>
-                      <button onClick={() => gerarBoletimPDF(ev, aluno.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                      <button onClick={() => gerarBoletimPDF(ev, aluno.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-control text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
                         <FileText className="w-3.5 h-3.5" /> PDF
                       </button>
                       {isAdmin && (
-                        <button onClick={() => onApagar(ev.id)} className="p-2 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => onApagar(ev.id)} className="p-2 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-control"><Trash2 className="w-4 h-4" /></button>
                       )}
                     </div>
                   </div>
@@ -95,7 +95,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                     <p className="text-xs text-ink-subtle mb-3">Avaliação anterior ao registro de autoria.</p>
                   )}
 
-                  {ev.notes && <p className="text-sm italic text-ink-muted bg-surface border border-line rounded-xl p-3 mb-3">"{ev.notes}"</p>}
+                  {ev.notes && <p className="text-sm italic text-ink-muted bg-surface border border-line rounded-control p-3 mb-3">"{ev.notes}"</p>}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                     {(EVALUATION_CRITERIA[ev.level as CapLevel] || []).map(c => {
                       const st = ev.scores?.[c.id] || 'pending';

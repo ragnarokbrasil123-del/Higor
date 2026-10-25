@@ -301,7 +301,7 @@ export function ScheduleModule() {
                 {g.blocos.map(b => (
                   <div key={b.hora}>
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-raised-soft text-white rounded-lg text-sm font-black shrink-0">
+                      <div className="flex items-center gap-1.5 px-3 py-1 bg-surface-raised-soft text-white rounded-control text-sm font-black shrink-0">
                         <Clock className="w-3.5 h-3.5" /> {b.hora}
                       </div>
                       <div className="h-px flex-1 bg-line" />
@@ -310,9 +310,9 @@ export function ScheduleModule() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {b.turmas.map(cls => (
-                        <div key={cls.id} className="relative bg-surface rounded-2xl p-3.5 border border-line group hover:border-info transition-colors shadow-sm">
+                        <div key={cls.id} className="relative bg-surface rounded-card p-3.5 border border-line group hover:border-info transition-colors shadow-sm">
                           {isAdmin && (
-                            <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-3 right-3 p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors md:opacity-0 md:group-hover:opacity-100">
+                            <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-3 right-3 p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-control transition-colors md:opacity-0 md:group-hover:opacity-100">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -332,7 +332,7 @@ export function ScheduleModule() {
                                   key={slot.id}
                                   onClick={() => handleStudentClick(slot.student_id)}
                                   className={cn(
-                                    'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border text-white transition-all',
+                                    'px-2.5 py-1.5 rounded-control text-xs font-bold flex items-center gap-2 border text-white transition-all',
                                     info?.bgClass || 'bg-line-strong text-ink',
                                     studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95' : 'opacity-50 border-dashed cursor-default',
                                     destaque && 'ring-2 ring-offset-1 ring-brand-bright'
@@ -356,7 +356,7 @@ export function ScheduleModule() {
           ))}
 
           {classes.length === 0 ? (
-            <div className="text-center py-20 bg-surface rounded-3xl border border-dashed border-line-strong">
+            <div className="text-center py-20 bg-surface rounded-panel border border-dashed border-line-strong">
               <LayoutGrid className="w-16 h-16 text-ink-on-dark mx-auto mb-4" />
               <h3 className="text-xl font-bold text-ink">Nenhum horário criado</h3>
               <p className="text-ink-muted mt-2">
@@ -364,7 +364,7 @@ export function ScheduleModule() {
               </p>
             </div>
           ) : grupos.length === 0 ? (
-            <div className="text-center py-16 bg-surface rounded-3xl border border-dashed border-line-strong">
+            <div className="text-center py-16 bg-surface rounded-panel border border-dashed border-line-strong">
               <Search className="w-12 h-12 text-ink-on-dark mx-auto mb-3" />
               <h3 className="text-lg font-bold text-ink">Nada encontrado</h3>
               <p className="text-ink-muted text-sm mt-1">Ajuste a busca ou os filtros.</p>
@@ -387,7 +387,7 @@ export function ScheduleModule() {
         }
       >
                 <form id="classForm" onSubmit={handleCreateClass} className="space-y-6">
-                  <div className="space-y-5 bg-surface-sunken p-5 rounded-2xl border border-line">
+                  <div className="space-y-5 bg-surface-sunken p-5 rounded-card border border-line">
                     <div className="relative">
                       <label className="block text-sm font-bold text-ink mb-2">Professor</label>
                       <div className="relative">
@@ -399,7 +399,7 @@ export function ScheduleModule() {
                           onFocus={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}
                           onBlur={() => setTimeout(() => setIsTeacherDropdownOpen(false), 200)}
                           placeholder="Clique para escolher da lista..."
-                          className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 focus:border-info transition-all text-ink font-medium pr-10"
+                          className="w-full bg-surface border border-line rounded-control px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 focus:border-info transition-all text-ink font-medium pr-10"
                         />
                         <button type="button" tabIndex={-1} className="absolute right-3 top-3.5" onClick={() => { setIsTeacherDropdownOpen(true); setShowFullList(true); }}>
                           <ChevronDown className="w-5 h-5 text-ink-subtle hover:text-info transition-colors" />
@@ -408,7 +408,7 @@ export function ScheduleModule() {
 
                       <AnimatePresence>
                         {isTeacherDropdownOpen && activeList.length > 0 && (
-                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
+                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="absolute z-10 w-full mt-2 bg-surface border border-line rounded-control shadow-xl max-h-56 overflow-y-auto custom-scrollbar">
                             {activeList.map(p => (
                               <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-surface-sunken last:border-0">
                                 <span className="block text-ink font-bold">{p.name || p.username}</span>
@@ -420,7 +420,7 @@ export function ScheduleModule() {
                       </AnimatePresence>
 
                       {professors.length === 0 && (
-                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-lg p-2">
+                        <p className="mt-2 text-xs font-bold text-warning-ink bg-warning-soft border border-brand-line rounded-control p-2">
                           Nenhum professor ativo cadastrado. Cadastre na aba Professores.
                         </p>
                       )}
@@ -435,7 +435,7 @@ export function ScheduleModule() {
                       <label className="block text-sm font-bold text-ink mb-2">Quais dias dessa aula?</label>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
-                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-info text-white border-info shadow-md shadow-info/20' : 'bg-surface text-ink-muted border-line hover:border-info')}>
+                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-control text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-info text-white border-info shadow-md shadow-info/20' : 'bg-surface text-ink-muted border-line hover:border-info')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -445,22 +445,22 @@ export function ScheduleModule() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-bold text-ink mb-2">Horário Início</label>
-                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
+                        <input type="time" required value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} className="w-full bg-surface border border-line rounded-control px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-ink mb-2">Horário Fim</label>
-                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
+                        <input type="time" required value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} className="w-full bg-surface border border-line rounded-control px-4 py-3 outline-none focus:ring-2 focus:ring-info/20 font-medium text-ink" />
                       </div>
                     </div>
 
                     {/* Cruzamento com o horário do professor */}
                     {selectedProf && form.days_of_week.length > 0 && (
                       conflicts.length === 0 ? (
-                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl p-3">
+                        <div className="flex items-center gap-2 text-sm font-bold text-success-ink bg-success-soft border border-success-soft rounded-control p-3">
                           <CheckCircle2 className="w-4 h-4 shrink-0" /> Dentro do horário de trabalho do professor.
                         </div>
                       ) : (
-                        <div className="text-sm bg-warning-soft border border-brand-line rounded-xl p-3 space-y-1">
+                        <div className="text-sm bg-warning-soft border border-brand-line rounded-control p-3 space-y-1">
                           <div className="flex items-center gap-2 font-black text-brand-deep">
                             <AlertTriangle className="w-4 h-4 shrink-0" /> Fora do horário do professor:
                           </div>
@@ -491,7 +491,7 @@ export function ScheduleModule() {
                           <div
                             key={opt.key}
                             className={cn(
-                              'flex flex-col p-3 rounded-xl border transition-colors',
+                              'flex flex-col p-3 rounded-control border transition-colors',
                               atual > 0 ? 'bg-info-soft border-info-soft' : 'bg-surface border-line',
                               travado && 'opacity-50'
                             )}
@@ -500,11 +500,11 @@ export function ScheduleModule() {
                               <div className={cn('w-3 h-3 rounded-full shadow-sm', opt.bg)} /> {opt.label}
                               <span className="ml-auto text-micro font-bold text-ink-subtle">máx {CAPACIDADE_TOUCA[opt.key]}</span>
                             </label>
-                            <div className="flex items-center bg-surface-sunken rounded-lg p-1">
+                            <div className="flex items-center bg-surface-sunken rounded-control p-1">
                               <button
                                 type="button"
                                 onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: Math.max(0, atual - 1) } })}
-                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-danger"
+                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-badge text-ink-muted font-bold shadow-sm hover:text-danger"
                               >
                                 -
                               </button>
@@ -513,7 +513,7 @@ export function ScheduleModule() {
                                 type="button"
                                 disabled={noLimite}
                                 onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: atual + 1 } })}
-                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-success disabled:opacity-30 disabled:hover:text-ink-muted disabled:cursor-not-allowed"
+                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-badge text-ink-muted font-bold shadow-sm hover:text-success disabled:opacity-30 disabled:hover:text-ink-muted disabled:cursor-not-allowed"
                               >
                                 +
                               </button>

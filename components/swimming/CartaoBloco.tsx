@@ -33,7 +33,7 @@ export function CartaoBloco({ etiqueta, subtitulo, alunos, pendentes, onAvaliar,
           na mesma linha e chegavam a sobrepor um ao outro. */}
       <div className="p-4 space-y-2 border-b border-surface-sunken">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised text-white rounded-lg font-black text-sm shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised text-white rounded-control font-black text-sm shrink-0">
             {etiqueta}
           </div>
 
@@ -54,7 +54,7 @@ export function CartaoBloco({ etiqueta, subtitulo, alunos, pendentes, onAvaliar,
             )}
 
             {alunos.length > 0 && pendentes === 0 && (
-              <span className="px-3 py-2 bg-success-soft text-success-ink rounded-xl text-xs font-black flex items-center gap-1.5">
+              <span className="px-3 py-2 bg-success-soft text-success-ink rounded-control text-xs font-black flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" /> {rotuloCompleto}
               </span>
             )}

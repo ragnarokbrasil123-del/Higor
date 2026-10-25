@@ -150,7 +150,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-surface-sunken p-6 text-center">
         <p className="text-ink-muted font-bold">Nenhum aluno encontrado nesta conta.</p>
-        <button onClick={onLogout} className="mt-6 px-6 py-3 bg-surface-raised text-white rounded-xl font-bold">Sair</button>
+        <button onClick={onLogout} className="mt-6 px-6 py-3 bg-surface-raised text-white rounded-control font-bold">Sair</button>
       </div>
     );
   }
@@ -203,7 +203,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="flex justify-between items-start relative z-10">
           <Image src="/logo.png" alt="Clube Olimpo" width={44} height={44} className="h-11 w-11 object-contain" />
-          <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
+          <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-control text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
             Sair <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -213,7 +213,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           <div className="mt-6 flex gap-2 overflow-x-auto relative z-10 pb-1">
             {filhos.map((f, i) => (
               <button key={f.id} onClick={() => setIdx(i)} className={cn(
-                'px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap border transition-all',
+                'px-4 py-2 rounded-control text-sm font-bold whitespace-nowrap border transition-all',
                 i === idx ? 'bg-surface text-surface-raised border-white' : 'bg-white/10 text-white border-white/20'
               )}>
                 {f.name.split(' ')[0]}
@@ -250,8 +250,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
         {/* Avisos no celular */}
         {suportaAvisos() && avisosOn === false && (
-          <div className="bg-warning-soft border border-brand-line rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-11 h-11 bg-brand-bright rounded-2xl flex items-center justify-center shrink-0">
+          <div className="bg-warning-soft border border-brand-line rounded-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-11 h-11 bg-brand-bright rounded-card flex items-center justify-center shrink-0">
               <BellRing className="w-6 h-6 text-brand-ink" />
             </div>
             <div className="flex-1">
@@ -263,14 +263,14 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
               </p>
             </div>
             {!iosSemInstalar && (
-              <button onClick={ligarAvisos} disabled={ativando} className="px-5 py-3 bg-black text-white rounded-xl font-bold text-sm shrink-0 active:scale-95 transition-transform disabled:opacity-50">
+              <button onClick={ligarAvisos} disabled={ativando} className="px-5 py-3 bg-black text-white rounded-control font-bold text-sm shrink-0 active:scale-95 transition-transform disabled:opacity-50">
                 {ativando ? 'Ativando...' : 'Ativar avisos'}
               </button>
             )}
           </div>
         )}
         {avisosOn === true && (
-          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl px-3 py-2 w-fit">
+          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-success-soft rounded-control px-3 py-2 w-fit">
             <BellRing className="w-3.5 h-3.5" /> Avisos ativados neste aparelho
           </div>
         )}
@@ -316,8 +316,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             </h2>
             <div className="space-y-2">
               {minhasAulas.map((a, i) => (
-                <div key={i} className="flex flex-wrap items-center gap-3 bg-surface-sunken border border-line rounded-2xl p-3">
-                  <span className="px-3 py-1.5 bg-surface-raised text-white rounded-lg text-sm font-black shrink-0">
+                <div key={i} className="flex flex-wrap items-center gap-3 bg-surface-sunken border border-line rounded-card p-3">
+                  <span className="px-3 py-1.5 bg-surface-raised text-white rounded-control text-sm font-black shrink-0">
                     {a.inicio} às {a.fim}
                   </span>
                   <span className="font-bold text-ink text-sm">{a.dia}</span>
@@ -362,10 +362,10 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-3 py-1 text-xs font-bold rounded-lg uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
+                        <span className={cn('px-3 py-1 text-xs font-bold rounded-control uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
                           {ev.approved ? 'Aprovado' : 'Em treinamento'}
                         </span>
-                        <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                        <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-control text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
                           <FileText className="w-3.5 h-3.5" /> PDF
                         </button>
                       </div>
@@ -373,7 +373,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
                     {/* Recado do professor primeiro — é o que o pai quer ler */}
                     {ev.notes && (
-                      <div className="mb-4 p-4 bg-brand-soft rounded-2xl border border-brand-line">
+                      <div className="mb-4 p-4 bg-brand-soft rounded-card border border-brand-line">
                         <p className="text-xs font-bold text-brand uppercase tracking-wider mb-1">Recado do Professor</p>
                         <p className="text-sm text-ink leading-relaxed">{ev.notes}</p>
                       </div>
@@ -405,7 +405,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                     )}
 
                     {ev.approved && (
-                      <div className="mt-4 p-3 bg-success rounded-xl text-white text-center shadow-lg shadow-success/20">
+                      <div className="mt-4 p-3 bg-success rounded-control text-white text-center shadow-lg shadow-success/20">
                         <p className="text-sm font-bold">Parabéns! {student.name.split(' ')[0]} foi aprovado(a) para trocar de touca! 🏅</p>
                       </div>
                     )}
