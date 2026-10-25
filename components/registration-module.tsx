@@ -319,7 +319,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                         <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Senha de Acesso do Pai *</label>
                         <div className="relative">
                           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
-                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-brand-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all font-medium text-amber-900" />
+                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-brand-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all font-medium text-brand-deep" />
                         </div>
                       </div>
                     </div>
@@ -328,7 +328,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                 </div>
                 
                 <div className="pt-4 md:pt-6 border-t border-line flex justify-end">
-                  <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-brand md:text-black rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
+                  <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-brand md:text-brand-ink rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
                     <Save className="w-4 h-4" /> {loading ? "Salvando..." : "Matricular Aluno"}
                   </button>
                 </div>
@@ -339,7 +339,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
 
             <motion.div key="bulk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto space-y-5">
               <div className="bg-warning-soft border border-brand-line rounded-2xl p-5 md:p-6">
-                <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
+                <h2 className="font-bold text-brand-deep flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
                 <p className="text-sm text-brand-deep">
                   Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
                   <b> nome, idade, touca, modalidade, dia, horario, responsavel, telefone, endereco, observacoes</b>.
@@ -352,10 +352,10 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                   <code className="bg-white/60 px-1 rounded">08:00/15:00</code>.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
-                  <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-amber-300 text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
+                  <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-brand-line text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
                     <Download className="w-4 h-4" /> Baixar modelo CSV
                   </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-amber-300 text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
+                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-brand-line text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
                     <UploadCloud className="w-4 h-4" /> Selecionar arquivo
                   </button>
                   <input type="file" accept=".csv,.tsv,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { const f = e.target.files?.[0]; if (f) readFileToText(f); e.target.value = ''; }} />
@@ -366,7 +366,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
                 <div className="bg-success-soft border border-success-soft rounded-2xl p-5 flex items-start gap-3">
                   <CheckCircle2 className="w-6 h-6 text-success shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-black text-emerald-800">Importação concluída!</p>
+                    <p className="font-black text-success-ink">Importação concluída!</p>
                     <p className="text-success-ink font-medium mt-1">
                       {bulkResult.created} aluno(s) cadastrado(s) · {bulkResult.allocated} alocado(s) em vagas da grade
                       {bulkResult.failed > 0 && <span className="text-danger-ink"> · {bulkResult.failed} falha(s)</span>}

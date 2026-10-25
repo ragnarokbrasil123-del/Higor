@@ -265,7 +265,7 @@ export function ProfessorsModule() {
                                   {shifts.length ? (
                                     <div className="flex flex-col gap-1">
                                       {shifts.map((s, i) => (
-                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-indigo-100 text-mini font-bold text-info-ink whitespace-nowrap">
+                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-info-soft text-mini font-bold text-info-ink whitespace-nowrap">
                                           {s.start}–{s.end}
                                         </span>
                                       ))}
@@ -351,7 +351,7 @@ export function ProfessorsModule() {
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {lines.length > 0 ? lines.map(line => (
                           <span key={line} className="inline-flex items-center gap-1 text-xs font-medium text-ink-muted bg-surface-sunken border border-line rounded-lg px-2 py-1">
-                            <Clock className="w-3 h-3 text-indigo-400 shrink-0" /> {line}
+                            <Clock className="w-3 h-3 text-info shrink-0" /> {line}
                           </span>
                         )) : (
                           <span className="text-xs text-ink-subtle italic">Sem horário definido</span>

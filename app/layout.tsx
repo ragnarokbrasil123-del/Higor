@@ -8,10 +8,10 @@ const inter = Inter({ subsets: ["latin"] });
 /**
  * Fonte de títulos e números de destaque (Olimpo Aqua).
  *
- * `preload: false` DE PROPÓSITO enquanto o visual novo está em
- * aprovação: só a página /design usa a fonte, e pré-carregar um
- * arquivo que o app não desenha custaria LCP em todo mundo à toa.
- * Quando a Etapa 3 aplicar o visual nas abas, isto vira `true`.
+ * `preload: true` agora que o app usa a fonte: na Etapa 3 o visual
+ * novo foi aplicado, então pré-carregar deixa de ser desperdício e
+ * passa a evitar o salto de fonte no primeiro desenho.
+
  *
  * Só os pesos usados: 600 para título, 700 para número grande.
  */
@@ -20,7 +20,7 @@ const sora = Sora({
   weight: ["600", "700"],
   variable: "--fonte-titulo",
   display: "swap",
-  preload: false,
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -58,8 +58,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  /*
+   * `data-tema="aqua"` liga a paleta Olimpo Aqua no app inteiro.
+   *
+   * A cor da marca muda de âmbar para azul-água, e isso não dá para
+   * fazer aba por aba: a navegação ficaria azul enquanto os botões
+   * do conteúdo seguiriam âmbar. Então a COR vira de uma vez, e o
+   * trabalho por aba passa a ser o estrutural (botões crus virando
+   * kit, componentes novos, espaçamento).
+   *
+   * `data-escuro="nao"` trava no claro por enquanto. O tema escuro
+   * existe e está conferido, mas ligar os dois ao mesmo tempo
+   * dobraria a superfície de teste — entra numa passada própria.
+   */
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-tema="aqua" data-escuro="nao">
       <head>
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         {/*

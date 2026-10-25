@@ -210,12 +210,14 @@ html, body {
   --color-line-strong: #bcccd9;
 
   /* --- marca: azul-água ---
-     `brand` é a identidade (anel de foco, borda, área grande).
-     `brand-hover` é o fundo de botão, mais escuro de propósito:
-     o #0a84c6 com texto branco dá 4,09:1 e reprova em texto pequeno.
+     `brand` é #097CBA e não o #0A84C6 original porque o par mais
+     usado do app é fundo-da-marca com texto branco (aba ativa,
+     botão primário): com o #0A84C6 isso dá 4,09:1 e reprova. Com
+     este, 4,56:1. Como anel de foco sobre a névoa dá 4,27:1, bem
+     acima dos 3:1 exigidos para elemento não textual.
      `brand-text` é a marca quando vira TEXTO sobre fundo claro. */
-  --color-brand: #0a84c6;
-  --color-brand-hover: #097cba;
+  --color-brand: #097cba;
+  --color-brand-hover: #07689d;
   --color-brand-ink: #ffffff;
   --color-brand-text: #0a6b9e;
   --color-brand-soft: #eaf4fb;

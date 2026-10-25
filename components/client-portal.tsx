@@ -197,7 +197,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     <div className="fixed inset-0 flex flex-col bg-canvas overflow-y-auto overflow-x-clip">
       {/* Cabeçalho */}
       <div className="bg-black pt-[max(3rem,calc(env(safe-area-inset-top)+1.5rem))] pb-6 px-5 sm:px-6 shadow-xl relative overflow-hidden shrink-0">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="flex justify-between items-start relative z-10">
           <Image src="/logo.png" alt="Clube Olimpo" width={44} height={44} className="h-11 w-11 object-contain" />
           <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
@@ -240,10 +240,10 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         {suportaAvisos() && avisosOn === false && (
           <div className="bg-warning-soft border border-brand-line rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="w-11 h-11 bg-brand-bright rounded-2xl flex items-center justify-center shrink-0">
-              <BellRing className="w-6 h-6 text-black" />
+              <BellRing className="w-6 h-6 text-brand-ink" />
             </div>
             <div className="flex-1">
-              <p className="font-black text-amber-900 text-sm">Quer ser avisado quando sair a avaliação?</p>
+              <p className="font-black text-brand-deep text-sm">Quer ser avisado quando sair a avaliação?</p>
               <p className="text-xs font-medium text-brand-deep mt-0.5">
                 {iosSemInstalar
                   ? 'No iPhone, primeiro adicione o app à Tela de Início: toque em Compartilhar, na barra de baixo, e escolha "Adicionar à Tela de Início". Depois volte aqui.'
@@ -308,7 +308,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         {/* Avaliações */}
         <div>
           <h2 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-500" /> Histórico de Avaliações
+            <Calendar className="w-5 h-5 text-brand" /> Histórico de Avaliações
           </h2>
 
           {avaliacoes.length === 0 ? (
@@ -350,8 +350,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
                     {/* Recado do professor primeiro — é o que o pai quer ler */}
                     {ev.notes && (
-                      <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Recado do Professor</p>
+                      <div className="mb-4 p-4 bg-brand-soft rounded-2xl border border-brand-line">
+                        <p className="text-xs font-bold text-brand uppercase tracking-wider mb-1">Recado do Professor</p>
                         <p className="text-sm text-ink leading-relaxed">{ev.notes}</p>
                       </div>
                     )}
@@ -362,7 +362,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                           {passou} de {criterios.length} fundamentos concluídos
                         </p>
                         <div className="h-2 bg-surface-sunken rounded-full overflow-hidden mb-3">
-                          <div className="h-full bg-emerald-500 transition-all" style={{ width: `${criterios.length ? (passou / criterios.length) * 100 : 0}%` }} />
+                          <div className="h-full bg-success transition-all" style={{ width: `${criterios.length ? (passou / criterios.length) * 100 : 0}%` }} />
                         </div>
                         <div className="space-y-1.5">
                           {criterios.map(crit => {
@@ -370,7 +370,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                             return (
                               <div key={crit.id} className="flex items-start gap-2 text-sm">
                                 <div className={cn('w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-                                  st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
+                                  st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-danger-soft text-danger' : 'bg-surface-sunken text-ink-subtle')}>
                                   {st === 'passed' ? <Check className="w-3 h-3" strokeWidth={3} /> : st === 'failed' ? <XIcon className="w-3 h-3" strokeWidth={3} /> : <span className="text-micro font-bold">–</span>}
                                 </div>
                                 <span className={cn('leading-snug', st === 'passed' ? 'text-ink' : 'text-ink-muted')}>{crit.label}</span>
@@ -382,7 +382,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                     )}
 
                     {ev.approved && (
-                      <div className="mt-4 p-3 bg-emerald-500 rounded-xl text-white text-center shadow-lg shadow-emerald-500/20">
+                      <div className="mt-4 p-3 bg-success rounded-xl text-white text-center shadow-lg shadow-success/20">
                         <p className="text-sm font-bold">Parabéns! {student.name.split(' ')[0]} foi aprovado(a) para trocar de touca! 🏅</p>
                       </div>
                     )}

@@ -549,7 +549,7 @@ export function StudentsModule() {
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-52 overflow-y-auto custom-scrollbar">
                           {vagasPorTurma.map(v => (
-                            <button key={v.slot.id} onClick={() => entrarNaTurma(v.slot.id)} className="text-left bg-surface border border-line hover:border-indigo-400 rounded-xl p-2.5 transition-colors">
+                            <button key={v.slot.id} onClick={() => entrarNaTurma(v.slot.id)} className="text-left bg-surface border border-line hover:border-info rounded-xl p-2.5 transition-colors">
                               <p className="text-sm font-black text-ink flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-info" /> {hhmm(v.cls!.start_time)}
                               </p>

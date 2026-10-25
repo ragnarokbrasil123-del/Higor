@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { ativarAvisos } from '@/lib/push';
 import { logoutServidor } from '@/lib/equipe';
-import { MobileNav } from '@/components/ui';
+import { ItemNav, MobileNav } from '@/components/ui';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO } from '@/lib/acesso';
 
 /* ============================================================
@@ -163,19 +163,19 @@ function GlobalNotifier() {
             initial={{ opacity: 0, y: -100 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-red-600 text-white rounded-3xl p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-red-400"
+            className="fixed top-20 left-4 right-4 z-[99999] md:left-auto md:right-10 md:w-96 bg-danger text-white rounded-3xl p-6 shadow-[0_20px_60px_rgba(220,38,38,0.8)] border-4 border-danger"
           >
-            <button onClick={() => setAlert(null)} className="absolute top-4 right-4 p-2 bg-red-700/50 hover:bg-red-800 rounded-full transition-colors">
+            <button onClick={() => setAlert(null)} className="absolute top-4 right-4 p-2 bg-danger-ink/50 hover:bg-danger-ink rounded-full transition-colors">
               <X className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-4 mb-3">
-              <div className="p-3 bg-red-500 rounded-2xl animate-pulse">
-                <AlertTriangle className="w-10 h-10 text-yellow-300" />
+              <div className="p-3 bg-danger rounded-2xl animate-pulse">
+                <AlertTriangle className="w-10 h-10 text-brand-bright" />
               </div>
               <h2 className="text-2xl font-black uppercase tracking-widest text-white leading-tight">{alert.title}</h2>
             </div>
-            <p className="text-red-100 font-bold ml-16 text-lg">{alert.message}</p>
-            <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-red-700 font-black py-4 rounded-xl hover:bg-red-50 active:scale-95 transition-all text-lg shadow-lg">
+            <p className="text-danger-soft font-bold ml-16 text-lg">{alert.message}</p>
+            <button onClick={() => setAlert(null)} className="mt-6 w-full bg-white text-danger-ink font-black py-4 rounded-xl hover:bg-danger-soft active:scale-95 transition-all text-lg shadow-lg">
               Ciente!
             </button>
           </motion.div>
@@ -339,8 +339,18 @@ export default function Page() {
       {/* convite para instalar o app — antes so aparecia no portal dos pais */}
       <InstallPrompt acimaDaBarra />
 
-      <div className="md:hidden flex items-center justify-between bg-surface-deep text-white p-4 shrink-0 shadow-md z-30">
-        <div className="flex items-center gap-2">
+      <div className="md:hidden relative flex items-center justify-between bg-surface-deep text-ink-inverse p-4 shrink-0 shadow-raised z-30">
+        {/* mesma textura de raia da barra lateral, para as duas larguras
+            de tela terem a mesma identidade */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='16'%3E%3Cpath d='M0 8q10-6 20 0t20 0 20 0 20 0' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E\")",
+          }}
+        />
+        <div className="relative flex items-center gap-2">
           {/* só aparece quando existe uma troca de aba nossa para desfazer —
               mesmo botão que o gesto/tecla de voltar do celular já usa. */}
           {navDepth > 0 && (
@@ -352,7 +362,7 @@ export default function Page() {
           <span className="font-bold text-sm tracking-tight uppercase">Clube <span className="text-brand">Olimpo</span></span>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="relative flex items-center gap-2">
           {isAdmin && (
              <button onClick={activateNotifications} className="p-2 text-brand-bright hover:text-white transition-colors bg-surface-raised rounded-lg border border-brand/30 shadow-lg shadow-brand/10">
                <BellRing className="w-5 h-5" />
@@ -365,107 +375,81 @@ export default function Page() {
         </div>
       </div>
 
-      <header className="hidden md:flex bg-surface-deep text-white shrink-0 w-60 lg:w-72 flex-col z-20 shadow-2xl relative">
-        <div className="p-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
+      <header className="hidden md:flex bg-surface-deep text-ink-inverse shrink-0 w-60 lg:w-72 flex-col z-20 shadow-overlay relative">
+        {/*
+          Textura de raia de piscina, bem discreta.
+
+          É um SVG em `data:` de ~190 bytes, posto por CSS: não entra
+          no HTML de cada render e não vira requisição. A opacidade
+          baixa é o ponto — a textura deve se notar de perto e sumir
+          de longe, nunca competir com o nome das abas.
+        */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-40 opacity-[0.06] pointer-events-none"
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='16'%3E%3Cpath d='M0 8q10-6 20 0t20 0 20 0 20 0' fill='none' stroke='%23ffffff' stroke-width='1.5'/%3E%3C/svg%3E\")",
+          }}
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-brand/20 to-transparent pointer-events-none"
+        />
+
+        <div className="relative p-6 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-control overflow-hidden shrink-0">
             <Image src="/logo.png" alt="Logo Clube Olimpo" width={40} height={40} className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-lg tracking-tight uppercase">
-            Clube <span className="text-brand">Olimpo</span>
+          <span className="font-titulo font-semibold text-lg tracking-tight uppercase">
+            Clube <span className="text-brand-bright">Olimpo</span>
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 space-y-1">
-          {isAdmin && (
-            <button onClick={() => irPara('dashboard')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'dashboard' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <LayoutDashboard className="w-5 h-5" />
-              <span className="font-bold text-sm">Painel</span>
-            </button>
-          )}
+        {/*
+          A navegação virou lista de dados.
 
-          {/* matricular aluno e importar planilha e trabalho de secretaria */}
-          {isAdmin && (
-            <button onClick={() => irPara('registration')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'registration' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <UserPlus className="w-5 h-5" />
-              <span className="font-bold text-sm">Cadastro Alunos</span>
-            </button>
-          )}
-
-          {isAdmin && (
-            <button onClick={() => irPara('students')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'students' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <Users className="w-5 h-5" />
-              <span className="font-bold text-sm">Alunos</span>
-            </button>
-          )}
-
-          <button onClick={() => irPara('swimming')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'swimming' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-            <Droplets className="w-5 h-5" />
-            <span className="font-bold text-sm">Avaliação Natação</span>
-          </button>
-
-          {isStaff && (
-            <button onClick={() => irPara('avulsos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'avulsos' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <Sparkles className="w-5 h-5" />
-              <span className="font-bold text-sm">Avulsos & Wellhub</span>
-            </button>
-          )}
-
-          {isAdmin && (
-            <button onClick={() => irPara('sabado')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'sabado' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <CalendarClock className="w-5 h-5" />
-              <span className="font-bold text-sm">Avaliação Sábado</span>
-            </button>
-          )}
-
-          {isStaff && (
-            <button onClick={() => irPara('hidro')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'hidro' ? "bg-cyan-500 text-black border-cyan-500 shadow-lg shadow-cyan-500/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <Waves className="w-5 h-5" />
-              <span className="font-bold text-sm">Hidro</span>
-            </button>
-          )}
-
-          {isStaff && (
-            <button onClick={() => irPara('cleaning')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'cleaning' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <ClipboardList className="w-5 h-5" />
-              <span className="font-bold text-sm">Checklist Limpeza</span>
-            </button>
-          )}
-
-          {isStaff && (
-            <button onClick={() => irPara('maintenance')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'maintenance' ? "bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <Wrench className="w-5 h-5" />
-              <span className="font-bold text-sm">Manutenção</span>
-            </button>
-          )}
-
-          {isAdmin && (
-            <button onClick={() => irPara('professors')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'professors' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <GraduationCap className="w-5 h-5" />
-              <span className="font-bold text-sm">Professores</span>
-            </button>
-          )}
-
-          {isStaff && (
-            <button onClick={() => irPara('schedule')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'schedule' ? "bg-info text-white border-info shadow-lg shadow-info/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <CalendarDays className="w-5 h-5" />
-              {/* o professor consulta a propria agenda; so o admin edita a grade */}
-              <span className="font-bold text-sm">{isAdmin ? 'Grade de Horários' : 'Minha semana'}</span>
-            </button>
-          )}
-
-          {isMaster && (
-            <button onClick={() => irPara('acessos')} className={cn("w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all border", activeTab === 'acessos' ? "bg-brand text-black border-brand shadow-lg shadow-brand/20" : "hover:bg-surface-raised text-ink-on-dark border-transparent")}>
-              <ShieldCheck className="w-5 h-5" />
-              <span className="font-bold text-sm">Acessos</span>
-            </button>
-          )}
+          Eram 13 botões escritos à mão com a mesma cadeia de classes
+          copiada: item novo nascia por cópia, e mudar o visual da
+          navegação era mudar 13 lugares. O `quem` de cada item é o
+          mesmo que decide a renderização da aba lá embaixo.
+        */}
+        <nav className="relative flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 space-y-1">
+          {([
+            { aba: 'dashboard',    icone: LayoutDashboard, rotulo: 'Painel',             quem: isAdmin },
+            { aba: 'registration', icone: UserPlus,        rotulo: 'Cadastro Alunos',    quem: isAdmin },
+            { aba: 'students',     icone: Users,           rotulo: 'Alunos',             quem: isAdmin },
+            { aba: 'swimming',     icone: Droplets,        rotulo: 'Avaliação Natação',  quem: true },
+            { aba: 'avulsos',      icone: Sparkles,        rotulo: 'Avulsos & Wellhub',  quem: isStaff },
+            { aba: 'sabado',       icone: CalendarClock,   rotulo: 'Avaliação Sábado',   quem: isAdmin },
+            { aba: 'hidro',        icone: Waves,           rotulo: 'Hidro',              quem: isStaff },
+            { aba: 'cleaning',     icone: ClipboardList,   rotulo: 'Checklist Limpeza',  quem: isStaff },
+            { aba: 'maintenance',  icone: Wrench,          rotulo: 'Manutenção',         quem: isStaff },
+            { aba: 'professors',   icone: GraduationCap,   rotulo: 'Professores',        quem: isAdmin },
+            { aba: 'schedule',     icone: CalendarDays,    rotulo: isAdmin ? 'Grade de Horários' : 'Minha semana', quem: isStaff },
+            { aba: 'acessos',      icone: ShieldCheck,     rotulo: 'Acessos',            quem: isMaster },
+          ] as const)
+            .filter(i => i.quem)
+            .map(i => (
+              <ItemNav
+                key={i.aba}
+                icone={i.icone}
+                rotulo={i.rotulo}
+                ativo={activeTab === i.aba}
+                aoClicar={() => irPara(i.aba as Tab)}
+              />
+            ))}
 
           {isAdmin && (
             <div className="pt-4 mt-4 border-t border-surface-raised-soft">
-               <button onClick={activateNotifications} className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-brand/10 text-brand-bright hover:bg-brand hover:text-black rounded-xl transition-all border border-brand/30">
-                 <BellRing className="w-5 h-5" />
-                 <span className="font-bold text-sm">Forçar PWA</span>
-               </button>
+              <button
+                onClick={activateNotifications}
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-control border border-brand/40
+                           bg-brand/10 text-brand-bright hover:bg-brand hover:text-brand-ink transition-colors"
+              >
+                <BellRing className="w-5 h-5" />
+                <span className="font-bold text-sm">Forçar PWA</span>
+              </button>
             </div>
           )}
         </nav>

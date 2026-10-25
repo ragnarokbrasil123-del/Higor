@@ -42,7 +42,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
           </div>
         </div>
 
-        <button onClick={onAvaliar} className="w-full py-5 bg-gradient-to-r from-brand to-orange-500 text-white rounded-2xl shadow-lg shadow-brand/30 font-black text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
+        <button onClick={onAvaliar} className="w-full py-5 bg-gradient-to-r from-brand to-brand-hover text-white rounded-2xl shadow-lg shadow-brand/30 font-black text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform">
           <Award className="w-6 h-6" /> Fazer avaliação
         </button>
 
@@ -103,7 +103,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                       return (
                         <div key={c.id} className="flex items-start gap-2 text-xs">
                           <div className={cn('w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-micro font-black',
-                            st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
+                            st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-danger-soft text-danger' : 'bg-surface-sunken text-ink-subtle')}>
                             {st === 'passed' ? '✔' : st === 'failed' ? '✖' : '–'}
                           </div>
                           <span className={st === 'passed' ? 'text-ink' : 'text-ink-muted'}>{c.label}</span>

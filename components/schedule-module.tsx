@@ -310,7 +310,7 @@ export function ScheduleModule() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {b.turmas.map(cls => (
-                        <div key={cls.id} className="relative bg-surface rounded-2xl p-3.5 border border-line group hover:border-indigo-300 transition-colors shadow-sm">
+                        <div key={cls.id} className="relative bg-surface rounded-2xl p-3.5 border border-line group hover:border-info transition-colors shadow-sm">
                           {isAdmin && (
                             <button onClick={() => handleDeleteClass(cls.id)} className="absolute top-3 right-3 p-1.5 text-ink-subtle hover:text-danger hover:bg-danger-soft rounded-lg transition-colors md:opacity-0 md:group-hover:opacity-100">
                               <Trash2 className="w-3.5 h-3.5" />
@@ -333,7 +333,7 @@ export function ScheduleModule() {
                                   onClick={() => handleStudentClick(slot.student_id)}
                                   className={cn(
                                     'px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border text-white transition-all',
-                                    info?.bgClass || 'bg-slate-300 text-ink',
+                                    info?.bgClass || 'bg-line-strong text-ink',
                                     studentName ? 'border-white/30 cursor-pointer hover:-translate-y-0.5 active:scale-95' : 'opacity-50 border-dashed cursor-default',
                                     destaque && 'ring-2 ring-offset-1 ring-brand-bright'
                                   )}
@@ -357,7 +357,7 @@ export function ScheduleModule() {
 
           {classes.length === 0 ? (
             <div className="text-center py-20 bg-surface rounded-3xl border border-dashed border-line-strong">
-              <LayoutGrid className="w-16 h-16 text-slate-200 mx-auto mb-4" />
+              <LayoutGrid className="w-16 h-16 text-ink-on-dark mx-auto mb-4" />
               <h3 className="text-xl font-bold text-ink">Nenhum horário criado</h3>
               <p className="text-ink-muted mt-2">
                 {isAdmin ? 'Clique em "Adicionar Horário" para montar a primeira turma.' : 'Nenhuma turma vinculada a você ainda.'}
@@ -365,7 +365,7 @@ export function ScheduleModule() {
             </div>
           ) : grupos.length === 0 ? (
             <div className="text-center py-16 bg-surface rounded-3xl border border-dashed border-line-strong">
-              <Search className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+              <Search className="w-12 h-12 text-ink-on-dark mx-auto mb-3" />
               <h3 className="text-lg font-bold text-ink">Nada encontrado</h3>
               <p className="text-ink-muted text-sm mt-1">Ajuste a busca ou os filtros.</p>
             </div>
@@ -435,7 +435,7 @@ export function ScheduleModule() {
                       <label className="block text-sm font-bold text-ink mb-2">Quais dias dessa aula?</label>
                       <div className="flex flex-wrap gap-2">
                         {DAYS.map(d => (
-                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-info text-white border-info shadow-md shadow-info/20' : 'bg-surface text-ink-muted border-line hover:border-indigo-300')}>
+                          <button type="button" key={d} onClick={() => toggleDay(d)} className={cn('px-4 py-2 rounded-xl text-sm font-bold border transition-all', form.days_of_week.includes(d) ? 'bg-info text-white border-info shadow-md shadow-info/20' : 'bg-surface text-ink-muted border-line hover:border-info')}>
                             {d.split('-')[0]}
                           </button>
                         ))}
@@ -513,7 +513,7 @@ export function ScheduleModule() {
                                 type="button"
                                 disabled={noLimite}
                                 onClick={() => setForm({ ...form, slots: { ...form.slots, [opt.key]: atual + 1 } })}
-                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-green-500 disabled:opacity-30 disabled:hover:text-ink-muted disabled:cursor-not-allowed"
+                                className="w-8 h-8 flex items-center justify-center bg-surface rounded-md text-ink-muted font-bold shadow-sm hover:text-success disabled:opacity-30 disabled:hover:text-ink-muted disabled:cursor-not-allowed"
                               >
                                 +
                               </button>
