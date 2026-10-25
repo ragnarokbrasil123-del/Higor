@@ -27,6 +27,7 @@
    ============================================================ */
 
 import { supabase } from '@/lib/supabase';
+import { limparCache } from '@/lib/cache';
 
 /**
  * Só o que o portal mostra na tela, mais o que ele precisa para se
@@ -114,6 +115,8 @@ export const MENSAGEM_FALHA: Record<FalhaLogin, string> = {
  * porque a chave pública não vai mais ler `students`.
  */
 export async function buscarFilhos(telefoneDigitado: string, senha: string): Promise<ResultadoLogin> {
+  // troca de usuário no mesmo aparelho: nada da sessão anterior fica
+  limparCache();
   const digitos = String(telefoneDigitado || '').replace(/\D/g, '');
   if (digitos.length < 8 || !senha) return { ok: false, motivo: 'credencial' };
 

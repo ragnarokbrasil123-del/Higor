@@ -1,5 +1,6 @@
 'use client';
 
+import { invalidarGrade, lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -10,7 +11,6 @@ import { CapLevel, levels, capLevelOrder } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
-import { paginado } from '@/lib/paginado';
 import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR } from '@/components/ui';
@@ -103,9 +103,9 @@ export function StudentsModule() {
     // e a rota só o entrega para o papel admin (ver /api/alunos).
     const [st, cl, sl, ev] = await Promise.all([
       lerAlunos('completo'),
-      paginado<any>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
-      paginado<any>('class_slots', 'id, class_id, cap_color, student_id'),
-      paginado<any>('evaluations', 'student_id, date, approved'),
+      lerTurmas(),
+      lerVagas(),
+      lerAvaliacoesResumo(),
     ]);
     setStudents((st as StudentRow[]).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')));
     setClasses(cl as ClassRow[]);
@@ -186,6 +186,7 @@ export function StudentsModule() {
    * pessoa voltar em seis meses, está tudo lá.
    */
   const cancelarMatricula = async (s: StudentRow) => {
+    invalidarGrade();
     const motivo = prompt(
       `Cancelar a matrícula de ${s.name}?\n\n` +
       'A ficha, as avaliações e o histórico de touca são mantidos — só a vaga na turma é liberada.\n\n' +
@@ -227,6 +228,7 @@ export function StudentsModule() {
    * duplicado ou digitado errado, não para aluno que saiu.
    */
   const excluir = async (s: StudentRow) => {
+    invalidarGrade();
     if (!confirm(
       `APAGAR ${s.name} de vez?\n\n` +
       'As avaliações dele serão apagadas junto e não há como desfazer.\n\n' +
@@ -246,12 +248,14 @@ export function StudentsModule() {
 
   // ------------------------------------------------ turmas
   const sairDaTurma = async (slotId: string) => {
+    invalidarGrade();
     const { error } = await supabase.from('class_slots').update({ student_id: null }).eq('id', slotId);
     if (error) return alert('Erro: ' + error.message);
     setSlots(prev => prev.map(s => (s.id === slotId ? { ...s, student_id: null } : s)));
   };
 
   const entrarNaTurma = async (slotId: string) => {
+    invalidarGrade();
     if (!editing) return;
     const { error } = await supabase.from('class_slots').update({ student_id: editing.id }).eq('id', slotId);
     if (error) return alert('Erro: ' + error.message);

@@ -1,5 +1,6 @@
 'use client';
 
+import { lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CalendarDays, Clock, Users } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -24,19 +25,6 @@ interface Turma { id: string; teacher_name: string; day_of_week: string; start_t
 interface Vaga { class_id: string; student_id: string | null }
 interface Aluno { id: string; name: string; level: CapLevel }
 
-async function paginado<T>(tabela: string, colunas: string): Promise<T[]> {
-  const linhas: T[] = [];
-  for (let de = 0; ; de += 1000) {
-    const { data, error } = await supabase.from(tabela).select(colunas).range(de, de + 999);
-    if (error) throw new Error(`${tabela}: ${error.message}`);
-    const lote = (data ?? []) as unknown as T[];
-    if (!lote.length) break;
-    linhas.push(...lote);
-    if (lote.length < 1000) break;
-  }
-  return linhas;
-}
-
 export function MinhaSemana({ meuNome }: { meuNome: string }) {
   const [dados, setDados] = useState<{ turmas: Turma[]; vagas: Vaga[]; alunos: Aluno[]; avals: any[] } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -50,10 +38,10 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
     (async () => {
       try {
         const [turmas, vagas, alunos, avals] = await Promise.all([
-          paginado<Turma>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
-          paginado<Vaga>('class_slots', 'class_id, student_id'),
+          lerTurmas() as Promise<Turma[]>,
+          lerVagas() as Promise<Vaga[]>,
           lerAlunos('basico') as Promise<Aluno[]>,
-          paginado<any>('evaluations', 'student_id, date'),
+          lerAvaliacoesResumo(),
         ]);
         if (vivo) setDados({ turmas, vagas, alunos, avals });
       } catch (e: any) {

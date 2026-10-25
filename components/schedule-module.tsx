@@ -1,8 +1,8 @@
 'use client';
 
+import { invalidarGrade, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { paginado } from '@/lib/paginado';
 import { lerAlunos } from '@/lib/alunos';
 import { lerEquipe } from '@/lib/equipe';
 import { Plus, Trash2, Calendar, Clock, User, X, LayoutGrid, AlertTriangle, ChevronDown, CheckCircle2, Search } from 'lucide-react';
@@ -142,8 +142,8 @@ export function ScheduleModule() {
     // `class_slots` passa de 1000 linhas: sem paginar, o corte do PostgREST
     // escondia vagas e as turmas apareciam com menos aluno do que têm.
     const [todas, slotData, stuData] = await Promise.all([
-      paginado<any>('classes', '*', 'start_time'),
-      paginado<any>('class_slots', '*'),
+      lerTurmas(),
+      lerVagas(),
       lerAlunos('nomes'),
     ]);
 
@@ -169,6 +169,7 @@ export function ScheduleModule() {
   };
 
   const handleCreateClass = async (e: React.FormEvent) => {
+    invalidarGrade();
     e.preventDefault();
     if (!form.teacher_name.trim()) return alert('Selecione o professor.');
     if (form.days_of_week.length === 0) return alert('Selecione pelo menos um dia da semana.');
@@ -226,6 +227,7 @@ export function ScheduleModule() {
   };
 
   const handleDeleteClass = async (id: string) => {
+    invalidarGrade();
     if (!confirm('Apagar essa turma inteira e todas as suas vagas?')) return;
     await supabase.from('class_slots').delete().eq('class_id', id);
     await supabase.from('classes').delete().eq('id', id);

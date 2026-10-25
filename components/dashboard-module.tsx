@@ -1,5 +1,6 @@
 'use client';
 
+import { lerAvaliacoesResumo, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -145,9 +146,9 @@ export function DashboardModule() {
         // As outras seguem direto daqui, que é o esperado.
         const [alunos, avals, turmas, vagas, equipe, limpeza, manut] = await Promise.all([
           lerAlunos('painel') as Promise<Aluno[]>,
-          buscarTudo<Aval>('evaluations', 'id,student_id,date,level,approved'),
-          buscarTudo<Turma>('classes', 'id,day_of_week,start_time,teacher_name'),
-          buscarTudo<Vaga>('class_slots', 'class_id,student_id'),
+          lerAvaliacoesResumo() as Promise<Aval[]>,
+          lerTurmas() as Promise<Turma[]>,
+          lerVagas() as Promise<Vaga[]>,
           lerEquipe() as Promise<Equipe[]>,
           buscarTudo<Tarefa>('cleaning_tasks', 'id,title,completed,date,created_at'),
           buscarTudo<Tarefa>('maintenance_tasks', 'id,title,completed,date,created_at'),

@@ -1,11 +1,11 @@
 'use client';
 
+import { invalidarGrade, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
-import { paginado } from '@/lib/paginado';
 import { criarAlunos, lerAlunos } from '@/lib/alunos';
 import { cn } from '@/lib/utils';
 import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR } from '@/components/ui';
@@ -172,8 +172,8 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
     // que sobram do corte do PostgREST simplesmente não apareciam aqui —
     // matrícula no balcão via "sem vaga" num horário que tinha vaga.
     const [clsData, slotData] = await Promise.all([
-      paginado<any>('classes', '*', 'start_time'),
-      paginado<any>('class_slots', '*'),
+      lerTurmas(),
+      lerVagas(),
     ]);
     setClasses(clsData);
     setAvailableSlots(slotData.filter(s => !s.student_id || s.student_id === ''));
@@ -321,6 +321,7 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
   };
 
   const runBulkImport = async () => {
+    invalidarGrade();
     const toCreate = bulkRows.filter(r => !r.skip);
     if (toCreate.length === 0) return;
     setBulkImporting(true);

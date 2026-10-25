@@ -1,8 +1,7 @@
 'use client';
 
+import { lerAvaliacoesCompletas, lerTurmas, lerVagas } from '@/lib/dados';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { paginado } from '@/lib/paginado';
 import { lerAlunos } from '@/lib/alunos';
 import { apagarAvaliacao as removerAvaliacao } from '@/lib/avaliacoes';
 import type { Aluno, ClassRow, SlotRow } from './constantes';
@@ -36,9 +35,9 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
 
     const [std, evl, cls, slt] = await Promise.all([
       lerAlunos('avaliacao'),
-      paginado<any>('evaluations', '*'),
-      paginado<any>('classes', 'id, teacher_name, day_of_week, start_time, end_time'),
-      paginado<any>('class_slots', 'id, class_id, cap_color, student_id'),
+      lerAvaliacoesCompletas(),
+      lerTurmas(),
+      lerVagas(),
     ]);
 
     // matricula cancelada some da avaliacao. Sem isto, como cancelar libera a
@@ -84,7 +83,7 @@ export function useDadosNatacao(aoReceberAlunoDeOutraAba: (id: string) => void) 
    */
   const recarregarAvaliacoes = async () => {
     const [evl, std] = await Promise.all([
-      paginado<any>('evaluations', '*'),
+      lerAvaliacoesCompletas(),
       lerAlunos('avaliacao'),
     ]);
     setEvaluations(evl.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
