@@ -13,60 +13,15 @@ import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
 import { apagarAluno, atualizarAlunos, lerAlunos } from '@/lib/alunos';
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
-import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Loading, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar , EsqueletoLista } from '@/components/ui';
+import { Badge, Button, DataTable, EmptyState, FilterBar, FilterFooter, Input, Modal, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TEmpty, TH, THead, TR , avisarErro, avisar, confirmar, perguntar , EsqueletoLista } from '@/components/ui';
 
-interface StudentRow {
-  id: string;
-  name: string;
-  age: number | null;
-  level: CapLevel;
-  guardian_name: string | null;
-  phone: string | null;
-  password: string | null;
-  modalidade: string | null;
-  endereco: string | null;
-  observacoes: string | null;
-  /** Matrícula ativa. Quem cancela vira false e mantém ficha e histórico. */
-  ativo: boolean | null;
-  inativo_em: string | null;
-  inativo_motivo: string | null;
-}
-interface ClassRow {
-  id: string;
-  teacher_name: string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-}
-interface SlotRow {
-  id: string;
-  class_id: string;
-  cap_color: string;
-  student_id: string | null;
-}
-interface EvalRow {
-  student_id: string;
-  date: string;
-  approved: boolean;
-}
-
-const DAYS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
-const MODALIDADES = ['fixo', 'wellhub', 'avulso'];
-const hhmm = (t: string) => String(t || '').slice(0, 5);
-
-/**
- * Selo de avaliação com o resultado do trimestre — não só "avaliado/pendente"
- * (como o SeloAvaliacao da Avaliação de Natação), mas separando quem passou
- * de quem ainda está em treinamento, pra dar pra ver isso direto na lista,
- * sem precisar abrir a ficha ou baixar um PDF.
- */
-function SeloAvaliacaoDetalhado({ ultima }: { ultima?: { date: string; approved: boolean } }) {
-  if (!ultima) return <Badge tone="neutral">pendente</Badge>;
-  const data = new Date(ultima.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-  return ultima.approved
-    ? <Badge tone="success">✓ Aprovado {data}</Badge>
-    : <Badge tone="warning">Treinando {data}</Badge>;
-}
+// Tipos, constantes e o selo vivem em components/alunos/ — são puros
+// e não dependem de estado nem de rede.
+import {
+  DAYS, MODALIDADES, hhmm,
+  type ClassRow, type EvalRow, type SlotRow, type StudentRow,
+} from './alunos/tipos';
+import { SeloAvaliacaoDetalhado } from './alunos/SeloAvaliacaoDetalhado';
 
 export function StudentsModule() {
   const [students, setStudents] = useState<StudentRow[]>([]);
