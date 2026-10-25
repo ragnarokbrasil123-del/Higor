@@ -11,7 +11,7 @@ export function ChipsTouca({ alunos }: { alunos: Aluno[] }) {
   return (
     <div className="flex flex-wrap gap-1 mt-0.5">
       {toucas.map(t => (
-        <span key={t} className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[t].bgClass)}>
+        <span key={t} className={cn('text-micro font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[t].bgClass)}>
           {levels[t].label}
         </span>
       ))}

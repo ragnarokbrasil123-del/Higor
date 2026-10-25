@@ -133,7 +133,7 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
         </div>
         <div>
           <p className="text-white font-bold text-sm leading-tight">Clube Olimpo App</p>
-          <p className="text-ink-on-dark-muted text-[10px]">Acesso rápido e seguro</p>
+          <p className="text-ink-on-dark-muted text-micro">Acesso rápido e seguro</p>
         </div>
       </div>
       

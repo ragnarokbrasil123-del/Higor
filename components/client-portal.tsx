@@ -333,7 +333,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                           {new Date(ev.date).toLocaleDateString('pt-BR')}
                         </p>
                         {evLevel && (
-                          <span className={cn('inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white', evLevel.bgClass)}>
+                          <span className={cn('inline-block mt-1 px-2 py-0.5 rounded text-micro font-bold uppercase tracking-wider text-white', evLevel.bgClass)}>
                             Touca {evLevel.name}
                           </span>
                         )}
@@ -371,7 +371,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                               <div key={crit.id} className="flex items-start gap-2 text-sm">
                                 <div className={cn('w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5',
                                   st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
-                                  {st === 'passed' ? <Check className="w-3 h-3" strokeWidth={3} /> : st === 'failed' ? <XIcon className="w-3 h-3" strokeWidth={3} /> : <span className="text-[10px] font-bold">–</span>}
+                                  {st === 'passed' ? <Check className="w-3 h-3" strokeWidth={3} /> : st === 'failed' ? <XIcon className="w-3 h-3" strokeWidth={3} /> : <span className="text-micro font-bold">–</span>}
                                 </div>
                                 <span className={cn('leading-snug', st === 'passed' ? 'text-ink' : 'text-ink-muted')}>{crit.label}</span>
                               </div>

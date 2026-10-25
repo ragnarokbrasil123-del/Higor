@@ -518,21 +518,21 @@ export function StudentsModule() {
                   <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider mb-3">Dados do aluno</h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="md:col-span-2">
-                      <label className="text-[11px] font-bold text-ink-muted">Nome *</label>
+                      <label className="text-mini font-bold text-ink-muted">Nome *</label>
                       <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted">Idade</label>
+                      <label className="text-mini font-bold text-ink-muted">Idade</label>
                       <input type="number" min={0} value={editing.age ?? ''} onChange={e => setEditing({ ...editing, age: e.target.value === '' ? null : Number(e.target.value) })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted">Modalidade</label>
+                      <label className="text-mini font-bold text-ink-muted">Modalidade</label>
                       <Select value={editing.modalidade || 'fixo'} onChange={e => setEditing({ ...editing, modalidade: e.target.value })} className="mt-1 py-2.5">
                         {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
                       </Select>
                     </div>
                     <div className="md:col-span-4">
-                      <label className="text-[11px] font-bold text-ink-muted">Touca</label>
+                      <label className="text-mini font-bold text-ink-muted">Touca</label>
                       <Select value={editing.level} onChange={e => setEditing({ ...editing, level: e.target.value as CapLevel })} className="mt-1 py-2.5">
                         {capLevelOrder.map(k => <option key={k} value={k}>{levels[k].name}</option>)}
                       </Select>
@@ -564,7 +564,7 @@ export function StudentsModule() {
                             </p>
                             <p className="text-xs font-medium text-ink-muted truncate">Prof. {rotuloProfessor(a.cls!.teacher_name)}</p>
                             {divergente && (
-                              <p className="text-[11px] font-bold text-warning-ink flex items-center gap-1 mt-1">
+                              <p className="text-mini font-bold text-warning-ink flex items-center gap-1 mt-1">
                                 <AlertTriangle className="w-3 h-3" /> vaga de {levels[a.slot.cap_color as CapLevel]?.label || a.slot.cap_color} — touca do aluno mudou
                               </p>
                             )}
@@ -586,7 +586,7 @@ export function StudentsModule() {
                           </button>
                         ))}
                       </div>
-                      <p className="text-[11px] font-bold text-ink-muted">
+                      <p className="text-mini font-bold text-ink-muted">
                         Vagas livres de <b>{levels[editing.level]?.label}</b> em {addDay.split('-')[0]}:
                       </p>
                       {vagasPorTurma.length === 0 ? (
@@ -598,7 +598,7 @@ export function StudentsModule() {
                               <p className="text-sm font-black text-ink flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-info" /> {hhmm(v.cls!.start_time)}
                               </p>
-                              <p className="text-[11px] font-medium text-ink-muted truncate">Prof. {rotuloProfessor(v.cls!.teacher_name)}</p>
+                              <p className="text-mini font-medium text-ink-muted truncate">Prof. {rotuloProfessor(v.cls!.teacher_name)}</p>
                             </button>
                           ))}
                         </div>
@@ -612,23 +612,23 @@ export function StudentsModule() {
                   <h3 className="text-xs font-black text-ink-subtle uppercase tracking-wider mb-3">Responsável e acesso</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><User className="w-3 h-3" /> Nome do responsável</label>
                       <input value={editing.guardian_name || ''} onChange={e => setEditing({ ...editing, guardian_name: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><Phone className="w-3 h-3" /> WhatsApp (login do portal)</label>
                       <input value={editing.phone || ''} onChange={e => setEditing({ ...editing, phone: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><Lock className="w-3 h-3" /> Senha do portal</label>
                       <input value={editing.password || ''} onChange={e => setEditing({ ...editing, password: e.target.value })} className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><MapPin className="w-3 h-3" /> Endereço</label>
                       <input value={editing.endereco || ''} onChange={e => setEditing({ ...editing, endereco: e.target.value })} placeholder="Rua, número, bairro..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20" />
                     </div>
                     <div className="md:col-span-2">
-                      <label className="text-[11px] font-bold text-ink-muted flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
+                      <label className="text-mini font-bold text-ink-muted flex items-center gap-1"><StickyNote className="w-3 h-3" /> Observações</label>
                       <textarea value={editing.observacoes || ''} onChange={e => setEditing({ ...editing, observacoes: e.target.value })} placeholder="Alergias, restrições, combinados com a família..." className="w-full mt-1 px-3 py-2.5 bg-surface-sunken border border-line rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand/20 min-h-[80px] resize-y" />
                     </div>
                   </div>

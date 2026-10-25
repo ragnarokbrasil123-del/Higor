@@ -54,7 +54,7 @@ export function LinhaAluno({ aluno, selo, onClick, variante = 'compacta', mostra
       <div className={cn('w-2 h-2 rounded-full shrink-0', info?.bgClass)} />
       <span className="flex-1 text-sm font-medium text-ink truncate">{aluno.name}</span>
       {mostrarTouca && (
-        <span className="text-[10px] font-bold text-ink-subtle uppercase tracking-wider shrink-0 hidden sm:inline">
+        <span className="text-micro font-bold text-ink-subtle uppercase tracking-wider shrink-0 hidden sm:inline">
           {info?.label}
         </span>
       )}

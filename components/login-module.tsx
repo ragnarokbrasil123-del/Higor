@@ -274,7 +274,7 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
                       <input type="text" required value={novoUsuario} autoCapitalize="none" onChange={(e) => setNovoUsuario(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-brand transition-colors" placeholder="Ex: maria.silva" />
                     </div>
-                    <p className="text-[11px] text-ink-on-dark-muted mt-1.5 ml-1">Mínimo 4 caracteres. Pode ser seu e-mail.</p>
+                    <p className="text-mini text-ink-on-dark-muted mt-1.5 ml-1">Mínimo 4 caracteres. Pode ser seu e-mail.</p>
                   </div>
                   <div>
                     <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Criar senha</label>

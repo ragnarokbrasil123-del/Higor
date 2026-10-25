@@ -382,14 +382,14 @@ export function ProfessorsModule() {
                           <TR key={p.id} muted={!isActive}>
                             <TD className="font-bold text-ink sticky left-0 bg-surface z-10 whitespace-nowrap">
                               {p.name || p.username || '—'}
-                              {!isActive && <span className="ml-2 text-[9px] font-bold text-danger uppercase">inativo</span>}
+                              {!isActive && <span className="ml-2 text-micro font-bold text-danger uppercase">inativo</span>}
                             </TD>
                             {DAYS.map(d => {
                               // sábado é escala alternada para todos — não há horário a mostrar
                               if (d.key === 'sab') {
                                 return (
                                   <TD key={d.key} className="align-top">
-                                    <span className="text-[10px] font-bold text-ink-subtle uppercase tracking-wider">escala</span>
+                                    <span className="text-micro font-bold text-ink-subtle uppercase tracking-wider">escala</span>
                                   </TD>
                                 );
                               }
@@ -400,7 +400,7 @@ export function ProfessorsModule() {
                                   {shifts.length ? (
                                     <div className="flex flex-col gap-1">
                                       {shifts.map((s, i) => (
-                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-indigo-100 text-[11px] font-bold text-info-ink whitespace-nowrap">
+                                        <span key={i} className="inline-block px-2 py-1 rounded-lg bg-surface border border-indigo-100 text-mini font-bold text-info-ink whitespace-nowrap">
                                           {s.start}–{s.end}
                                         </span>
                                       ))}
@@ -631,7 +631,7 @@ export function ProfessorsModule() {
                   ) : currentProfessor?.username && !showAccessForm ? (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-success-soft border border-success-soft rounded-xl p-3">
                       <div>
-                        <p className="text-[10px] font-bold text-success-ink uppercase tracking-wider">Login ativo</p>
+                        <p className="text-micro font-bold text-success-ink uppercase tracking-wider">Login ativo</p>
                         <p className="font-bold text-ink">{currentProfessor.username}</p>
                       </div>
                       <div className="flex gap-2">

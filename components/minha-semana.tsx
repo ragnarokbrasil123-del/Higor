@@ -179,7 +179,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
                     </span>
                     <div className="flex flex-wrap gap-1 ml-auto">
                       {t.toucas.map(k => (
-                        <span key={k} className={cn('text-[10px] font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[k].bgClass)}>
+                        <span key={k} className={cn('text-micro font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[k].bgClass)}>
                           {levels[k].label}
                         </span>
                       ))}

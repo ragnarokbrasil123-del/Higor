@@ -111,13 +111,13 @@ export function PainelSemTurma({ semTurma, semTurmaFiltrado, filtros, avaliadoAg
                   {g.titulo}
                 </>}
                 subtitulo={
-                  <p className={cn('text-[11px] font-bold truncate', g.aviso ? 'text-warning-ink' : 'text-ink-muted')}>{g.desc}</p>
+                  <p className={cn('text-mini font-bold truncate', g.aviso ? 'text-warning-ink' : 'text-ink-muted')}>{g.desc}</p>
                 }
               >
                 {g.aviso && (
                   <div className="px-4 py-2.5 bg-warning-soft border-b border-brand-wash flex items-start gap-2">
                     <CalendarDays className="w-4 h-4 text-warning-ink shrink-0 mt-0.5" />
-                    <p className="text-[11px] font-medium text-brand-deep">
+                    <p className="text-mini font-medium text-brand-deep">
                       Estes alunos são de turma fixa mas ficaram sem horário — o dia/hora da planilha não bateu com nenhum professor.
                       Dá pra alocar cada um na aba <b>Alunos</b> → <b>Abrir ficha</b>.
                     </p>

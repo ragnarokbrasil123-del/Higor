@@ -208,7 +208,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
           </div>
           <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Escreva, ou toque em “Gerar sugestão” para criar a partir do resultado." className="min-h-[110px]" />
           {marcados === 0 && (
-            <p className="text-[11px] font-bold text-ink-subtle mt-2">Marque os critérios acima para liberar a sugestão.</p>
+            <p className="text-mini font-bold text-ink-subtle mt-2">Marque os critérios acima para liberar a sugestão.</p>
           )}
         </div>
       </div>

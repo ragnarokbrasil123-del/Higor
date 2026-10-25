@@ -127,7 +127,7 @@ export function PainelTurmas({
                     etiqueta={<><Clock className="w-3.5 h-3.5" /> {bloco.hora}</>}
                     subtitulo={
                       bloco.professor && isAdmin
-                        ? <p className="text-[11px] font-bold text-ink-muted truncate">{bloco.professor}</p>
+                        ? <p className="text-mini font-bold text-ink-muted truncate">{bloco.professor}</p>
                         : undefined
                     }
                   >

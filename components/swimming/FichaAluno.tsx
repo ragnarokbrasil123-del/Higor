@@ -59,7 +59,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <div>
                       <p className="font-black text-ink">{new Date(ev.date).toLocaleDateString('pt-BR')}</p>
-                      <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded text-white', levels[ev.level as CapLevel]?.bgClass)}>
+                      <span className={cn('text-micro font-bold uppercase px-2 py-0.5 rounded text-white', levels[ev.level as CapLevel]?.bgClass)}>
                         Touca {levels[ev.level as CapLevel]?.name}
                       </span>
                     </div>
@@ -102,7 +102,7 @@ export function FichaAluno({ aluno, historico, isAdmin, selo, onVoltar, onAvalia
                       const st = ev.scores?.[c.id] || 'pending';
                       return (
                         <div key={c.id} className="flex items-start gap-2 text-xs">
-                          <div className={cn('w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[9px] font-black',
+                          <div className={cn('w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-micro font-black',
                             st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
                             {st === 'passed' ? '✔' : st === 'failed' ? '✖' : '–'}
                           </div>

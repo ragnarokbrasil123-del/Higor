@@ -381,7 +381,7 @@ export function ScheduleModule() {
                         <Clock className="w-3.5 h-3.5" /> {b.hora}
                       </div>
                       <div className="h-px flex-1 bg-line" />
-                      <span className="text-[11px] font-bold text-ink-subtle shrink-0">{b.turmas.length} turma(s)</span>
+                      <span className="text-mini font-bold text-ink-subtle shrink-0">{b.turmas.length} turma(s)</span>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -488,7 +488,7 @@ export function ScheduleModule() {
                             {activeList.map(p => (
                               <button key={p.id} type="button" onClick={() => { setForm({ ...form, teacher_name: p.name || '' }); setIsTeacherDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-info-soft transition-colors border-b border-surface-sunken last:border-0">
                                 <span className="block text-ink font-bold">{p.name || p.username}</span>
-                                <span className="block text-[11px] text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
+                                <span className="block text-mini text-ink-subtle font-medium truncate">{summarizeProf(p.schedule)}</span>
                               </button>
                             ))}
                           </motion.div>
@@ -501,7 +501,7 @@ export function ScheduleModule() {
                         </p>
                       )}
                       {selectedProf && (
-                        <p className="mt-2 text-[11px] text-ink-muted font-medium">
+                        <p className="mt-2 text-mini text-ink-muted font-medium">
                           <span className="font-bold text-ink-muted">Trabalha:</span> {summarizeProf(selectedProf.schedule)}
                         </p>
                       )}
@@ -545,7 +545,7 @@ export function ScheduleModule() {
                               {c.day.split('-')[0]}: {c.hours === 'folga' ? 'é folga dele(a)' : `só trabalha ${c.hours}`}
                             </p>
                           ))}
-                          <p className="text-[11px] text-warning-ink ml-6 pt-1">Você ainda pode salvar (ex.: substituição).</p>
+                          <p className="text-mini text-warning-ink ml-6 pt-1">Você ainda pode salvar (ex.: substituição).</p>
                         </div>
                       )
                     )}
@@ -574,7 +574,7 @@ export function ScheduleModule() {
                           >
                             <label className="text-sm font-bold text-ink mb-2 flex items-center gap-2">
                               <div className={cn('w-3 h-3 rounded-full shadow-sm', opt.bg)} /> {opt.label}
-                              <span className="ml-auto text-[10px] font-bold text-ink-subtle">máx {CAPACIDADE_TOUCA[opt.key]}</span>
+                              <span className="ml-auto text-micro font-bold text-ink-subtle">máx {CAPACIDADE_TOUCA[opt.key]}</span>
                             </label>
                             <div className="flex items-center bg-surface-sunken rounded-lg p-1">
                               <button
@@ -595,7 +595,7 @@ export function ScheduleModule() {
                               </button>
                             </div>
                             {travado && (
-                              <p className="text-[10px] font-bold text-warning-ink mt-1.5">
+                              <p className="text-micro font-bold text-warning-ink mt-1.5">
                                 {NIVEL_UNICO.includes(opt.key) ? 'turma já é de outro nível único' : 'grupo verde+ cheio (9/9)'}
                               </p>
                             )}
