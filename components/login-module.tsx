@@ -102,7 +102,7 @@ function Erro({ texto }: { texto: string }) {
 function Ondas() {
   return (
     <svg
-      className="absolute bottom-0 left-0 w-full h-44 pointer-events-none"
+      className="fixed bottom-0 left-0 w-full h-44 pointer-events-none"
       viewBox="0 0 1440 200"
       preserveAspectRatio="none"
       aria-hidden="true"
@@ -253,7 +253,15 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden bg-[#06283f]">
+    /* A rolagem fica NESTA caixa, que ocupa a janela inteira, e não no
+       bloco do formulário: presa ao bloco, a barra aparecia encostada
+       no cartão, no meio da tela.
+
+       O conteúdo é centralizado com `m-auto` e não com `justify-center`:
+       num container que rola, centralizar pelo flex empurra o topo para
+       fora e ele fica inalcançável — não dá para rolar para cima do
+       início. Com margem automática, o excesso sobra para baixo. */
+    <div className="fixed inset-0 overflow-y-auto overscroll-contain bg-[#06283f]">
       {/* Instalar antes de entrar é o momento natural — e no iPhone os avisos
           só funcionam com o app na Tela de Início. */}
       <InstallPrompt />
@@ -262,196 +270,198 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
           As cores são literais, e não tokens, porque esta é a única tela
           que não muda de tema — ela acontece antes de o app saber quem
           entrou. O cartão branco por cima é que carrega os tokens. */}
-      <div className="absolute inset-0 bg-[linear-gradient(165deg,#06283f_0%,#0a4a73_55%,#097cba_100%)]" />
+      <div className="fixed inset-0 bg-[linear-gradient(165deg,#06283f_0%,#0a4a73_55%,#097cba_100%)]" />
       <Ondas />
 
-      <div className="relative z-10 w-full max-w-md p-6 max-h-dvh overflow-y-auto">
-        <div className="flex flex-col items-center mb-7 motion-safe:animate-[desce_.3s_ease-out]">
-          {/* `priority`: é o maior elemento desta tela, ou seja, o que o
-              navegador usa para medir o LCP. Sem isso ele entra na fila
-              comum e o app aparenta demorar mais do que demora. */}
-          <Image
-            src="/logo.png"
-            alt="Clube Olimpo"
-            width={176}
-            height={176}
-            priority
-            className="w-32 h-32 md:w-36 md:h-36 object-contain mb-3 drop-shadow-2xl"
-          />
-          <h1 className="font-titulo text-white text-xl md:text-2xl font-semibold tracking-[0.18em] uppercase text-center">
-            Portal de Acesso
-          </h1>
-          {/* fio de ouro: a cor da conquista aparece uma vez, sem disputar
-              com o azul da ação */}
-          <span className="mt-3 h-px w-16 bg-ouro" aria-hidden="true" />
-        </div>
-
-        {loginType === 'none' ? (
-          <div key="selector" className="space-y-3 motion-safe:animate-[cresce_.2s_ease-out]">
-            <button
-              onClick={() => setLoginType('team')}
-              className="w-full p-5 bg-surface rounded-card shadow-overlay border border-line flex items-center justify-between gap-3 text-left group transition-all hover:border-brand-line active:scale-[.98]"
-            >
-              <span className="flex items-center gap-4 min-w-0">
-                <span className="p-3 bg-brand rounded-control text-brand-ink shrink-0"><ShieldCheck className="w-6 h-6" /></span>
-                <span className="min-w-0">
-                  <span className="block font-bold text-lg text-ink leading-tight">Portal do Colaborador</span>
-                  <span className="block text-xs text-ink-muted mt-0.5">{LOGIN_PROFESSOR_LIBERADO ? 'Professores e Administração' : 'Somente Administração'}</span>
-                </span>
-              </span>
-              <ArrowRight className="w-5 h-5 text-brand-text shrink-0 group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            <button
-              onClick={() => setLoginType('client')}
-              disabled={!LOGIN_RESPONSAVEL_LIBERADO}
-              className={cn(
-                'w-full p-5 bg-surface rounded-card shadow-overlay border border-line flex items-center justify-between gap-3 text-left group transition-all',
-                LOGIN_RESPONSAVEL_LIBERADO ? 'hover:border-brand-line active:scale-[.98]' : 'opacity-60 cursor-not-allowed'
-              )}
-            >
-              <span className="flex items-center gap-4 min-w-0">
-                <span className="p-3 bg-brand rounded-control text-brand-ink shrink-0"><User className="w-6 h-6" /></span>
-                <span className="min-w-0">
-                  <span className="block font-bold text-lg text-ink leading-tight">Portal do Aluno</span>
-                  <span className="block text-xs text-ink-muted mt-0.5">{LOGIN_RESPONSAVEL_LIBERADO ? 'Alunos e responsáveis' : 'Portal ainda não liberado'}</span>
-                </span>
-              </span>
-              {LOGIN_RESPONSAVEL_LIBERADO
-                ? <ArrowRight className="w-5 h-5 text-brand-text shrink-0 group-hover:translate-x-1 transition-transform" />
-                : <Lock className="w-5 h-5 text-ink-subtle shrink-0" />}
-            </button>
+      <div className="relative z-10 min-h-full flex">
+        <div className="w-full max-w-md p-6 m-auto">
+          <div className="flex flex-col items-center mb-7 motion-safe:animate-[desce_.3s_ease-out]">
+            {/* `priority`: é o maior elemento desta tela, ou seja, o que o
+                navegador usa para medir o LCP. Sem isso ele entra na fila
+                comum e o app aparenta demorar mais do que demora. */}
+            <Image
+              src="/logo.png"
+              alt="Clube Olimpo"
+              width={176}
+              height={176}
+              priority
+              className="w-28 h-28 md:w-36 md:h-36 object-contain mb-3 drop-shadow-2xl"
+            />
+            <h1 className="font-titulo text-white text-xl md:text-2xl font-semibold tracking-[0.18em] uppercase text-center">
+              Portal de Acesso
+            </h1>
+            {/* fio de ouro: a cor da conquista aparece uma vez, sem disputar
+                com o azul da ação */}
+            <span className="mt-3 h-px w-16 bg-ouro" aria-hidden="true" />
           </div>
-        ) : loginType === 'team' ? (
 
-          /* --- LOGIN DA EQUIPE --- */
-          <Cartao chave="team-form">
-            <BotaoVoltar aoClicar={() => { setLoginType('none'); setError(''); }} />
-            <form onSubmit={handleTeamLogin} className="space-y-4">
-              <Campo
-                rotulo="Usuário" icone={User} type="text" required
-                value={username} onChange={(e) => setUsername(e.target.value)}
-                autoCapitalize="none" autoComplete="username" placeholder="Ex: admin"
-              />
-              <Campo
-                rotulo="Senha" icone={Lock} required
-                type={showTeamPassword ? 'text' : 'password'}
-                value={password} onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password" placeholder="••••••••"
-                acao={<BotaoOlho mostrando={showTeamPassword} aoAlternar={() => setShowTeamPassword(!showTeamPassword)} />}
-              />
-              <Erro texto={error} />
-              <Button type="submit" block size="lg" disabled={loading}>
-                {loading ? 'Entrando...' : 'Entrar no Sistema'}
-              </Button>
-            </form>
-          </Cartao>
+          {loginType === 'none' ? (
+            <div key="selector" className="space-y-3 motion-safe:animate-[cresce_.2s_ease-out]">
+              <button
+                onClick={() => setLoginType('team')}
+                className="w-full p-5 bg-surface rounded-card shadow-overlay border border-line flex items-center justify-between gap-3 text-left group transition-all hover:border-brand-line active:scale-[.98]"
+              >
+                <span className="flex items-center gap-4 min-w-0">
+                  <span className="p-3 bg-brand rounded-control text-brand-ink shrink-0"><ShieldCheck className="w-6 h-6" /></span>
+                  <span className="min-w-0">
+                    <span className="block font-bold text-lg text-ink leading-tight">Portal do Colaborador</span>
+                    <span className="block text-xs text-ink-muted mt-0.5">{LOGIN_PROFESSOR_LIBERADO ? 'Professores e Administração' : 'Somente Administração'}</span>
+                  </span>
+                </span>
+                <ArrowRight className="w-5 h-5 text-brand-text shrink-0 group-hover:translate-x-1 transition-transform" />
+              </button>
 
-        ) : loginType === 'convite' ? (
+              <button
+                onClick={() => setLoginType('client')}
+                disabled={!LOGIN_RESPONSAVEL_LIBERADO}
+                className={cn(
+                  'w-full p-5 bg-surface rounded-card shadow-overlay border border-line flex items-center justify-between gap-3 text-left group transition-all',
+                  LOGIN_RESPONSAVEL_LIBERADO ? 'hover:border-brand-line active:scale-[.98]' : 'opacity-60 cursor-not-allowed'
+                )}
+              >
+                <span className="flex items-center gap-4 min-w-0">
+                  <span className="p-3 bg-brand rounded-control text-brand-ink shrink-0"><User className="w-6 h-6" /></span>
+                  <span className="min-w-0">
+                    <span className="block font-bold text-lg text-ink leading-tight">Portal do Aluno</span>
+                    <span className="block text-xs text-ink-muted mt-0.5">{LOGIN_RESPONSAVEL_LIBERADO ? 'Alunos e responsáveis' : 'Portal ainda não liberado'}</span>
+                  </span>
+                </span>
+                {LOGIN_RESPONSAVEL_LIBERADO
+                  ? <ArrowRight className="w-5 h-5 text-brand-text shrink-0 group-hover:translate-x-1 transition-transform" />
+                  : <Lock className="w-5 h-5 text-ink-subtle shrink-0" />}
+              </button>
+            </div>
+          ) : loginType === 'team' ? (
 
-          /* --- CRIAR ACESSO COM CÓDIGO DE CONVITE --- */
-          <Cartao chave="convite-form">
-            <BotaoVoltar aoClicar={voltarInicio} />
-
-            {!convidado ? (
-              /* passo 1: conferir o código */
-              <form onSubmit={handleConferirCodigo} className="space-y-4">
-                <div className="text-center mb-6">
-                  <div className="w-14 h-14 mx-auto mb-3 bg-brand-soft rounded-card flex items-center justify-center">
-                    <KeyRound className="w-7 h-7 text-brand-text" />
-                  </div>
-                  <h2 className="font-titulo text-ink font-semibold text-lg mb-1">Criar meu acesso</h2>
-                  <p className="text-ink-muted text-xs">Digite o código que a administração te passou.</p>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-ink-muted uppercase tracking-wider ml-1">Código do convite</label>
-                  <input
-                    type="text" required value={codigo} autoCapitalize="characters" autoComplete="off"
-                    onChange={(e) => setCodigo(normalizarCodigo(e.target.value))}
-                    maxLength={9}
-                    className="w-full mt-1 px-4 py-4 bg-surface-sunken border border-line rounded-control text-ink text-center text-2xl font-mono font-black tracking-[0.3em] outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/25"
-                    placeholder="XXXX-XXXX"
-                  />
-                </div>
-                <Erro texto={error} />
-                <Button type="submit" block size="lg" disabled={loading}>
-                  {loading ? 'Conferindo...' : 'Continuar'}
-                </Button>
-              </form>
-            ) : (
-              /* passo 2: escolher usuário e senha */
-              <form onSubmit={handleCriarAcesso} className="space-y-4">
-                <div className="text-center mb-6">
-                  <p className="text-brand-text text-xs font-bold uppercase tracking-wider">
-                    {convidado.role === 'admin' ? 'Administrador' : 'Professor'}
-                  </p>
-                  <h2 className="font-titulo text-ink font-semibold text-lg mt-1 leading-tight">Olá, {(convidado.name || '').split(' ')[0]}!</h2>
-                  <p className="text-ink-muted text-xs mt-1">Escolha como você vai entrar daqui pra frente.</p>
-                </div>
+            /* --- LOGIN DA EQUIPE --- */
+            <Cartao chave="team-form">
+              <BotaoVoltar aoClicar={() => { setLoginType('none'); setError(''); }} />
+              <form onSubmit={handleTeamLogin} className="space-y-4">
                 <Campo
                   rotulo="Usuário" icone={User} type="text" required
-                  value={novoUsuario} autoCapitalize="none" autoComplete="username"
-                  onChange={(e) => setNovoUsuario(e.target.value)}
-                  placeholder="Ex: maria.silva"
-                  ajuda="Mínimo 4 caracteres. Pode ser seu e-mail."
+                  value={username} onChange={(e) => setUsername(e.target.value)}
+                  autoCapitalize="none" autoComplete="username" placeholder="Ex: admin"
                 />
                 <Campo
-                  rotulo="Criar senha" icone={Lock} required
+                  rotulo="Senha" icone={Lock} required
                   type={showTeamPassword ? 'text' : 'password'}
-                  value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)}
-                  autoComplete="new-password" placeholder="Mínimo 6 caracteres"
+                  value={password} onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password" placeholder="••••••••"
                   acao={<BotaoOlho mostrando={showTeamPassword} aoAlternar={() => setShowTeamPassword(!showTeamPassword)} />}
-                />
-                <Campo
-                  rotulo="Repetir a senha" icone={Lock} required
-                  type={showTeamPassword ? 'text' : 'password'}
-                  value={repeteSenha} onChange={(e) => setRepeteSenha(e.target.value)}
-                  autoComplete="new-password" placeholder="••••••••"
                 />
                 <Erro texto={error} />
                 <Button type="submit" block size="lg" disabled={loading}>
-                  {loading ? 'Criando...' : 'Criar acesso e entrar'}
+                  {loading ? 'Entrando...' : 'Entrar no Sistema'}
                 </Button>
               </form>
-            )}
-          </Cartao>
+            </Cartao>
 
-        ) : (
+          ) : loginType === 'convite' ? (
 
-          /* --- LOGIN DO CLIENTE/PAI --- */
-          <Cartao chave="client-form">
-            <BotaoVoltar aoClicar={() => { setLoginType('none'); setError(''); }} />
-            <form onSubmit={handleClientLogin} className="space-y-4">
-              <div className="text-center mb-6">
-                <h2 className="font-titulo text-ink font-semibold text-lg mb-1">Ficha do Aluno</h2>
-                <p className="text-ink-muted text-xs">Digite os dados cadastrados na secretaria.</p>
-              </div>
-              <Campo
-                rotulo="WhatsApp" icone={Phone} type="tel" required
-                value={phone} onChange={(e) => setPhone(e.target.value)}
-                autoComplete="tel" placeholder="(DDD) 99999-9999"
-              />
-              <div>
-                <Campo
-                  rotulo="Senha de Acesso" icone={Lock} required
-                  type={showClientPassword ? 'text' : 'password'}
-                  value={clientPassword} onChange={(e) => setClientPassword(e.target.value)}
-                  autoComplete="current-password" placeholder="••••••••"
-                  acao={<BotaoOlho mostrando={showClientPassword} aoAlternar={() => setShowClientPassword(!showClientPassword)} />}
-                />
-                <div className="text-right mt-2">
-                  <button type="button" onClick={handleForgotPassword} className="text-xs text-brand-text font-bold hover:underline py-1">
-                    Esqueci a senha
-                  </button>
+            /* --- CRIAR ACESSO COM CÓDIGO DE CONVITE --- */
+            <Cartao chave="convite-form">
+              <BotaoVoltar aoClicar={voltarInicio} />
+
+              {!convidado ? (
+                /* passo 1: conferir o código */
+                <form onSubmit={handleConferirCodigo} className="space-y-4">
+                  <div className="text-center mb-6">
+                    <div className="w-14 h-14 mx-auto mb-3 bg-brand-soft rounded-card flex items-center justify-center">
+                      <KeyRound className="w-7 h-7 text-brand-text" />
+                    </div>
+                    <h2 className="font-titulo text-ink font-semibold text-lg mb-1">Criar meu acesso</h2>
+                    <p className="text-ink-muted text-xs">Digite o código que a administração te passou.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-ink-muted uppercase tracking-wider ml-1">Código do convite</label>
+                    <input
+                      type="text" required value={codigo} autoCapitalize="characters" autoComplete="off"
+                      onChange={(e) => setCodigo(normalizarCodigo(e.target.value))}
+                      maxLength={9}
+                      className="w-full mt-1 px-4 py-4 bg-surface-sunken border border-line rounded-control text-ink text-center text-2xl font-mono font-black tracking-[0.3em] outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/25"
+                      placeholder="XXXX-XXXX"
+                    />
+                  </div>
+                  <Erro texto={error} />
+                  <Button type="submit" block size="lg" disabled={loading}>
+                    {loading ? 'Conferindo...' : 'Continuar'}
+                  </Button>
+                </form>
+              ) : (
+                /* passo 2: escolher usuário e senha */
+                <form onSubmit={handleCriarAcesso} className="space-y-4">
+                  <div className="text-center mb-6">
+                    <p className="text-brand-text text-xs font-bold uppercase tracking-wider">
+                      {convidado.role === 'admin' ? 'Administrador' : 'Professor'}
+                    </p>
+                    <h2 className="font-titulo text-ink font-semibold text-lg mt-1 leading-tight">Olá, {(convidado.name || '').split(' ')[0]}!</h2>
+                    <p className="text-ink-muted text-xs mt-1">Escolha como você vai entrar daqui pra frente.</p>
+                  </div>
+                  <Campo
+                    rotulo="Usuário" icone={User} type="text" required
+                    value={novoUsuario} autoCapitalize="none" autoComplete="username"
+                    onChange={(e) => setNovoUsuario(e.target.value)}
+                    placeholder="Ex: maria.silva"
+                    ajuda="Mínimo 4 caracteres. Pode ser seu e-mail."
+                  />
+                  <Campo
+                    rotulo="Criar senha" icone={Lock} required
+                    type={showTeamPassword ? 'text' : 'password'}
+                    value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)}
+                    autoComplete="new-password" placeholder="Mínimo 6 caracteres"
+                    acao={<BotaoOlho mostrando={showTeamPassword} aoAlternar={() => setShowTeamPassword(!showTeamPassword)} />}
+                  />
+                  <Campo
+                    rotulo="Repetir a senha" icone={Lock} required
+                    type={showTeamPassword ? 'text' : 'password'}
+                    value={repeteSenha} onChange={(e) => setRepeteSenha(e.target.value)}
+                    autoComplete="new-password" placeholder="••••••••"
+                  />
+                  <Erro texto={error} />
+                  <Button type="submit" block size="lg" disabled={loading}>
+                    {loading ? 'Criando...' : 'Criar acesso e entrar'}
+                  </Button>
+                </form>
+              )}
+            </Cartao>
+
+          ) : (
+
+            /* --- LOGIN DO CLIENTE/PAI --- */
+            <Cartao chave="client-form">
+              <BotaoVoltar aoClicar={() => { setLoginType('none'); setError(''); }} />
+              <form onSubmit={handleClientLogin} className="space-y-4">
+                <div className="text-center mb-6">
+                  <h2 className="font-titulo text-ink font-semibold text-lg mb-1">Ficha do Aluno</h2>
+                  <p className="text-ink-muted text-xs">Digite os dados cadastrados na secretaria.</p>
                 </div>
-              </div>
-              <Erro texto={error} />
-              <Button type="submit" block size="lg" disabled={loading}>
-                {loading ? 'Buscando ficha...' : 'Acessar Ficha'}
-              </Button>
-            </form>
-          </Cartao>
-        )}
+                <Campo
+                  rotulo="WhatsApp" icone={Phone} type="tel" required
+                  value={phone} onChange={(e) => setPhone(e.target.value)}
+                  autoComplete="tel" placeholder="(DDD) 99999-9999"
+                />
+                <div>
+                  <Campo
+                    rotulo="Senha de Acesso" icone={Lock} required
+                    type={showClientPassword ? 'text' : 'password'}
+                    value={clientPassword} onChange={(e) => setClientPassword(e.target.value)}
+                    autoComplete="current-password" placeholder="••••••••"
+                    acao={<BotaoOlho mostrando={showClientPassword} aoAlternar={() => setShowClientPassword(!showClientPassword)} />}
+                  />
+                  <div className="text-right mt-2">
+                    <button type="button" onClick={handleForgotPassword} className="text-xs text-brand-text font-bold hover:underline py-1">
+                      Esqueci a senha
+                    </button>
+                  </div>
+                </div>
+                <Erro texto={error} />
+                <Button type="submit" block size="lg" disabled={loading}>
+                  {loading ? 'Buscando ficha...' : 'Acessar Ficha'}
+                </Button>
+              </form>
+            </Cartao>
+          )}
+        </div>
       </div>
     </div>
   );
