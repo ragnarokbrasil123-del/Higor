@@ -49,12 +49,20 @@ async function erroDaResposta(resp: Response, padrao: string) {
 
 /* ================= login e convite ================= */
 
-export type MotivoLogin = 'credencial' | 'bloqueada' | 'erro';
+export type MotivoLogin = 'credencial' | 'bloqueada' | 'erro' | 'nao-configurado';
 
 export const MENSAGEM_LOGIN: Record<MotivoLogin, string> = {
   credencial: 'Acesso negado. Verifique usuário e senha.',
   bloqueada: 'Esta conta não está liberada. Fale com a administração.',
   erro: 'Não conseguimos entrar agora. Tente de novo em instantes.',
+  /**
+   * O servidor respondeu 503 (sem SUPABASE_SERVICE_ROLE_KEY / SESSION_SECRET)
+   * e o caminho antigo esbarrou no RLS. Não é senha errada: é ambiente sem
+   * as variáveis. Acontece em pré-visualização do Vercel, onde as variáveis
+   * costumam estar marcadas só para Production. Dizer isso aqui evita
+   * procurar o problema na senha, que está certa.
+   */
+  'nao-configurado': 'Este endereço do app não está configurado para entrar. Use o endereço oficial do clube.',
 };
 
 export type ResultadoEquipe =
@@ -75,7 +83,9 @@ export async function loginEquipe(usuario: string, senha: string): Promise<Resul
 
   if (resp?.ok) return { ok: true, usuario: (await resp.json()).usuario };
 
-  if (resp && !(await usarFallback(resp))) {
+  const semVariaveis = await usarFallback(resp);
+
+  if (resp && !semVariaveis) {
     const corpo = await resp.json().catch(() => null);
     return { ok: false, motivo: (corpo?.motivo as MotivoLogin) || 'erro' };
   }
@@ -88,7 +98,9 @@ export async function loginEquipe(usuario: string, senha: string): Promise<Resul
     .eq('password', senha)
     .maybeSingle();
 
-  if (error) return { ok: false, motivo: 'erro' };
+  // Com o RLS ligado, este caminho SEMPRE falha — e a falha significa
+  // "faltam as variáveis no servidor", não "senha errada".
+  if (error) return { ok: false, motivo: semVariaveis ? 'nao-configurado' : 'erro' };
   if (!data) return { ok: false, motivo: 'credencial' };
   if (!contaLiberada(data)) return { ok: false, motivo: 'bloqueada' };
   return { ok: true, usuario: data };
