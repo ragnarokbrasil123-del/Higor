@@ -2,11 +2,11 @@
 
 import { invalidarGrade, lerTurmas, lerVagas } from '@/lib/dados';
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { UserPlus, Save, Lock, UploadCloud, FileSpreadsheet, Download, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { CapLevel, levels } from '@/types';
 import { supabase } from '@/lib/supabase';
 import { criarAlunos, lerAlunos } from '@/lib/alunos';
+import { BadgeTouca } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { DataTable, PageHeader, PageShell, ResponsiveTable, RowCard, Select, TD, TH, THead, TR , avisarErro, avisar } from '@/components/ui';
 
@@ -273,220 +273,215 @@ export function RegistrationModule({ onSuccess }: RegistrationModuleProps) {
           }
         />
 
-        <AnimatePresence mode="wait">
-          
-          {mode === 'single' ? (
-            
-            <motion.div key="single" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto bg-surface md:rounded-panel shadow-raised border border-line overflow-hidden rounded-2xl">
-              <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  
-                  <div className="space-y-1 md:space-y-2 md:col-span-2">
-                    <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Aluno *</label>
-                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                  </div>
-                  
-                  <div className="space-y-1 md:space-y-2">
-                    <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Idade</label>
-                    <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} placeholder="opcional" className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                  </div>
-                  
-                  <div className="space-y-1 md:space-y-2">
-                    <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nível Inicial (Touca) *</label>
-                    <Select value={level} onChange={(e) => setLevel(e.target.value as CapLevel)}>
-                      {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
-                    </Select>
-                  </div>
+        {mode === 'single' ? (
 
-                  <div className="md:col-span-2 p-3 bg-surface-sunken border border-line rounded-xl">
-                    <p className="text-xs font-medium text-ink-muted">
-                      O dia e o horário da aula são definidos depois, na aba <b className="text-ink">Alunos</b> → <b className="text-ink">Abrir ficha</b>.
-                    </p>
-                  </div>
+          <div key="single" className="max-w-3xl mx-auto bg-surface md:rounded-panel shadow-raised border border-line overflow-hidden rounded-card motion-safe:animate-[surge_.2s_ease-out]">
+            <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                
+                <div className="space-y-1 md:space-y-2 md:col-span-2">
+                  <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Aluno *</label>
+                  <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-control text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                </div>
+                
+                <div className="space-y-1 md:space-y-2">
+                  <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Idade</label>
+                  <input type="number" min="1" value={age} onChange={(e) => setAge(e.target.value)} placeholder="opcional" className="w-full px-4 py-3 bg-surface-sunken border border-line rounded-control text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                </div>
+                
+                <div className="space-y-1 md:space-y-2">
+                  <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nível Inicial (Touca) *</label>
+                  <Select value={level} onChange={(e) => setLevel(e.target.value as CapLevel)}>
+                    {Object.entries(levels).map(([key, value]) => (<option key={key} value={key}>Touca {value.name}</option>))}
+                  </Select>
+                </div>
 
-                  <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-surface-sunken/50 border border-line rounded-2xl space-y-4 md:space-y-6">
-                    <h3 className="font-bold text-ink text-sm md:text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-brand" /> Dados do Responsável (Acesso ao Portal)</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                      <div className="space-y-1 md:space-y-2">
-                        <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Responsável</label>
-                        <input type="text" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                      </div>
-                      <div className="space-y-1 md:space-y-2">
-                        <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">WhatsApp (Login)</label>
-                        <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(DDD) 99999-9999" className="w-full px-4 py-3 bg-surface border border-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
-                      </div>
-                      <div className="space-y-1 md:space-y-2 md:col-span-2">
-                        <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Senha de Acesso do Pai *</label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
-                          <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-brand-line rounded-xl text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all font-medium text-amber-900" />
-                        </div>
+                <div className="md:col-span-2 p-3 bg-surface-sunken border border-line rounded-control">
+                  <p className="text-xs font-medium text-ink-muted">
+                    O dia e o horário da aula são definidos depois, na aba <b className="text-ink">Alunos</b> → <b className="text-ink">Abrir ficha</b>.
+                  </p>
+                </div>
+
+                <div className="md:col-span-2 mt-4 p-4 md:p-6 bg-surface-sunken/50 border border-line rounded-card space-y-4 md:space-y-6">
+                  <h3 className="font-bold text-ink text-sm md:text-base flex items-center gap-2"><UserPlus className="w-4 h-4 text-brand" /> Dados do Responsável (Acesso ao Portal)</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div className="space-y-1 md:space-y-2">
+                      <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Nome do Responsável</label>
+                      <input type="text" value={guardianName} onChange={(e) => setGuardianName(e.target.value)} className="w-full px-4 py-3 bg-surface border border-line rounded-control text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                    </div>
+                    <div className="space-y-1 md:space-y-2">
+                      <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">WhatsApp (Login)</label>
+                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(DDD) 99999-9999" className="w-full px-4 py-3 bg-surface border border-line rounded-control text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all" />
+                    </div>
+                    <div className="space-y-1 md:space-y-2 md:col-span-2">
+                      <label className="text-xs md:text-sm font-bold text-ink-muted uppercase tracking-wider">Senha de Acesso do Pai *</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-subtle" />
+                        <input type="text" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Defina a senha que o pai usará no app" className="w-full pl-10 pr-4 py-3 bg-surface border border-brand-line rounded-control text-sm md:text-base focus:ring-2 focus:ring-brand/20 outline-none transition-all font-medium text-brand-deep" />
                       </div>
                     </div>
                   </div>
-
                 </div>
-                
-                <div className="pt-4 md:pt-6 border-t border-line flex justify-end">
-                  <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-brand md:text-black rounded-xl font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
-                    <Save className="w-4 h-4" /> {loading ? "Salvando..." : "Matricular Aluno"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
 
-          ) : (
+              </div>
+              
+              <div className="pt-4 md:pt-6 border-t border-line flex justify-end">
+                <button type="submit" disabled={loading} className="w-full md:w-auto px-8 py-4 md:py-3 bg-black text-white md:bg-brand md:text-brand-ink rounded-control font-bold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md">
+                  <Save className="w-4 h-4" /> {loading ? "Salvando..." : "Matricular Aluno"}
+                </button>
+              </div>
+            </form>
+          </div>
 
-            <motion.div key="bulk" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="max-w-3xl mx-auto space-y-5">
-              <div className="bg-warning-soft border border-brand-line rounded-2xl p-5 md:p-6">
-                <h2 className="font-bold text-amber-900 flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
-                <p className="text-sm text-brand-deep">
-                  Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
-                  <b> nome, idade, touca, modalidade, dia, horario, responsavel, telefone, endereco, observacoes</b>.
-                  Só <b>nome</b> é obrigatório — o resto pode ficar em branco.
-                  <b> Não precisa de senha</b>: o sistema já gera sozinho, com os 4 últimos dígitos do telefone.
-                  <b> Modalidade</b> aceita fixo, wellhub (ou "gympass") e avulso — sem preencher, entra como fixo.
-                  Vários dias na mesma célula: separe por <code className="bg-white/60 px-1 rounded">/</code>.
-                  Horário diferente por dia? Separe do mesmo jeito, na mesma ordem dos dias — ex.: dia{' '}
-                  <code className="bg-white/60 px-1 rounded">Segunda-feira/Quarta-feira</code> e horário{' '}
-                  <code className="bg-white/60 px-1 rounded">08:00/15:00</code>.
-                </p>
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-amber-300 text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
-                    <Download className="w-4 h-4" /> Baixar modelo CSV
-                  </button>
-                  <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-amber-300 text-brand-deep rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
-                    <UploadCloud className="w-4 h-4" /> Selecionar arquivo
-                  </button>
-                  <input type="file" accept=".csv,.tsv,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { const f = e.target.files?.[0]; if (f) readFileToText(f); e.target.value = ''; }} />
+        ) : (
+
+          <div key="bulk" className="max-w-3xl mx-auto space-y-5 motion-safe:animate-[surge_.2s_ease-out]">
+            <div className="bg-warning-soft border border-brand-line rounded-card p-5 md:p-6">
+              <h2 className="font-bold text-brand-deep flex items-center gap-2 mb-2"><FileSpreadsheet className="w-5 h-5" /> Importar lista de alunos</h2>
+              <p className="text-sm text-brand-deep">
+                Cole a planilha (do Excel / Google Sheets) ou selecione um arquivo CSV. Colunas aceitas:
+                <b> nome, idade, touca, modalidade, dia, horario, responsavel, telefone, endereco, observacoes</b>.
+                Só <b>nome</b> é obrigatório — o resto pode ficar em branco.
+                <b> Não precisa de senha</b>: o sistema já gera sozinho, com os 4 últimos dígitos do telefone.
+                <b> Modalidade</b> aceita fixo, wellhub (ou "gympass") e avulso — sem preencher, entra como fixo.
+                Vários dias na mesma célula: separe por <code className="bg-white/60 px-1 rounded">/</code>.
+                Horário diferente por dia? Separe do mesmo jeito, na mesma ordem dos dias — ex.: dia{' '}
+                <code className="bg-white/60 px-1 rounded">Segunda-feira/Quarta-feira</code> e horário{' '}
+                <code className="bg-white/60 px-1 rounded">08:00/15:00</code>.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <button onClick={downloadTemplate} className="px-4 py-2 bg-surface border border-brand-line text-brand-deep rounded-control text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
+                  <Download className="w-4 h-4" /> Baixar modelo CSV
+                </button>
+                <button onClick={() => fileInputRef.current?.click()} className="px-4 py-2 bg-surface border border-brand-line text-brand-deep rounded-control text-sm font-bold flex items-center gap-2 hover:bg-brand-wash transition-colors">
+                  <UploadCloud className="w-4 h-4" /> Selecionar arquivo
+                </button>
+                <input type="file" accept=".csv,.tsv,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { const f = e.target.files?.[0]; if (f) readFileToText(f); e.target.value = ''; }} />
+              </div>
+            </div>
+
+            {bulkResult && (
+              <div className="bg-success-soft border border-success-soft rounded-card p-5 flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-success shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-black text-success-ink">Importação concluída!</p>
+                  <p className="text-success-ink font-medium mt-1">
+                    {bulkResult.created} aluno(s) cadastrado(s) · {bulkResult.allocated} alocado(s) em vagas da grade
+                    {bulkResult.failed > 0 && <span className="text-danger-ink"> · {bulkResult.failed} falha(s)</span>}
+                  </p>
                 </div>
               </div>
+            )}
 
-              {bulkResult && (
-                <div className="bg-success-soft border border-success-soft rounded-2xl p-5 flex items-start gap-3">
-                  <CheckCircle2 className="w-6 h-6 text-success shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-black text-emerald-800">Importação concluída!</p>
-                    <p className="text-success-ink font-medium mt-1">
-                      {bulkResult.created} aluno(s) cadastrado(s) · {bulkResult.allocated} alocado(s) em vagas da grade
-                      {bulkResult.failed > 0 && <span className="text-danger-ink"> · {bulkResult.failed} falha(s)</span>}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="bg-surface border border-line rounded-3xl p-4 md:p-6 space-y-4">
-                <textarea
-                  value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
-                  spellCheck={false}
-                  placeholder={'nome;idade;touca;modalidade;dia;horario;responsavel;telefone;endereco;observacoes\nAna Clara Souza;7;Laranja;fixo;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;;'}
-                  className="w-full h-44 p-4 bg-surface-sunken border border-line rounded-2xl text-xs md:text-sm font-mono text-ink outline-none focus:ring-2 focus:ring-brand/20 resize-y"
-                />
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-xs font-bold text-ink-muted">{bulkStatus}</p>
-                  <div className="flex gap-2">
-                    <button onClick={() => { setBulkText(''); setBulkRows([]); setBulkStatus(''); setBulkResult(null); }} className="px-4 py-2.5 text-sm font-bold text-ink-muted hover:text-ink">Limpar</button>
-                    <button onClick={analyzeBulk} disabled={!bulkText.trim()} className="px-5 py-2.5 bg-surface-raised text-white rounded-xl text-sm font-bold disabled:opacity-40 active:scale-95 transition-transform">Analisar</button>
-                  </div>
+            <div className="bg-surface border border-line rounded-panel p-4 md:p-6 space-y-4">
+              <textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                spellCheck={false}
+                placeholder={'nome;idade;touca;modalidade;dia;horario;responsavel;telefone;endereco;observacoes\nAna Clara Souza;7;Laranja;fixo;Segunda-feira/Quarta-feira;08:00;Marcia Souza;11999998888;;'}
+                className="w-full h-44 p-4 bg-surface-sunken border border-line rounded-card text-xs md:text-sm font-mono text-ink outline-none focus:ring-2 focus:ring-brand/20 resize-y"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs font-bold text-ink-muted">{bulkStatus}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => { setBulkText(''); setBulkRows([]); setBulkStatus(''); setBulkResult(null); }} className="px-4 py-2.5 text-sm font-bold text-ink-muted hover:text-ink">Limpar</button>
+                  <button onClick={analyzeBulk} disabled={!bulkText.trim()} className="px-5 py-2.5 bg-surface-raised text-white rounded-control text-sm font-bold disabled:opacity-40 active:scale-95 transition-transform">Analisar</button>
                 </div>
               </div>
+            </div>
 
-              {bulkRows.length > 0 && (
-                <div className="bg-surface border border-line rounded-3xl overflow-hidden">
-                  <div className="p-4 border-b border-line bg-surface-sunken flex items-center justify-between gap-3">
-                    <h3 className="font-black text-ink text-sm">Prévia ({bulkRows.length} linha{bulkRows.length > 1 ? 's' : ''})</h3>
-                    <button onClick={runBulkImport} disabled={bulkImporting || bulkRows.filter(r => !r.skip).length === 0} className="px-5 py-2.5 bg-success text-white rounded-xl text-sm font-black disabled:opacity-40 active:scale-95 transition-transform flex items-center gap-2">
-                      <Save className="w-4 h-4" /> {bulkImporting ? 'Importando...' : `Importar ${bulkRows.filter(r => !r.skip).length} aluno(s)`}
-                    </button>
-                  </div>
-                  <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
-                    <ResponsiveTable
-                      table={                    <DataTable minWidth={560}>
-                          <THead>
-                            <TH>Aluno</TH>
-                            <TH>Touca</TH>
-                            <TH>Dia / Hora</TH>
-                            <TH>Observações</TH>
-                          </THead>
-                          <tbody>
-                            {bulkRows.map((r, i) => (
-                              <TR key={i} muted={r.skip}>
-                                <TD>
-                                  <p className="font-bold text-ink">{r.name}</p>
-                                  <p className="text-xs text-ink-muted">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
-                                </TD>
-                                <TD>
-                                  <div className="flex flex-wrap gap-1">
-                                    <span className={cn('px-2 py-1 rounded text-micro font-bold uppercase text-white shadow-sm', levels[r.level].bgClass)}>{levels[r.level].label}</span>
-                                    {r.modalidade !== 'fixo' && (
-                                      <span className="px-2 py-1 rounded text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
-                                    )}
-                                  </div>
-                                </TD>
-                                <TD className="text-xs font-medium text-ink-muted">
-                                  {formatarDiasHorarios(r.diasHorarios)}
-                                </TD>
-                                <TD>
-                                  {r.issues.length === 0 ? (
-                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-success"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
-                                  ) : (
-                                    <ul className="space-y-0.5">
-                                      {r.issues.map((iss, k) => (
-                                        <li key={k} className={cn('inline-flex items-center gap-1 text-mini font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
-                                          <AlertTriangle className="w-3 h-3 shrink-0" /> {iss}
-                                        </li>
-                                      ))}
-                                    </ul>
+            {bulkRows.length > 0 && (
+              <div className="bg-surface border border-line rounded-panel overflow-hidden">
+                <div className="p-4 border-b border-line bg-surface-sunken flex items-center justify-between gap-3">
+                  <h3 className="font-black text-ink text-sm">Prévia ({bulkRows.length} linha{bulkRows.length > 1 ? 's' : ''})</h3>
+                  <button onClick={runBulkImport} disabled={bulkImporting || bulkRows.filter(r => !r.skip).length === 0} className="px-5 py-2.5 bg-success text-white rounded-control text-sm font-black disabled:opacity-40 active:scale-95 transition-transform flex items-center gap-2">
+                    <Save className="w-4 h-4" /> {bulkImporting ? 'Importando...' : `Importar ${bulkRows.filter(r => !r.skip).length} aluno(s)`}
+                  </button>
+                </div>
+                <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
+                  <ResponsiveTable
+                    table={                    <DataTable minWidth={560}>
+                        <THead>
+                          <TH>Aluno</TH>
+                          <TH>Touca</TH>
+                          <TH>Dia / Hora</TH>
+                          <TH>Observações</TH>
+                        </THead>
+                        <tbody>
+                          {bulkRows.map((r, i) => (
+                            <TR key={i} muted={r.skip}>
+                              <TD>
+                                <p className="font-bold text-ink">{r.name}</p>
+                                <p className="text-xs text-ink-muted">{r.age || '?'} anos{r.guardian ? ` · ${r.guardian}` : ''}</p>
+                              </TD>
+                              <TD>
+                                <div className="flex flex-wrap gap-1">
+                                  <BadgeTouca nivel={r.level} />
+                                  {r.modalidade !== 'fixo' && (
+                                    <span className="px-2 py-1 rounded text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
                                   )}
-                                </TD>
-                              </TR>
+                                </div>
+                              </TD>
+                              <TD className="text-xs font-medium text-ink-muted">
+                                {formatarDiasHorarios(r.diasHorarios)}
+                              </TD>
+                              <TD>
+                                {r.issues.length === 0 ? (
+                                  <span className="inline-flex items-center gap-1 text-xs font-bold text-success"><CheckCircle2 className="w-3.5 h-3.5" /> ok</span>
+                                ) : (
+                                  <ul className="space-y-0.5">
+                                    {r.issues.map((iss, k) => (
+                                      <li key={k} className={cn('inline-flex items-center gap-1 text-mini font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
+                                        <AlertTriangle className="w-3 h-3 shrink-0" /> {iss}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </TD>
+                            </TR>
+                          ))}
+                        </tbody>
+                      </DataTable>}
+                    cards={bulkRows.map((r, i) => (
+                      <RowCard
+                        key={i}
+                        muted={r.skip}
+                        title={r.name}
+                        subtitle={`${r.age || '?'} anos${r.guardian ? ' · ' + r.guardian : ''}`}
+                        badges={
+                          <>
+                            <BadgeTouca nivel={r.level} />
+                            {r.modalidade !== 'fixo' && (
+                              <span className="px-2 py-1 rounded-badge text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
+                            )}
+                          </>
+                        }
+                        fields={[
+                          { label: 'Dia / Hora', value: formatarDiasHorarios(r.diasHorarios) },
+                        ]}
+                      >
+                        {r.issues.length === 0 ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-success">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> pronto para importar
+                          </span>
+                        ) : (
+                          <ul className="space-y-1">
+                            {r.issues.map((iss, k) => (
+                              <li key={k} className={cn('flex items-start gap-1.5 text-mini font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
+                                <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" /> {iss}
+                              </li>
                             ))}
-                          </tbody>
-                        </DataTable>}
-                      cards={bulkRows.map((r, i) => (
-                        <RowCard
-                          key={i}
-                          muted={r.skip}
-                          title={r.name}
-                          subtitle={`${r.age || '?'} anos${r.guardian ? ' · ' + r.guardian : ''}`}
-                          badges={
-                            <>
-                              <span className={cn('px-2 py-1 rounded-badge text-micro font-bold uppercase text-white', levels[r.level].bgClass)}>
-                                {levels[r.level].label}
-                              </span>
-                              {r.modalidade !== 'fixo' && (
-                                <span className="px-2 py-1 rounded-badge text-micro font-bold uppercase bg-info-soft text-info-ink">{r.modalidade}</span>
-                              )}
-                            </>
-                          }
-                          fields={[
-                            { label: 'Dia / Hora', value: formatarDiasHorarios(r.diasHorarios) },
-                          ]}
-                        >
-                          {r.issues.length === 0 ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-success">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> pronto para importar
-                            </span>
-                          ) : (
-                            <ul className="space-y-1">
-                              {r.issues.map((iss, k) => (
-                                <li key={k} className={cn('flex items-start gap-1.5 text-mini font-medium', r.skip ? 'text-danger' : 'text-warning-ink')}>
-                                  <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" /> {iss}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </RowCard>
-                      ))}
-                    />
-                  </div>
+                          </ul>
+                        )}
+                      </RowCard>
+                    ))}
+                  />
                 </div>
-              )}
-            </motion.div>
+              </div>
+            )}
+          </div>
 
-          )}
-        </AnimatePresence>
+        )}
     </PageShell>
   );
 }

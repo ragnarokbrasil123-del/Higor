@@ -16,7 +16,10 @@ import { ConsentimentoPortal } from '@/components/consentimento-portal';
 import { avisoPronto, VERSAO_AVISO } from '@/lib/aviso-privacidade';
 import { rotuloProfessor } from '@/lib/professor';
 import { cn } from '@/lib/utils';
-import { EmptyState , avisar } from '@/components/ui';
+import { BadgeTouca, EmptyState, JornadaToucas, avisar } from '@/components/ui';
+
+/** As duas toucas escuras pedem texto branco na inicial do aluno. */
+const TOUCA_ESCURA: CapLevel[] = ['darkBlue', 'black'];
 
 /** O que o login traz da linha de students (ver COLUNAS_PORTAL). */
 type AlunoLogado = Student & {
@@ -147,7 +150,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-surface-sunken p-6 text-center">
         <p className="text-ink-muted font-bold">Nenhum aluno encontrado nesta conta.</p>
-        <button onClick={onLogout} className="mt-6 px-6 py-3 bg-surface-raised text-white rounded-xl font-bold">Sair</button>
+        <button onClick={onLogout} className="mt-6 px-6 py-3 bg-surface-raised text-white rounded-control font-bold">Sair</button>
       </div>
     );
   }
@@ -197,10 +200,10 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
     <div className="fixed inset-0 flex flex-col bg-canvas overflow-y-auto overflow-x-clip">
       {/* Cabeçalho */}
       <div className="bg-black pt-[max(3rem,calc(env(safe-area-inset-top)+1.5rem))] pb-6 px-5 sm:px-6 shadow-xl relative overflow-hidden shrink-0">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[80px] rounded-full pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="flex justify-between items-start relative z-10">
           <Image src="/logo.png" alt="Clube Olimpo" width={44} height={44} className="h-11 w-11 object-contain" />
-          <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
+          <button onClick={onLogout} className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-control text-xs font-bold transition-colors flex items-center gap-2 backdrop-blur-md">
             Sair <LogOut className="w-4 h-4" />
           </button>
         </div>
@@ -210,7 +213,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           <div className="mt-6 flex gap-2 overflow-x-auto relative z-10 pb-1">
             {filhos.map((f, i) => (
               <button key={f.id} onClick={() => setIdx(i)} className={cn(
-                'px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap border transition-all',
+                'px-4 py-2 rounded-control text-sm font-bold whitespace-nowrap border transition-all',
                 i === idx ? 'bg-surface text-surface-raised border-white' : 'bg-white/10 text-white border-white/20'
               )}>
                 {f.name.split(' ')[0]}
@@ -220,12 +223,21 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         )}
 
         <div className="mt-6 flex items-center gap-4 relative z-10">
-          <div className={cn('w-20 h-20 rounded-3xl flex items-center justify-center text-white font-bold text-3xl shadow-lg border-2 border-white/20', nivel.bgClass)}>
+          <div className={cn(
+            'w-20 h-20 rounded-panel flex items-center justify-center font-titulo font-bold text-3xl shadow-overlay border-2 border-white/20',
+            nivel.bgClass,
+            TOUCA_ESCURA.includes(student.level as CapLevel) ? 'text-white' : 'text-[#0b1b2b]'
+          )}>
             {student.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight leading-tight break-words">{student.name}</h1>
-            <p className="text-ink-subtle text-sm mt-1">Dossiê do Aluno</p>
+            <h1 className="font-titulo text-xl sm:text-2xl font-semibold text-white tracking-tight leading-tight break-words">{student.name}</h1>
+            {/* "Dossiê do Aluno" era frio para quem é mãe ou pai lendo
+                o resultado do filho. A touca diz mais e é o que a
+                pessoa veio ver. */}
+            <div className="mt-1.5">
+              <BadgeTouca nivel={student.level as CapLevel} completo />
+            </div>
           </div>
         </div>
       </div>
@@ -238,12 +250,12 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
         {/* Avisos no celular */}
         {suportaAvisos() && avisosOn === false && (
-          <div className="bg-warning-soft border border-brand-line rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="w-11 h-11 bg-brand-bright rounded-2xl flex items-center justify-center shrink-0">
-              <BellRing className="w-6 h-6 text-black" />
+          <div className="bg-warning-soft border border-brand-line rounded-panel p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-11 h-11 bg-brand-bright rounded-card flex items-center justify-center shrink-0">
+              <BellRing className="w-6 h-6 text-brand-ink" />
             </div>
             <div className="flex-1">
-              <p className="font-black text-amber-900 text-sm">Quer ser avisado quando sair a avaliação?</p>
+              <p className="font-black text-brand-deep text-sm">Quer ser avisado quando sair a avaliação?</p>
               <p className="text-xs font-medium text-brand-deep mt-0.5">
                 {iosSemInstalar
                   ? 'No iPhone, primeiro adicione o app à Tela de Início: toque em Compartilhar, na barra de baixo, e escolha "Adicionar à Tela de Início". Depois volte aqui.'
@@ -251,14 +263,14 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
               </p>
             </div>
             {!iosSemInstalar && (
-              <button onClick={ligarAvisos} disabled={ativando} className="px-5 py-3 bg-black text-white rounded-xl font-bold text-sm shrink-0 active:scale-95 transition-transform disabled:opacity-50">
+              <button onClick={ligarAvisos} disabled={ativando} className="px-5 py-3 bg-black text-white rounded-control font-bold text-sm shrink-0 active:scale-95 transition-transform disabled:opacity-50">
                 {ativando ? 'Ativando...' : 'Ativar avisos'}
               </button>
             )}
           </div>
         )}
         {avisosOn === true && (
-          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-success-soft rounded-xl px-3 py-2 w-fit">
+          <div className="flex items-center gap-2 text-xs font-bold text-success-ink bg-success-soft border border-success-soft rounded-control px-3 py-2 w-fit">
             <BellRing className="w-3.5 h-3.5" /> Avisos ativados neste aparelho
           </div>
         )}
@@ -280,6 +292,19 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
           ) : null}
         </div>
 
+        {/*
+          A jornada das sete toucas, antes dos critérios.
+
+          A pergunta que o responsável faz primeiro é "em que ponto
+          meu filho está?", e uma lista de critérios não responde
+          isso — responde "o que falta". A linha mostra o percurso
+          inteiro: de onde veio, onde está, o que vem depois.
+        */}
+        <div className="bg-surface rounded-panel border border-line shadow-raised p-4 sm:p-5">
+          <h2 className="font-titulo text-base font-semibold text-ink mb-3">O caminho até aqui</h2>
+          <JornadaToucas atual={student.level as CapLevel} />
+        </div>
+
         {/* O que falta para trocar de touca — vale mesmo sem nenhuma avaliação */}
         <CaminhoTouca nome={student.name} nivel={student.level as CapLevel} avaliacoes={avaliacoes} />
 
@@ -291,8 +316,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
             </h2>
             <div className="space-y-2">
               {minhasAulas.map((a, i) => (
-                <div key={i} className="flex flex-wrap items-center gap-3 bg-surface-sunken border border-line rounded-2xl p-3">
-                  <span className="px-3 py-1.5 bg-surface-raised text-white rounded-lg text-sm font-black shrink-0">
+                <div key={i} className="flex flex-wrap items-center gap-3 bg-surface-sunken border border-line rounded-card p-3">
+                  <span className="px-3 py-1.5 bg-surface-raised text-white rounded-control text-sm font-black shrink-0">
                     {a.inicio} às {a.fim}
                   </span>
                   <span className="font-bold text-ink text-sm">{a.dia}</span>
@@ -308,7 +333,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
         {/* Avaliações */}
         <div>
           <h2 className="text-lg font-bold text-ink mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-500" /> Histórico de Avaliações
+            <Calendar className="w-5 h-5 text-brand" /> Histórico de Avaliações
           </h2>
 
           {avaliacoes.length === 0 ? (
@@ -333,16 +358,14 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                           {new Date(ev.date).toLocaleDateString('pt-BR')}
                         </p>
                         {evLevel && (
-                          <span className={cn('inline-block mt-1 px-2 py-0.5 rounded text-micro font-bold uppercase tracking-wider text-white', evLevel.bgClass)}>
-                            Touca {evLevel.name}
-                          </span>
+                          <BadgeTouca nivel={ev.level as CapLevel} completo className="mt-1" />
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-3 py-1 text-xs font-bold rounded-lg uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
+                        <span className={cn('px-3 py-1 text-xs font-bold rounded-control uppercase', ev.approved ? 'bg-success-soft text-success-ink' : 'bg-brand-wash text-warning-ink')}>
                           {ev.approved ? 'Aprovado' : 'Em treinamento'}
                         </span>
-                        <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-lg text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
+                        <button onClick={() => gerarBoletimPDF(ev, student.name)} className="px-3 py-1.5 bg-surface-raised-soft text-white rounded-control text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-transform">
                           <FileText className="w-3.5 h-3.5" /> PDF
                         </button>
                       </div>
@@ -350,8 +373,8 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
 
                     {/* Recado do professor primeiro — é o que o pai quer ler */}
                     {ev.notes && (
-                      <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                        <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Recado do Professor</p>
+                      <div className="mb-4 p-4 bg-brand-soft rounded-card border border-brand-line">
+                        <p className="text-xs font-bold text-brand uppercase tracking-wider mb-1">Recado do Professor</p>
                         <p className="text-sm text-ink leading-relaxed">{ev.notes}</p>
                       </div>
                     )}
@@ -362,7 +385,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                           {passou} de {criterios.length} fundamentos concluídos
                         </p>
                         <div className="h-2 bg-surface-sunken rounded-full overflow-hidden mb-3">
-                          <div className="h-full bg-emerald-500 transition-all" style={{ width: `${criterios.length ? (passou / criterios.length) * 100 : 0}%` }} />
+                          <div className="h-full bg-success transition-all" style={{ width: `${criterios.length ? (passou / criterios.length) * 100 : 0}%` }} />
                         </div>
                         <div className="space-y-1.5">
                           {criterios.map(crit => {
@@ -370,7 +393,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                             return (
                               <div key={crit.id} className="flex items-start gap-2 text-sm">
                                 <div className={cn('w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-                                  st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-red-100 text-danger' : 'bg-surface-sunken text-ink-subtle')}>
+                                  st === 'passed' ? 'bg-success-soft text-success' : st === 'failed' ? 'bg-danger-soft text-danger' : 'bg-surface-sunken text-ink-subtle')}>
                                   {st === 'passed' ? <Check className="w-3 h-3" strokeWidth={3} /> : st === 'failed' ? <XIcon className="w-3 h-3" strokeWidth={3} /> : <span className="text-micro font-bold">–</span>}
                                 </div>
                                 <span className={cn('leading-snug', st === 'passed' ? 'text-ink' : 'text-ink-muted')}>{crit.label}</span>
@@ -382,7 +405,7 @@ export function ClientPortal({ students, onLogout }: ClientPortalProps) {
                     )}
 
                     {ev.approved && (
-                      <div className="mt-4 p-3 bg-emerald-500 rounded-xl text-white text-center shadow-lg shadow-emerald-500/20">
+                      <div className="mt-4 p-3 bg-success rounded-control text-white text-center shadow-lg shadow-success/20">
                         <p className="text-sm font-bold">Parabéns! {student.name.split(' ')[0]} foi aprovado(a) para trocar de touca! 🏅</p>
                       </div>
                     )}

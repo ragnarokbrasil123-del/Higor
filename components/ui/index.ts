@@ -5,6 +5,11 @@ export { PageShell, PageHeader, FilterBar, ChipRow, FilterFooter } from './Page'
 export { Modal } from './Modal';
 export { Avisos, avisar, avisarErro, confirmar, perguntar } from './Avisos';
 export { Esqueleto, EsqueletoLista, EsqueletoCartoes } from './Esqueleto';
+export { ItemNav } from './ItemNav';
+export { BadgeTouca, textoSobreTouca } from './BadgeTouca';
+export { BarraProgresso, AnelProgresso } from './Progresso';
+export { FolhaInferior } from './FolhaInferior';
+export { JornadaToucas } from './JornadaToucas';
 export { DateNav } from './DateNav';
 export { DataTable, THead, TH, TR, TD, TEmpty } from './DataTable';
 export { MobileNav } from './MobileNav';

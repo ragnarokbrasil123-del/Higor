@@ -4,6 +4,7 @@ import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { levels, type CapLevel } from '@/types';
 import { cn } from '@/lib/utils';
+import { BadgeTouca, textoSobreTouca } from '@/components/ui';
 import type { Aluno } from './constantes';
 
 interface LinhaAlunoProps {
@@ -33,7 +34,7 @@ export function LinhaAluno({ aluno, selo, onClick, variante = 'compacta', mostra
         onClick={onClick}
         className="w-full flex items-center gap-3 p-3.5 hover:bg-surface-sunken transition-colors text-left"
       >
-        <div className={cn('w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0', info?.bgClass)}>
+        <div className={cn('w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0', info?.bgClass, textoSobreTouca(aluno.level))}>
           {aluno.name.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">

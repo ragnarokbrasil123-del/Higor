@@ -10,6 +10,7 @@ import { Badge, Card, EmptyState, ErrorState, Loading, PageHeader, PageShell } f
 import { TRIMESTRE_ATUAL, trimestre } from '@/lib/trimestre';
 import { lecionaEm } from '@/lib/professor';
 import { lerAlunos } from '@/lib/alunos';
+import { BadgeTouca } from '@/components/ui';
 
 /* ============================================================
    Minha Semana — a agenda do professor, só leitura.
@@ -171,7 +172,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
               {aberto.turmas.map(t => (
                 <Card key={t.id} as="panel">
                   <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <span className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised text-white rounded-lg font-black text-sm shrink-0">
+                    <span className="flex items-center gap-2 px-3 py-1.5 bg-surface-raised text-white rounded-control font-black text-sm shrink-0">
                       <Clock className="w-3.5 h-3.5" /> {t.hora}
                     </span>
                     <span className="text-xs font-bold text-ink-muted flex items-center gap-1">
@@ -179,9 +180,7 @@ export function MinhaSemana({ meuNome }: { meuNome: string }) {
                     </span>
                     <div className="flex flex-wrap gap-1 ml-auto">
                       {t.toucas.map(k => (
-                        <span key={k} className={cn('text-micro font-bold uppercase px-1.5 py-0.5 rounded text-white', levels[k].bgClass)}>
-                          {levels[k].label}
-                        </span>
+                        <BadgeTouca key={k} nivel={k} />
                       ))}
                     </div>
                     <Badge tone={t.pendentes > 0 ? 'warning' : 'success'}>

@@ -100,8 +100,8 @@ export function PainelTurmas({
           </div>
   
           {blocos.length === 0 ? (
-            <div className="text-center py-16 bg-surface rounded-3xl border border-dashed border-line-strong">
-              <CalendarDays className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <div className="text-center py-16 bg-surface rounded-panel border border-dashed border-line-strong">
+              <CalendarDays className="w-12 h-12 text-ink-on-dark mx-auto mb-3" />
               <h3 className="font-bold text-ink">
                 {soPendentes ? 'Nada pendente' : 'Ninguém com aula'} em {diaAtivo.split('-')[0]}
                 {!sabadoMode && filterProf !== 'all' && <> para {filterProf.split(' ')[0]}</>}

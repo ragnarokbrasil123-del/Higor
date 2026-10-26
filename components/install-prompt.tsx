@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Download, X, Share, PlusSquare, Smartphone } from 'lucide-react';
 
 interface InstallPromptProps {
@@ -92,19 +91,19 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
         <p className="text-ink-on-dark text-sm mb-10 max-w-[280px]">Tenha o Clube Olimpo na tela do seu celular para acesso ultra-rápido à sua ficha.</p>
 
         {isIOS ? (
-           <div className="bg-white/10 border border-white/20 p-6 rounded-3xl w-full max-w-sm flex flex-col items-center gap-4">
+           <div className="bg-white/10 border border-white/20 p-6 rounded-panel w-full max-w-sm flex flex-col items-center gap-4">
              <p className="text-white text-sm font-bold">No seu iPhone, siga os 2 passos:</p>
-             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-xl w-full">
-               <Share className="w-6 h-6 text-blue-400 shrink-0" /> 
+             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-control w-full">
+               <Share className="w-6 h-6 text-brand-bright shrink-0" /> 
                <span className="text-xs text-left">1. Toque em <b>Compartilhar</b> na barra inferior do seu Safari.</span>
              </div>
-             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-xl w-full">
-               <PlusSquare className="w-6 h-6 text-blue-400 shrink-0" /> 
+             <div className="flex items-center gap-3 text-ink-on-dark bg-black/40 px-4 py-3 rounded-control w-full">
+               <PlusSquare className="w-6 h-6 text-brand-bright shrink-0" /> 
                <span className="text-xs text-left">2. Toque em <b>Adicionar à Tela de Início</b>.</span>
              </div>
            </div>
         ) : (
-           <button onClick={handleInstallClick} className="w-full max-w-xs py-4 bg-brand text-black font-extrabold rounded-2xl text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-brand/30">
+           <button onClick={handleInstallClick} className="w-full max-w-xs py-4 bg-brand text-brand-ink font-extrabold rounded-card text-lg flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-brand/30">
              <Download className="w-6 h-6" /> Instalar Agora
            </button>
         )}
@@ -118,10 +117,8 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
 
   // --- MODO 2: BANNER (SUTIL NO RODAPÉ) ---
   return (
-    <motion.div
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      className={`fixed left-0 right-0 z-[99999] bg-surface-raised border-t border-slate-700 p-4 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:hidden ${
+    <div
+      className={`fixed left-0 right-0 z-[99999] motion-safe:animate-[surge_.25s_ease-out] bg-surface-raised border-t border-surface-raised-soft p-4 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:hidden ${
         acimaDaBarra
           ? 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))]'
           : 'bottom-0 pb-8 md:pb-4'
@@ -139,12 +136,12 @@ export function InstallPrompt({ acimaDaBarra = false }: InstallPromptProps) {
       
       <div className="flex items-center gap-3">
         {isIOS ? (
-           <button onClick={() => setDisplayMode('modal')} className="px-4 py-2 bg-white/10 text-blue-400 font-bold text-xs rounded-full border border-blue-400/30">Instalar App</button>
+           <button onClick={() => setDisplayMode('modal')} className="px-4 py-2 bg-white/10 text-brand-bright font-bold text-xs rounded-full border border-brand/30">Instalar App</button>
         ) : (
-           <button onClick={handleInstallClick} className="px-4 py-2 bg-brand text-black font-bold text-xs rounded-full shadow-lg shadow-brand/20">Instalar</button>
+           <button onClick={handleInstallClick} className="px-4 py-2 bg-brand text-brand-ink font-bold text-xs rounded-full shadow-lg shadow-brand/20">Instalar</button>
         )}
         <button onClick={dispensar} aria-label="Fechar" className="p-1 text-ink-muted hover:text-white transition-colors"><X className="w-5 h-5" /></button>
       </div>
-    </motion.div>
+    </div>
   );
 }

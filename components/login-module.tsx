@@ -1,10 +1,11 @@
 'use client';
 
-import { avisar } from '@/components/ui';
+import { avisar, Button } from '@/components/ui';
 import Image from 'next/image';
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Lock, User, Phone, ArrowRight, ShieldCheck, ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { InstallPrompt } from '@/components/install-prompt';
 import { LOGIN_PROFESSOR_LIBERADO, LOGIN_RESPONSAVEL_LIBERADO, normalizarCodigo } from '@/lib/acesso';
 import { buscarFilhos, MENSAGEM_FALHA } from '@/lib/login-responsavel';
@@ -15,6 +16,110 @@ import {
 
 interface LoginModuleProps {
   onLogin: (role: 'admin' | 'teacher' | 'client', data: any) => void;
+}
+
+/* ============================================================
+   Peças desta tela.
+
+   Os oito campos eram o mesmo bloco de seis linhas copiado, com a
+   cadeia de classes repetida em cada um: mudar a altura do campo
+   era mudar oito lugares. Ficam fora do componente de propósito —
+   declaradas dentro dele, o React as trataria como um tipo novo a
+   cada tecla digitada e o campo perderia o foco.
+   ============================================================ */
+
+interface CampoProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  rotulo: string;
+  icone: LucideIcon;
+  /** Botão encostado na direita (mostrar/ocultar senha). */
+  acao?: React.ReactNode;
+  ajuda?: string;
+}
+
+function Campo({ rotulo, icone: Icone, acao, ajuda, className, ...props }: CampoProps) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-ink-muted uppercase tracking-wider ml-1">{rotulo}</label>
+      <div className="relative mt-1">
+        <Icone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-subtle pointer-events-none" />
+        <input
+          {...props}
+          className={cn(
+            'w-full pl-12 py-4 bg-surface-sunken border border-line rounded-control text-ink',
+            'outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/25',
+            acao ? 'pr-12' : 'pr-4',
+            className
+          )}
+        />
+        {acao}
+      </div>
+      {ajuda && <p className="text-mini text-ink-subtle mt-1.5 ml-1">{ajuda}</p>}
+    </div>
+  );
+}
+
+/** Mostrar/ocultar senha. O rótulo é lido em voz alta; o ícone sozinho não diz nada. */
+function BotaoOlho({ mostrando, aoAlternar }: { mostrando: boolean; aoAlternar: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={aoAlternar}
+      aria-label={mostrando ? 'Ocultar senha' : 'Mostrar senha'}
+      className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-control text-ink-subtle hover:text-brand-text transition-colors"
+    >
+      {mostrando ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+    </button>
+  );
+}
+
+function BotaoVoltar({ aoClicar }: { aoClicar: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={aoClicar}
+      className="mb-5 -ml-2 px-2 py-2 min-h-11 inline-flex items-center gap-2 rounded-control text-sm font-bold text-brand-text hover:bg-brand-soft transition-colors"
+    >
+      <ArrowLeft className="w-4 h-4" /> Voltar
+    </button>
+  );
+}
+
+/**
+ * Erro do formulário. O role="alert" faz o leitor de tela anunciar
+ * o texto assim que ele aparece — antes era um parágrafo comum, que
+ * passava em silêncio para quem não enxerga a cor vermelha.
+ */
+function Erro({ texto }: { texto: string }) {
+  if (!texto) return null;
+  return (
+    <p role="alert" className="text-sm font-bold text-danger-ink bg-danger-soft border border-danger/25 rounded-control px-3 py-2.5 text-center">
+      {texto}
+    </p>
+  );
+}
+
+/** Água no pé da tela. Decoração: invisível para leitor de tela. */
+function Ondas() {
+  return (
+    <svg
+      className="absolute bottom-0 left-0 w-full h-44 pointer-events-none"
+      viewBox="0 0 1440 200"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <path fill="#ffffff" fillOpacity="0.07" d="M0,118 C240,178 480,58 720,98 C960,138 1200,178 1440,118 L1440,200 L0,200 Z" />
+      <path fill="#ffffff" fillOpacity="0.10" d="M0,152 C300,102 600,182 900,142 C1140,112 1320,162 1440,152 L1440,200 L0,200 Z" />
+    </svg>
+  );
+}
+
+/** Cartão branco onde moram os formulários. */
+function Cartao({ children, chave }: { children: React.ReactNode; chave: string }) {
+  return (
+    <div key={chave} className="bg-surface rounded-panel shadow-overlay p-6 motion-safe:animate-[surge-lado_.2s_ease-out]">
+      {children}
+    </div>
+  );
 }
 
 export function LoginModule({ onLogin }: LoginModuleProps) {
@@ -148,17 +253,20 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-black overflow-hidden">
+    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden bg-[#06283f]">
       {/* Instalar antes de entrar é o momento natural — e no iPhone os avisos
           só funcionam com o app na Tela de Início. */}
       <InstallPrompt />
 
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-black via-surface-raised to-amber-900/20 opacity-80" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* Fundo: água funda em cima, clareando até a cor da marca embaixo.
+          As cores são literais, e não tokens, porque esta é a única tela
+          que não muda de tema — ela acontece antes de o app saber quem
+          entrou. O cartão branco por cima é que carrega os tokens. */}
+      <div className="absolute inset-0 bg-[linear-gradient(165deg,#06283f_0%,#0a4a73_55%,#097cba_100%)]" />
+      <Ondas />
 
-      <div className="relative z-10 w-full max-w-md p-6">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center mb-10">
+      <div className="relative z-10 w-full max-w-md p-6 max-h-dvh overflow-y-auto">
+        <div className="flex flex-col items-center mb-7 motion-safe:animate-[desce_.3s_ease-out]">
           {/* `priority`: é o maior elemento desta tela, ou seja, o que o
               navegador usa para medir o LCP. Sem isso ele entra na fila
               comum e o app aparenta demorar mais do que demora. */}
@@ -168,176 +276,182 @@ export function LoginModule({ onLogin }: LoginModuleProps) {
             width={176}
             height={176}
             priority
-            className="w-44 h-44 object-contain mb-4 drop-shadow-2xl"
+            className="w-32 h-32 md:w-36 md:h-36 object-contain mb-3 drop-shadow-2xl"
           />
-          <h1 className="text-white text-2xl font-bold tracking-widest uppercase">Portal de Acesso</h1>
-        </motion.div>
+          <h1 className="font-titulo text-white text-xl md:text-2xl font-semibold tracking-[0.18em] uppercase text-center">
+            Portal de Acesso
+          </h1>
+          {/* fio de ouro: a cor da conquista aparece uma vez, sem disputar
+              com o azul da ação */}
+          <span className="mt-3 h-px w-16 bg-ouro" aria-hidden="true" />
+        </div>
 
-        <AnimatePresence mode="wait">
-          {loginType === 'none' ? (
-            <motion.div key="selector" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-4">
-              <button onClick={() => setLoginType('team')} className="w-full p-5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl backdrop-blur-md transition-all flex items-center justify-between group active:scale-95">
-                <div className="flex items-center gap-4 text-white">
-                  <div className="p-3 bg-brand rounded-xl text-black shadow-lg shadow-brand/30"><ShieldCheck className="w-6 h-6" /></div>
-                  <div className="text-left"><p className="font-bold text-lg">Portal do Colaborador</p><p className="text-xs text-ink-on-dark">{LOGIN_PROFESSOR_LIBERADO ? 'Professores e Administração' : 'Somente Administração'}</p></div>
-                </div>
-                <ArrowRight className="w-5 h-5 text-brand group-hover:translate-x-1 transition-transform" />
-              </button>
+        {loginType === 'none' ? (
+          <div key="selector" className="space-y-3 motion-safe:animate-[cresce_.2s_ease-out]">
+            <button
+              onClick={() => setLoginType('team')}
+              className="w-full p-5 bg-surface rounded-card shadow-overlay border border-line flex items-center justify-between gap-3 text-left group transition-all hover:border-brand-line active:scale-[.98]"
+            >
+              <span className="flex items-center gap-4 min-w-0">
+                <span className="p-3 bg-brand rounded-control text-brand-ink shrink-0"><ShieldCheck className="w-6 h-6" /></span>
+                <span className="min-w-0">
+                  <span className="block font-bold text-lg text-ink leading-tight">Portal do Colaborador</span>
+                  <span className="block text-xs text-ink-muted mt-0.5">{LOGIN_PROFESSOR_LIBERADO ? 'Professores e Administração' : 'Somente Administração'}</span>
+                </span>
+              </span>
+              <ArrowRight className="w-5 h-5 text-brand-text shrink-0 group-hover:translate-x-1 transition-transform" />
+            </button>
 
-              <button
-                onClick={() => setLoginType('client')}
-                disabled={!LOGIN_RESPONSAVEL_LIBERADO}
-                className={`w-full p-5 bg-white/10 border border-white/20 rounded-2xl backdrop-blur-md transition-all flex items-center justify-between group ${LOGIN_RESPONSAVEL_LIBERADO ? 'hover:bg-white/20 active:scale-95' : 'opacity-50 cursor-not-allowed'}`}
-              >
-                <div className="flex items-center gap-4 text-white">
-                  <div className="p-3 bg-blue-500 rounded-xl text-white shadow-lg shadow-blue-500/30"><User className="w-6 h-6" /></div>
-                  <div className="text-left"><p className="font-bold text-lg">Portal do Aluno</p><p className="text-xs text-ink-on-dark">{LOGIN_RESPONSAVEL_LIBERADO ? 'Alunos e responsáveis' : 'Portal ainda não liberado'}</p></div>
-                </div>
-                {LOGIN_RESPONSAVEL_LIBERADO
-                  ? <ArrowRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
-                  : <Lock className="w-5 h-5 text-ink-on-dark-muted" />}
-              </button>
-
-            </motion.div>
-          ) : loginType === 'team' ? (
-            
-            /* --- LOGIN DA EQUIPE --- */
-            <motion.div key="team-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
-              <button onClick={() => {setLoginType('none'); setError('');}} className="mb-6 text-brand flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
-              <form onSubmit={handleTeamLogin} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Usuário</label>
-                  <div className="relative mt-1">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                    <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-brand transition-colors" placeholder="Ex: admin" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Senha</label>
-                  <div className="relative mt-1">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                    <input type={showTeamPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-brand transition-colors" placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowTeamPassword(!showTeamPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-on-dark-muted hover:text-brand transition-colors">
-                      {showTeamPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-                {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
-                <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-brand text-black font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-brand/20">{loading ? "Entrando..." : "Entrar no Sistema"}</button>
-              </form>
-            </motion.div>
-
-          ) : loginType === 'convite' ? (
-
-            /* --- CRIAR ACESSO COM CÓDIGO DE CONVITE --- */
-            <motion.div key="convite-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
-              <button onClick={voltarInicio} className="mb-6 text-brand flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
-
-              {!convidado ? (
-                /* passo 1: conferir o código */
-                <form onSubmit={handleConferirCodigo} className="space-y-4">
-                  <div className="text-center mb-6">
-                    <div className="w-14 h-14 mx-auto mb-3 bg-brand/20 rounded-2xl flex items-center justify-center">
-                      <KeyRound className="w-7 h-7 text-brand" />
-                    </div>
-                    <h2 className="text-white font-bold text-lg mb-1">Criar meu acesso</h2>
-                    <p className="text-ink-on-dark text-xs">Digite o código que a administração te passou.</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Código do convite</label>
-                    <input
-                      type="text" required value={codigo} autoCapitalize="characters" autoComplete="off"
-                      onChange={(e) => setCodigo(normalizarCodigo(e.target.value))}
-                      maxLength={9}
-                      className="w-full mt-1 px-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white text-center text-2xl font-mono font-black tracking-[0.3em] outline-none focus:border-brand transition-colors"
-                      placeholder="XXXX-XXXX"
-                    />
-                  </div>
-                  {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
-                  <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-brand text-black font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-brand/20">
-                    {loading ? "Conferindo..." : "Continuar"}
-                  </button>
-                </form>
-              ) : (
-                /* passo 2: escolher usuário e senha */
-                <form onSubmit={handleCriarAcesso} className="space-y-4">
-                  <div className="text-center mb-6">
-                    <p className="text-brand text-xs font-bold uppercase tracking-wider">
-                      {convidado.role === 'admin' ? 'Administrador' : 'Professor'}
-                    </p>
-                    <h2 className="text-white font-bold text-lg mt-1 leading-tight">Olá, {(convidado.name || '').split(' ')[0]}!</h2>
-                    <p className="text-ink-on-dark text-xs mt-1">Escolha como você vai entrar daqui pra frente.</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Usuário</label>
-                    <div className="relative mt-1">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                      <input type="text" required value={novoUsuario} autoCapitalize="none" onChange={(e) => setNovoUsuario(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-brand transition-colors" placeholder="Ex: maria.silva" />
-                    </div>
-                    <p className="text-mini text-ink-on-dark-muted mt-1.5 ml-1">Mínimo 4 caracteres. Pode ser seu e-mail.</p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Criar senha</label>
-                    <div className="relative mt-1">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                      <input type={showTeamPassword ? "text" : "password"} required value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-brand transition-colors" placeholder="Mínimo 6 caracteres" />
-                      <button type="button" onClick={() => setShowTeamPassword(!showTeamPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-on-dark-muted hover:text-brand transition-colors">
-                        {showTeamPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Repetir a senha</label>
-                    <div className="relative mt-1">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                      <input type={showTeamPassword ? "text" : "password"} required value={repeteSenha} onChange={(e) => setRepeteSenha(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-brand transition-colors" placeholder="••••••••" />
-                    </div>
-                  </div>
-                  {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
-                  <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-brand text-black font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-brand/20">
-                    {loading ? "Criando..." : "Criar acesso e entrar"}
-                  </button>
-                </form>
+            <button
+              onClick={() => setLoginType('client')}
+              disabled={!LOGIN_RESPONSAVEL_LIBERADO}
+              className={cn(
+                'w-full p-5 bg-surface rounded-card shadow-overlay border border-line flex items-center justify-between gap-3 text-left group transition-all',
+                LOGIN_RESPONSAVEL_LIBERADO ? 'hover:border-brand-line active:scale-[.98]' : 'opacity-60 cursor-not-allowed'
               )}
-            </motion.div>
+            >
+              <span className="flex items-center gap-4 min-w-0">
+                <span className="p-3 bg-brand rounded-control text-brand-ink shrink-0"><User className="w-6 h-6" /></span>
+                <span className="min-w-0">
+                  <span className="block font-bold text-lg text-ink leading-tight">Portal do Aluno</span>
+                  <span className="block text-xs text-ink-muted mt-0.5">{LOGIN_RESPONSAVEL_LIBERADO ? 'Alunos e responsáveis' : 'Portal ainda não liberado'}</span>
+                </span>
+              </span>
+              {LOGIN_RESPONSAVEL_LIBERADO
+                ? <ArrowRight className="w-5 h-5 text-brand-text shrink-0 group-hover:translate-x-1 transition-transform" />
+                : <Lock className="w-5 h-5 text-ink-subtle shrink-0" />}
+            </button>
+          </div>
+        ) : loginType === 'team' ? (
 
-          ) : (
+          /* --- LOGIN DA EQUIPE --- */
+          <Cartao chave="team-form">
+            <BotaoVoltar aoClicar={() => { setLoginType('none'); setError(''); }} />
+            <form onSubmit={handleTeamLogin} className="space-y-4">
+              <Campo
+                rotulo="Usuário" icone={User} type="text" required
+                value={username} onChange={(e) => setUsername(e.target.value)}
+                autoCapitalize="none" autoComplete="username" placeholder="Ex: admin"
+              />
+              <Campo
+                rotulo="Senha" icone={Lock} required
+                type={showTeamPassword ? 'text' : 'password'}
+                value={password} onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password" placeholder="••••••••"
+                acao={<BotaoOlho mostrando={showTeamPassword} aoAlternar={() => setShowTeamPassword(!showTeamPassword)} />}
+              />
+              <Erro texto={error} />
+              <Button type="submit" block size="lg" disabled={loading}>
+                {loading ? 'Entrando...' : 'Entrar no Sistema'}
+              </Button>
+            </form>
+          </Cartao>
 
-            /* --- LOGIN DO CLIENTE/PAI --- */
-            <motion.div key="client-form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/10 border border-white/20 p-6 rounded-3xl backdrop-blur-md">
-              <button onClick={() => {setLoginType('none'); setError('');}} className="mb-6 text-blue-400 flex items-center gap-2 text-sm font-bold"><ArrowLeft className="w-4 h-4"/> Voltar</button>
-              <form onSubmit={handleClientLogin} className="space-y-4">
+        ) : loginType === 'convite' ? (
+
+          /* --- CRIAR ACESSO COM CÓDIGO DE CONVITE --- */
+          <Cartao chave="convite-form">
+            <BotaoVoltar aoClicar={voltarInicio} />
+
+            {!convidado ? (
+              /* passo 1: conferir o código */
+              <form onSubmit={handleConferirCodigo} className="space-y-4">
                 <div className="text-center mb-6">
-                  <h2 className="text-white font-bold text-lg mb-1">Dossiê do Aluno</h2>
-                  <p className="text-ink-on-dark text-xs">Digite os dados cadastrados na secretaria.</p>
+                  <div className="w-14 h-14 mx-auto mb-3 bg-brand-soft rounded-card flex items-center justify-center">
+                    <KeyRound className="w-7 h-7 text-brand-text" />
+                  </div>
+                  <h2 className="font-titulo text-ink font-semibold text-lg mb-1">Criar meu acesso</h2>
+                  <p className="text-ink-muted text-xs">Digite o código que a administração te passou.</p>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">WhatsApp</label>
-                  <div className="relative mt-1">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                    <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors" placeholder="(DDD) 99999-9999" />
-                  </div>
+                  <label className="text-xs font-bold text-ink-muted uppercase tracking-wider ml-1">Código do convite</label>
+                  <input
+                    type="text" required value={codigo} autoCapitalize="characters" autoComplete="off"
+                    onChange={(e) => setCodigo(normalizarCodigo(e.target.value))}
+                    maxLength={9}
+                    className="w-full mt-1 px-4 py-4 bg-surface-sunken border border-line rounded-control text-ink text-center text-2xl font-mono font-black tracking-[0.3em] outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/25"
+                    placeholder="XXXX-XXXX"
+                  />
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-ink-on-dark uppercase tracking-wider ml-1">Senha de Acesso</label>
-                  <div className="relative mt-1">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-on-dark-muted" />
-                    <input type={showClientPassword ? "text" : "password"} required value={clientPassword} onChange={(e) => setClientPassword(e.target.value)} className="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors" placeholder="••••••••" />
-                    <button type="button" onClick={() => setShowClientPassword(!showClientPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-on-dark-muted hover:text-blue-400 transition-colors">
-                      {showClientPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <div className="text-right mt-2">
-                    <button type="button" onClick={handleForgotPassword} className="text-xs text-blue-400 font-medium hover:underline">Esqueci a senha</button>
-                  </div>
-                </div>
-
-                {error && <p className="text-red-400 text-sm font-bold text-center">{error}</p>}
-                <button type="submit" disabled={loading} className="w-full py-4 mt-2 bg-blue-600 text-white font-bold rounded-xl active:scale-95 transition-transform shadow-lg shadow-blue-500/20">{loading ? "Buscando ficha..." : "Acessar Ficha"}</button>
+                <Erro texto={error} />
+                <Button type="submit" block size="lg" disabled={loading}>
+                  {loading ? 'Conferindo...' : 'Continuar'}
+                </Button>
               </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ) : (
+              /* passo 2: escolher usuário e senha */
+              <form onSubmit={handleCriarAcesso} className="space-y-4">
+                <div className="text-center mb-6">
+                  <p className="text-brand-text text-xs font-bold uppercase tracking-wider">
+                    {convidado.role === 'admin' ? 'Administrador' : 'Professor'}
+                  </p>
+                  <h2 className="font-titulo text-ink font-semibold text-lg mt-1 leading-tight">Olá, {(convidado.name || '').split(' ')[0]}!</h2>
+                  <p className="text-ink-muted text-xs mt-1">Escolha como você vai entrar daqui pra frente.</p>
+                </div>
+                <Campo
+                  rotulo="Usuário" icone={User} type="text" required
+                  value={novoUsuario} autoCapitalize="none" autoComplete="username"
+                  onChange={(e) => setNovoUsuario(e.target.value)}
+                  placeholder="Ex: maria.silva"
+                  ajuda="Mínimo 4 caracteres. Pode ser seu e-mail."
+                />
+                <Campo
+                  rotulo="Criar senha" icone={Lock} required
+                  type={showTeamPassword ? 'text' : 'password'}
+                  value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)}
+                  autoComplete="new-password" placeholder="Mínimo 6 caracteres"
+                  acao={<BotaoOlho mostrando={showTeamPassword} aoAlternar={() => setShowTeamPassword(!showTeamPassword)} />}
+                />
+                <Campo
+                  rotulo="Repetir a senha" icone={Lock} required
+                  type={showTeamPassword ? 'text' : 'password'}
+                  value={repeteSenha} onChange={(e) => setRepeteSenha(e.target.value)}
+                  autoComplete="new-password" placeholder="••••••••"
+                />
+                <Erro texto={error} />
+                <Button type="submit" block size="lg" disabled={loading}>
+                  {loading ? 'Criando...' : 'Criar acesso e entrar'}
+                </Button>
+              </form>
+            )}
+          </Cartao>
+
+        ) : (
+
+          /* --- LOGIN DO CLIENTE/PAI --- */
+          <Cartao chave="client-form">
+            <BotaoVoltar aoClicar={() => { setLoginType('none'); setError(''); }} />
+            <form onSubmit={handleClientLogin} className="space-y-4">
+              <div className="text-center mb-6">
+                <h2 className="font-titulo text-ink font-semibold text-lg mb-1">Ficha do Aluno</h2>
+                <p className="text-ink-muted text-xs">Digite os dados cadastrados na secretaria.</p>
+              </div>
+              <Campo
+                rotulo="WhatsApp" icone={Phone} type="tel" required
+                value={phone} onChange={(e) => setPhone(e.target.value)}
+                autoComplete="tel" placeholder="(DDD) 99999-9999"
+              />
+              <div>
+                <Campo
+                  rotulo="Senha de Acesso" icone={Lock} required
+                  type={showClientPassword ? 'text' : 'password'}
+                  value={clientPassword} onChange={(e) => setClientPassword(e.target.value)}
+                  autoComplete="current-password" placeholder="••••••••"
+                  acao={<BotaoOlho mostrando={showClientPassword} aoAlternar={() => setShowClientPassword(!showClientPassword)} />}
+                />
+                <div className="text-right mt-2">
+                  <button type="button" onClick={handleForgotPassword} className="text-xs text-brand-text font-bold hover:underline py-1">
+                    Esqueci a senha
+                  </button>
+                </div>
+              </div>
+              <Erro texto={error} />
+              <Button type="submit" block size="lg" disabled={loading}>
+                {loading ? 'Buscando ficha...' : 'Acessar Ficha'}
+              </Button>
+            </form>
+          </Cartao>
+        )}
       </div>
     </div>
   );

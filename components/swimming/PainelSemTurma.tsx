@@ -72,7 +72,7 @@ export function PainelSemTurma({ semTurma, semTurmaFiltrado, filtros, avaliadoAg
               <div className="flex items-center gap-3">
                 {(filtros.grupo !== 'all' || filtros.touca !== 'all' || filtros.soPendentes) && (
                   <button onClick={() => { filtros.setGrupo('all'); filtros.setTouca('all'); filtros.setSoPendentes(false); }}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-info bg-info-soft border border-info-soft rounded-lg px-3 py-1.5">
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-info bg-info-soft border border-info-soft rounded-control px-3 py-1.5">
                     Limpar filtros <X className="w-3.5 h-3.5" />
                   </button>
                 )}

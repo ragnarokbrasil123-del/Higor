@@ -87,7 +87,9 @@ export type FalhaLogin =
   /** casou com mais de uma família: precisa do número completo */
   | 'ambiguo'
   /** o banco não respondeu */
-  | 'erro';
+  | 'erro'
+  /** o servidor não tem as variáveis e o caminho antigo esbarrou no RLS */
+  | 'nao-configurado';
 
 export type ResultadoLogin =
   | { ok: true; filhos: any[] }
@@ -98,6 +100,7 @@ export const MENSAGEM_FALHA: Record<FalhaLogin, string> = {
   credencial: 'Telefone ou Senha incorretos. Tente novamente.',
   ambiguo: 'Digite o telefone completo, com DDD, para continuarmos.',
   erro: 'Não conseguimos consultar agora. Tente de novo em instantes.',
+  'nao-configurado': 'Este endereço do app não está configurado para entrar. Use o endereço oficial do clube.',
 };
 
 /**
@@ -120,6 +123,11 @@ export async function buscarFilhos(telefoneDigitado: string, senha: string): Pro
   const digitos = String(telefoneDigitado || '').replace(/\D/g, '');
   if (digitos.length < 8 || !senha) return { ok: false, motivo: 'credencial' };
 
+  /* A rota disse "ainda não configurado"? Guarda isso: com o RLS ligado,
+     o caminho antigo vai falhar logo abaixo, e a mensagem precisa dizer
+     "falta configurar o ambiente", não "senha errada". */
+  let semVariaveis = false;
+
   try {
     const resp = await fetch('/api/login-responsavel', {
       method: 'POST',
@@ -137,6 +145,7 @@ export async function buscarFilhos(telefoneDigitado: string, senha: string): Pro
       const { motivo } = await resp.json().catch(() => ({ motivo: 'erro' }));
       return { ok: false, motivo: (motivo as FalhaLogin) || 'erro' };
     }
+    semVariaveis = true;
     console.warn(
       '[login] SUPABASE_SERVICE_ROLE_KEY não configurada: conferindo a senha no navegador. ' +
       'Configure a key para fechar isto (ver LGPD.md, item 3.1).'
@@ -154,7 +163,7 @@ export async function buscarFilhos(telefoneDigitado: string, senha: string): Pro
       .eq('password', senha)
   );
 
-  if (error) return { ok: false, motivo: 'erro' };
+  if (error) return { ok: false, motivo: semVariaveis ? 'nao-configurado' : 'erro' };
   if (!data?.length) return { ok: false, motivo: 'credencial' };
 
   const telefones = new Set(data.map((a: any) => String(a.phone || '')));

@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, CheckCircle2, ChevronRight, MessageCircle, Sparkles, X } from 'lucide-react';
 import { levels, type CapLevel } from '@/types';
 import { cn } from '@/lib/utils';
-import { Button, IconButton, Modal, Textarea } from '@/components/ui';
+import { AnelProgresso, BadgeTouca, Button, IconButton, Modal, Textarea, textoSobreTouca } from '@/components/ui';
 import type { Aluno } from './constantes';
 import type { useFilaAvaliacao } from './useFilaAvaliacao';
 
@@ -43,17 +42,17 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
         {feito.proximo ? (
           <>
             {/* o professor emenda a turma seguinte sem passar pela tela inicial */}
-            <button onClick={() => abrir(feito.proximo!.ids)} className="mt-8 px-8 py-4 bg-surface-raised text-white font-black rounded-2xl active:scale-95 transition-transform flex items-center gap-2">
+            <Button variant="dark" size="lg" className="mt-8" onClick={() => abrir(feito.proximo!.ids)}>
               {feito.proximo.rotulo} · {feito.proximo.ids.length} a avaliar <ChevronRight className="w-5 h-5" />
-            </button>
-            <button onClick={encerrar} className="mt-3 px-6 py-3 text-ink-muted font-bold rounded-2xl active:scale-95 transition-transform">
+            </Button>
+            <Button variant="ghost" className="mt-3" onClick={encerrar}>
               Voltar para as turmas
-            </button>
+            </Button>
           </>
         ) : (
-          <button onClick={encerrar} className="mt-8 px-8 py-4 bg-surface-raised text-white font-black rounded-2xl active:scale-95 transition-transform">
+          <Button variant="dark" size="lg" className="mt-8" onClick={encerrar}>
             Voltar para as turmas
-          </button>
+          </Button>
         )}
       </div>
     );
@@ -71,26 +70,40 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
             <IconButton onClick={pedirSaida} aria-label="Sair da avaliação" className="bg-surface-sunken shrink-0">
               <ArrowLeft className="w-5 h-5 text-ink-muted" />
             </IconButton>
-            <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center text-white font-black shrink-0', info?.bgClass)}>
+            <div className={cn('w-11 h-11 rounded-control flex items-center justify-center font-black shrink-0', info?.bgClass, textoSobreTouca(alunoAtual.level))}>
               {alunoAtual.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-black text-ink leading-tight break-words line-clamp-2">{alunoAtual.name}</h2>
-              <p className="text-xs font-bold text-ink-muted">Touca {info?.name}</p>
+              <h2 className="font-titulo font-semibold text-ink leading-tight break-words line-clamp-2">{alunoAtual.name}</h2>
+              <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <BadgeTouca nivel={alunoAtual.level} variante="discreto" />
+                {temRascunho && (
+                  <span className="text-micro font-bold text-warning-ink bg-warning-soft px-1.5 py-0.5 rounded-badge">
+                    rascunho
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="text-right shrink-0">
-              <p className="text-xs font-black text-ink tabular-nums">{filaIdx + 1} de {fila.length}</p>
-              <p className="text-mini font-bold text-ink-subtle tabular-nums">{marcados} de {criterios.length} marcados</p>
-              {temRascunho && (
-                <span className="inline-block mt-1 text-micro font-bold text-warning-ink bg-warning-soft px-1.5 py-0.5 rounded-badge">
-                  rascunho
-                </span>
-              )}
-            </div>
+            {/*
+              O anel diz "quanto falta deste aluno" sem precisar ler.
+              A posição na fila fica embaixo em texto, porque é outra
+              informação: uma é o aluno, a outra é a turma.
+            */}
+            <AnelProgresso
+              valor={marcados}
+              total={criterios.length}
+              tamanho={48}
+              conquista={passou === criterios.length && criterios.length > 0}
+            />
           </div>
 
-          <div className="mt-3 h-1.5 bg-surface-sunken rounded-full overflow-hidden">
-            <div className="h-full bg-brand transition-all" style={{ width: `${criterios.length ? (marcados / criterios.length) * 100 : 0}%` }} />
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="numero text-mini font-bold text-ink-muted">
+              Aluno {filaIdx + 1} de {fila.length}
+            </span>
+            <span className="numero text-mini font-bold text-ink-subtle">
+              {marcados} de {criterios.length} critérios
+            </span>
           </div>
 
           {fila.length > 1 && (
@@ -125,37 +138,30 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
         </div>
       </div>
 
-      <AnimatePresence>
-        {ultimoSalvo && (
-          <motion.div
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            className="sticky top-[92px] z-30 mx-4 mt-3"
-          >
-            <div className={cn(
-              'rounded-card px-4 py-3 shadow-overlay flex items-center gap-3',
-              ultimoSalvo.novaTouca ? 'bg-success text-white' : 'bg-surface-raised text-white'
-            )}>
-              <CheckCircle2 className="w-5 h-5 shrink-0" />
-              <p className="text-sm font-bold leading-tight">
-                {ultimoSalvo.novaTouca
-                  ? <>{ultimoSalvo.nome} passou para a touca <b>{ultimoSalvo.novaTouca}</b>! 🏅</>
-                  : <>Avaliação de {ultimoSalvo.nome} salva.</>}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {ultimoSalvo && (
+        <div className="sticky top-[92px] z-30 mx-4 mt-3 motion-safe:animate-[desce_.2s_ease-out]">
+          <div className={cn(
+            'rounded-card px-4 py-3 shadow-overlay flex items-center gap-3',
+            ultimoSalvo.novaTouca ? 'bg-success text-white' : 'bg-surface-raised text-white'
+          )}>
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <p className="text-sm font-bold leading-tight">
+              {ultimoSalvo.novaTouca
+                ? <>{ultimoSalvo.nome} passou para a touca <b>{ultimoSalvo.novaTouca}</b>! 🏅</>
+                : <>Avaliação de {ultimoSalvo.nome} salva.</>}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-3xl mx-auto w-full p-4 space-y-2 pb-32">
         <div className="flex gap-2 mb-3">
-          <button onClick={() => marcarTodos('passed')} className="flex-1 py-3 bg-success text-white font-black rounded-xl text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
+          <Button variant="sucesso" block onClick={() => marcarTodos("passed")}>
             <Check className="w-4 h-4" strokeWidth={3} /> Marcar todos como Passou
-          </button>
-          <button onClick={() => marcarTodos('pending')} className="px-5 py-3 bg-surface border border-line text-ink-muted font-bold rounded-xl text-sm active:scale-95 transition-transform">
+          </Button>
+          <Button variant="secondary" onClick={() => marcarTodos("pending")}>
             Limpar
-          </button>
+          </Button>
         </div>
 
         {criterios.map(crit => {
@@ -201,7 +207,7 @@ export function TelaAvaliacao({ aval, alunoPorId }: TelaAvaliacaoProps) {
               type="button"
               disabled={marcados === 0}
               onClick={gerarSugestao}
-              className="px-3 py-1.5 bg-info-soft border border-info-soft text-info-ink rounded-lg text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 bg-info-soft border border-info-soft text-info-ink rounded-control text-xs font-black flex items-center gap-1.5 active:scale-95 transition-transform disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-3.5 h-3.5" /> {notes ? 'Gerar outra' : 'Gerar sugestão'}
             </button>
